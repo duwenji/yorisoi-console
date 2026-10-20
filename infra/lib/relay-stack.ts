@@ -77,14 +77,7 @@ export class RelayStack extends Stack {
       entry: `${repoRoot}api/src/relay/handler.ts`,
       runtime: lambda.Runtime.NODEJS_22_X,
       architecture: lambda.Architecture.ARM_64,
-      bundling: {
-        format: nodejs.OutputFormat.ESM,
-        target: 'node22',
-        minify: true,
-        sourceMap: true,
-        // The Bedrock SDK still requires CommonJS modules, which an ES module has no `require` for.
-        banner: "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);",
-      },
+      bundling: { format: nodejs.OutputFormat.ESM, target: 'node22', minify: true, sourceMap: true },
       memorySize: 512,
       // A narration takes a few seconds; the API waits at most 29.
       timeout: Duration.seconds(28),
@@ -116,16 +109,20 @@ export class RelayStack extends Stack {
       // Put in by hand (docs/operations/ai-relay.md): it holds a Google private key.
       secrets.Secret.fromSecretNameV2(this, 'IntegrityAccount', config.integritySecretName).grantRead(fn);
     }
-    // R-5: the jp profiles of the listed models only, and the models in the regions they route to
+    // R-5: the listed models only: in Tokyo, or behind a jp profile in the regions it routes to
     // (Tokyo and Osaka).
     fn.addToRolePolicy(
       new iam.PolicyStatement({
         actions: ['bedrock:InvokeModel'],
-        resources: config.models.flatMap((m) => [
-          `arn:${this.partition}:bedrock:${this.region}:${this.account}:inference-profile/${m.profile}`,
-          `arn:${this.partition}:bedrock:ap-northeast-1::foundation-model/${m.foundationModel}`,
-          `arn:${this.partition}:bedrock:ap-northeast-3::foundation-model/${m.foundationModel}`,
-        ]),
+        resources: config.models.flatMap((m) =>
+          m.inferenceProfile
+            ? [
+                `arn:${this.partition}:bedrock:${this.region}:${this.account}:inference-profile/${m.profile}`,
+                `arn:${this.partition}:bedrock:ap-northeast-1::foundation-model/${m.foundationModel}`,
+                `arn:${this.partition}:bedrock:ap-northeast-3::foundation-model/${m.foundationModel}`,
+              ]
+            : [`arn:${this.partition}:bedrock:${this.region}::foundation-model/${m.foundationModel}`],
+        ),
       }),
     );
 

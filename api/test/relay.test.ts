@@ -10,7 +10,7 @@ import { freshTable, startDynamoLocal } from './dynamo-local.js';
 const PKG = 'io.github.duwenji.yorisoi.sanpoguide';
 const INSTALL = '0b6f3c1e-8a2d-4f0b-9a57-3c2e1d4b5a69';
 const HAIKU_45: ModelChoice = { id: 'haiku-4-5', profile: 'jp.anthropic.claude-haiku-4-5-20251001-v1:0', price: { inputPerMTok: 1.1, outputPerMTok: 5.5 } };
-const HAIKU_55: ModelChoice = { id: 'haiku-5-5', profile: 'jp.anthropic.claude-haiku-5-5', price: { inputPerMTok: 0.11, outputPerMTok: 0.55 } };
+const DEEPSEEK: ModelChoice = { id: 'deepseek-v3-2', profile: 'deepseek.v3.2', price: { inputPerMTok: 0.74, outputPerMTok: 2.22 } };
 
 let local: Awaited<ReturnType<typeof startDynamoLocal>>;
 let ports: RelayPorts;
@@ -34,7 +34,7 @@ beforeEach(async () => {
   calls = [];
   metrics = {};
   integrity = undefined;
-  settings = { dailyLimit: 3, monthlyBudgetUsd: 5, model: HAIKU_55 };
+  settings = { dailyLimit: 3, monthlyBudgetUsd: 5, model: DEEPSEEK };
   counter = 0;
   ports = {
     db: fresh.db,
@@ -153,7 +153,7 @@ describe('generating', () => {
     const res = await narrate(t, { system: '固定の指示', user: 'スポット' });
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ text: 'こんにちは', quota: { limit: 3, remaining: 2, resetsAt: '2026-10-19T15:00:00.000Z' }, usage: { inputTokens: 2000, outputTokens: 300 } });
-    expect(calls).toEqual([{ model: 'jp.anthropic.claude-haiku-5-5', system: '固定の指示', user: 'スポット' }]);
+    expect(calls).toEqual([{ model: 'deepseek.v3.2', system: '固定の指示', user: 'スポット' }]);
   });
 
   it('stops at the limit and starts again after midnight in Japan (V-03, V-04)', async () => {
@@ -199,9 +199,9 @@ describe('generating', () => {
   });
 
   it('pauses when the month’s spend reaches the budget (V-07)', async () => {
-    settings = { dailyLimit: 100, monthlyBudgetUsd: 0.001, model: HAIKU_55 };
+    settings = { dailyLimit: 100, monthlyBudgetUsd: 0.005, model: DEEPSEEK };
     const t = await token();
-    // 2,000 × 0.11 + 300 × 0.55 = 385 micro-USD a call: the third call passes the budget.
+    // 2,000 × 0.74 + 300 × 2.22 = 2,146 micro-USD a call: the third call passes the budget.
     expect((await narrate(t)).status).toBe(200);
     expect((await narrate(t)).status).toBe(200);
     expect((await narrate(t)).status).toBe(200);
@@ -238,25 +238,25 @@ describe('generating', () => {
 });
 
 describe('settings (R-5, R-14, V-12)', () => {
-  const defaults = { monthlyBudgetUsd: 5, models: [HAIKU_45, HAIKU_55], model: 'haiku-4-5' };
+  const defaults = { monthlyBudgetUsd: 5, models: [DEEPSEEK, HAIKU_45], model: 'deepseek-v3-2' };
   let seen: Record<string, number>;
   const metric = (name: string, value: number) => (seen[name] = value);
   beforeEach(() => (seen = {}));
 
   it('uses 5 to 100 as set, and 30 with a report otherwise', () => {
-    expect(readSettings({ dailyLimit: '50', monthlyBudgetUsd: '20', model: 'haiku-5-5' }, defaults, metric)).toEqual({ dailyLimit: 50, monthlyBudgetUsd: 20, model: HAIKU_55 });
+    expect(readSettings({ dailyLimit: '50', monthlyBudgetUsd: '20', model: 'deepseek-v3-2' }, defaults, metric)).toEqual({ dailyLimit: 50, monthlyBudgetUsd: 20, model: DEEPSEEK });
     expect(seen.InvalidSetting).toBe(0);
     for (const bad of ['4', '101', '30.5', 'many', undefined]) {
-      expect(readSettings({ dailyLimit: bad, monthlyBudgetUsd: '20', model: 'haiku-5-5' }, defaults, metric).dailyLimit).toBe(30);
+      expect(readSettings({ dailyLimit: bad, monthlyBudgetUsd: '20', model: 'deepseek-v3-2' }, defaults, metric).dailyLimit).toBe(30);
       expect(seen.InvalidSetting).toBe(1);
     }
-    expect(readSettings({ dailyLimit: '30', monthlyBudgetUsd: '-1', model: 'haiku-5-5' }, defaults, metric).monthlyBudgetUsd).toBe(5);
+    expect(readSettings({ dailyLimit: '30', monthlyBudgetUsd: '-1', model: 'deepseek-v3-2' }, defaults, metric).monthlyBudgetUsd).toBe(5);
   });
 
   it('switches only to a listed model, and keeps the default with a report otherwise', () => {
     expect(readSettings({ dailyLimit: '30', monthlyBudgetUsd: '5', model: 'haiku-4-5' }, defaults, metric).model).toBe(HAIKU_45);
-    for (const bad of ['nova-2-lite', 'jp.anthropic.claude-haiku-5-5', '', undefined]) {
-      expect(readSettings({ dailyLimit: '30', monthlyBudgetUsd: '5', model: bad }, defaults, metric).model).toBe(HAIKU_45);
+    for (const bad of ['nova-2-lite', 'haiku-5-5', 'deepseek.v3.2', '', undefined]) {
+      expect(readSettings({ dailyLimit: '30', monthlyBudgetUsd: '5', model: bad }, defaults, metric).model).toBe(DEEPSEEK);
       expect(seen.InvalidSetting).toBe(1);
     }
   });

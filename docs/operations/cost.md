@@ -27,7 +27,7 @@
 
 ## 運営の AI（中継）
 
-中継（`YorisoiAiRelay-<env>`）の費用は、ほとんどが Bedrock のモデルの利用料で、使った分だけかかる。解説 1 回（入力約 750・出力約 290 トークン）で、Haiku 4.5 は約 0.0024 USD、Haiku 5.5 は約 0.00024 USD。月の上限は Parameter Store の予算で決まり、中継が自分で止める（[運営の AI の手順](ai-relay.md)）。ほかは、本番の WAF が約 7 USD/月、警報 4 つが約 0.4 USD/月で、API Gateway・Lambda・DynamoDB はほぼ 0。費用はタグ `project=yorisoi-ai-relay` で分けて見る。
+中継（`YorisoiAiRelay-<env>`）の費用は、ほとんどが Bedrock のモデルの利用料で、使った分だけかかる。解説 1 回（入力約 600〜750・出力約 290〜340 トークン）で、DeepSeek V3.2 は約 0.0012 USD、Haiku 4.5 は約 0.0024 USD。月の上限は Parameter Store の予算で決まり、中継が自分で止める（[運営の AI の手順](ai-relay.md)）。ほかは、本番の WAF が約 7 USD/月、警報 4 つが約 0.4 USD/月で、API Gateway・Lambda・DynamoDB はほぼ 0。費用はタグ `project=yorisoi-ai-relay` で分けて見る。
 
 ## 一度だけ要る操作
 

@@ -8,7 +8,7 @@
 |---|---|
 | API Gateway（REST API、ステージ `api`） | `/v1/session/challenge`・`/v1/session`・`/v1/quota`・`/v1/generate`。本番は AWS WAF で送信元ごとに 5 分 300 回まで |
 | Lambda（`api/src/relay/`） | 端末の確認、回数、長さの確認、Bedrock の呼び出し。プロンプトと出力はログに書かない |
-| Bedrock | 下の表のモデルの jp 推論プロファイル。Lambda のロールで呼び（キーを持たない）、ロールは表のモデルしか呼べない |
+| Bedrock | 下の表のモデルを、日本の中で処理する形（東京リージョンのモデルか jp 推論プロファイル）で、Converse API で呼ぶ。Lambda のロールで呼び（キーを持たない）、ロールは表のモデルしか呼べない |
 | DynamoDB | nonce・トークン・端末ごとの 1 日の回数・月の費用。どれも期限で消える |
 | Parameter Store | `/yorisoi-ai-relay/<env>/model`（モデル）・`/yorisoi-ai-relay/<env>/daily-limit`（1 日の上限）・`/yorisoi-ai-relay/<env>/monthly-budget-usd`（月の予算） |
 | CloudWatch の警報 → SNS（メール） | 予算の 80%、予算に達して止まった、設定の値が正しくない、Bedrock の失敗が 5 分で 10 回 |
@@ -17,12 +17,12 @@
 
 切り替えられるモデル（`relay-config.ts` の `models`）:
 
-| 値 | 推論プロファイル | 単価（100 万トークンあたり、入力 / 出力） | 状態 |
-|---|---|---|---|
-| `haiku-4-5` | `jp.anthropic.claude-haiku-4-5-20251001-v1:0` | 1.10 / 5.50 USD | 既定。開発用で呼べることを確かめた |
-| `haiku-5-5` | `jp.anthropic.claude-haiku-5-5` | 0.11 / 0.55 USD | 開発用のアカウントはクォータが 0 で、まだ呼べない |
+| 値 | Bedrock の ID | 処理する場所 | 単価（100 万トークンあたり、入力 / 出力） | 状態 |
+|---|---|---|---|---|
+| `deepseek-v3-2` | `deepseek.v3.2` | 東京 | 0.74 / 2.22 USD | 既定 |
+| `haiku-4-5` | `jp.anthropic.claude-haiku-4-5-20251001-v1:0` | 東京・大阪 | 1.10 / 5.50 USD | 切り替え先。使う前に Anthropic のユースケースを申告する |
 
-表にないモデルを足すときは、`models` に足して配備する（ロールが呼べるモデルも一緒に増える）。単価は月の費用の足し上げに使うので、Bedrock の価格表の jp の値を入れる。
+どちらも開発用で呼べることを確かめた。表にないモデルを足すときは、`models` に足して配備する（ロールが呼べるモデルも一緒に増える）。単価は月の費用の足し上げに使うので、Bedrock の価格表の東京（推論プロファイルなら jp）の値を入れる。日本の外で処理するモデル・プロファイルは足さない（ADR-AI-RELAY R-5）。
 
 ## 配備
 
@@ -43,7 +43,7 @@ npx cdk -a "npx tsx bin/relay.ts" deploy -c env=dev
 
 本番は、配備の前に次を済ませる。
 
-1. Anthropic のモデルのユースケースを申告する。Haiku 5.5 に切り替えるなら、そのクォータ（Cross-region model inference tokens per minute）も引き上げる（ADR-AI-RELAY T-6）
+1. Haiku 4.5 に切り替えることがあるなら、Anthropic のモデルのユースケースを申告しておく（ADR-AI-RELAY T-6）
 2. 月の予算を決め、`relay-config.ts` の `monthlyBudgetUsd` に入れる（T-7）
 3. Play Integrity のサービス アカウントを作り、鍵を Secrets Manager に入れる（下の節）
 4. 警報の宛先を `-c alarmEmail=<メール>` で渡す
@@ -54,7 +54,7 @@ npx cdk -a "npx tsx bin/relay.ts" deploy -c env=dev
 
 ```sh
 # Git Bash ではパスの書き換えを止める
-MSYS_NO_PATHCONV=1 aws ssm put-parameter --name /yorisoi-ai-relay/dev/model --value haiku-5-5 --overwrite
+MSYS_NO_PATHCONV=1 aws ssm put-parameter --name /yorisoi-ai-relay/dev/model --value haiku-4-5 --overwrite
 MSYS_NO_PATHCONV=1 aws ssm put-parameter --name /yorisoi-ai-relay/dev/daily-limit --value 50 --overwrite
 MSYS_NO_PATHCONV=1 aws ssm put-parameter --name /yorisoi-ai-relay/dev/monthly-budget-usd --value 10 --overwrite
 ```

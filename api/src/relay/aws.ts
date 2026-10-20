@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto';
-import { AnthropicBedrock } from '@anthropic-ai/bedrock-sdk';
+import { BedrockRuntimeClient, ConverseCommand } from '@aws-sdk/client-bedrock-runtime';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { GetSecretValueCommand, SecretsManagerClient } from '@aws-sdk/client-secrets-manager';
 import { GetParametersCommand, SSMClient } from '@aws-sdk/client-ssm';
@@ -75,7 +75,7 @@ async function build(): Promise<RelayPorts> {
   const db = DynamoDBDocumentClient.from(new DynamoDBClient({ region }), { marshallOptions: { removeUndefinedValues: true } });
   const installKey = process.env.INSTALL_KEY ?? (await secret(secrets, env('INSTALL_KEY_SECRET_ARN')));
   const integrity = process.env.INTEGRITY_SECRET_ID ? new PlayIntegrity(JSON.parse(await secret(secrets, process.env.INTEGRITY_SECRET_ID)) as ServiceAccount) : undefined;
-  const bedrock = new AnthropicBedrock({ awsRegion: region });
+  const bedrock = new BedrockRuntimeClient({ region });
   const limitParam = env('PARAM_DAILY_LIMIT');
   const budgetParam = env('PARAM_MONTHLY_BUDGET');
   const modelParam = env('PARAM_MODEL');
@@ -102,21 +102,28 @@ async function build(): Promise<RelayPorts> {
       return read;
     },
     ...(integrity ? { verifyIntegrity: (token, expect) => integrity.verify(token, expect) } : {}),
+    // Converse speaks to every model on the list the same way (R-5); thinking stays off, its default.
     generate: async (model, system, user): Promise<ModelReply> => {
-      const message = await bedrock.messages.create({
-        model: model.profile,
-        max_tokens: MAX_OUTPUT_TOKENS,
-        // A short narration on the move: no thinking, so the output tokens are the words spoken.
-        thinking: { type: 'disabled' },
-        system,
-        messages: [{ role: 'user', content: user }],
-      });
-      const text = message.content
-        .flatMap((block) => (block.type === 'text' ? [block.text] : []))
+      const out = await bedrock.send(
+        new ConverseCommand({
+          modelId: model.profile,
+          system: [{ text: system }],
+          messages: [{ role: 'user', content: [{ text: user }] }],
+          inferenceConfig: { maxTokens: MAX_OUTPUT_TOKENS },
+        }),
+      );
+      const text = (out.output?.message?.content ?? [])
+        .flatMap((block) => (block.text !== undefined ? [block.text] : []))
         .join('')
         .trim();
-      const stop = message.stop_reason === 'refusal' ? 'refusal' : message.stop_reason === 'max_tokens' ? 'max_tokens' : 'end';
-      return { text, stop, inputTokens: message.usage.input_tokens, outputTokens: message.usage.output_tokens };
+      const reason = out.stopReason;
+      const stop =
+        reason === 'max_tokens' || reason === 'model_context_window_exceeded'
+          ? 'max_tokens'
+          : reason === 'content_filtered' || reason === 'guardrail_intervened'
+            ? 'refusal'
+            : 'end';
+      return { text, stop, inputTokens: out.usage?.inputTokens ?? 0, outputTokens: out.usage?.outputTokens ?? 0 };
     },
     metric: emitMetric,
   };

@@ -1,10 +1,15 @@
-/** A model the operator may switch to (ADR-AI-RELAY R-5): a Bedrock inference profile in Japan. */
+/**
+ * A model the operator may switch to (ADR-AI-RELAY R-5), processed in Japan: a model Bedrock runs
+ * in Tokyo itself, or a jp inference profile (Tokyo and Osaka).
+ */
 export interface RelayModel {
   id: string;
+  /** What the relay passes as `modelId`: the model in Tokyo, or the jp inference profile. */
   profile: string;
-  /** The foundation model behind the profile, which the role must also be allowed to call. */
+  /** The foundation model, which the role must also be allowed to call behind a profile. */
   foundationModel: string;
-  /** Bedrock's price for the profile, USD per million tokens, for the month's spend (R-10). */
+  inferenceProfile: boolean;
+  /** Bedrock's price in Tokyo (or for the jp profile), USD per million tokens, for the month's spend (R-10). */
   price: { inputPerMTok: number; outputPerMTok: number };
 }
 
@@ -37,19 +42,21 @@ export interface RelayConfig {
   alarmEmail?: string;
 }
 
-/** Claude Haiku on the jp profiles: 4.5 until the account gets a quota for 5.5 (ADR-AI-RELAY T-6). */
+/** DeepSeek V3.2 in Tokyo for now, and Claude Haiku 4.5 to switch to (ADR-AI-RELAY R-5). */
 const MODELS: RelayModel[] = [
+  {
+    id: 'deepseek-v3-2',
+    profile: 'deepseek.v3.2',
+    foundationModel: 'deepseek.v3.2',
+    inferenceProfile: false,
+    price: { inputPerMTok: 0.74, outputPerMTok: 2.22 },
+  },
   {
     id: 'haiku-4-5',
     profile: 'jp.anthropic.claude-haiku-4-5-20251001-v1:0',
     foundationModel: 'anthropic.claude-haiku-4-5-20251001-v1:0',
+    inferenceProfile: true,
     price: { inputPerMTok: 1.1, outputPerMTok: 5.5 },
-  },
-  {
-    id: 'haiku-5-5',
-    profile: 'jp.anthropic.claude-haiku-5-5',
-    foundationModel: 'anthropic.claude-haiku-5-5',
-    price: { inputPerMTok: 0.11, outputPerMTok: 0.55 },
   },
 ];
 
@@ -58,7 +65,7 @@ export const relayConfigs: Record<RelayConfig['name'], RelayConfig> = {
     name: 'dev',
     region: 'ap-northeast-1',
     models: MODELS,
-    model: 'haiku-4-5',
+    model: 'deepseek-v3-2',
     packages: ['io.github.duwenji.yorisoi.sanpoguide'],
     dailyLimit: 30,
     monthlyBudgetUsd: 5,
@@ -71,7 +78,7 @@ export const relayConfigs: Record<RelayConfig['name'], RelayConfig> = {
     name: 'prod',
     region: 'ap-northeast-1',
     models: MODELS,
-    model: 'haiku-4-5',
+    model: 'deepseek-v3-2',
     packages: ['io.github.duwenji.yorisoi.sanpoguide'],
     integritySecretName: 'yorisoi-ai-relay/prod/play-integrity',
     dailyLimit: 30,

@@ -15,16 +15,17 @@ describe('RelayStack', () => {
   const prod = template('prod');
   const dev = template('dev');
 
-  it('calls only the jp profiles of the listed models, starting with Haiku 4.5 (ADR-AI-RELAY R-5)', () => {
+  it('calls only the listed models in Japan, starting with DeepSeek V3.2 in Tokyo (ADR-AI-RELAY R-5)', () => {
     const policies = JSON.stringify(prod.findResources('AWS::IAM::Policy'));
-    for (const name of ['inference-profile/jp.anthropic.claude-haiku-4-5-20251001-v1:0', 'inference-profile/jp.anthropic.claude-haiku-5-5', 'foundation-model/anthropic.claude-haiku-5-5']) {
+    for (const name of [':bedrock:ap-northeast-1::foundation-model/deepseek.v3.2', 'inference-profile/jp.anthropic.claude-haiku-4-5-20251001-v1:0', 'ap-northeast-3::foundation-model/anthropic.claude-haiku-4-5']) {
       expect(policies).toContain(name);
     }
+    expect(policies).not.toContain('ap-northeast-3::foundation-model/deepseek');
     expect(policies).not.toMatch(/bedrock:\*|"bedrock:InvokeModel","Resource":"\*"/);
     prod.hasResourceProperties('AWS::Lambda::Function', {
-      Environment: { Variables: Match.objectLike({ DEFAULT_MODEL: 'haiku-4-5', INTEGRITY_SECRET_ID: 'yorisoi-ai-relay/prod/play-integrity' }) },
+      Environment: { Variables: Match.objectLike({ DEFAULT_MODEL: 'deepseek-v3-2', INTEGRITY_SECRET_ID: 'yorisoi-ai-relay/prod/play-integrity' }) },
     });
-    prod.hasResourceProperties('AWS::SSM::Parameter', { Name: '/yorisoi-ai-relay/prod/model', Value: 'haiku-4-5' });
+    prod.hasResourceProperties('AWS::SSM::Parameter', { Name: '/yorisoi-ai-relay/prod/model', Value: 'deepseek-v3-2' });
   });
 
   it('keeps the daily limit and the budget in Parameter Store (R-14)', () => {
