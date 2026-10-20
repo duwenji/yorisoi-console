@@ -6,7 +6,8 @@
   "description": "AWS CDK app of the channel management system (ADR-001)",
   "scripts": {
     "synth": "cdk synth --quiet",
-    "cdk": "cdk"
+    "cdk": "cdk",
+    "synth:relay": "cdk synth -a \"npx tsx bin/relay.ts\" --quiet"
   },
   "dependencies": {
     "aws-cdk-lib": "^2.272.0",

@@ -1,0 +1,53 @@
+import { App } from 'aws-cdk-lib';
+import { Match, Template } from 'aws-cdk-lib/assertions';
+import { describe, expect, it } from 'vitest';
+import { relayConfigs } from '../lib/relay-config.js';
+import { RelayStack } from '../lib/relay-stack.js';
+
+function template(name: 'dev' | 'prod') {
+  // Skip bundling the Lambda code; tests look at the resources, not the bundle.
+  const app = new App({ context: { 'aws:cdk:bundling-stacks': [] } });
+  const stack = new RelayStack(app, `Relay-${name}`, { config: relayConfigs[name], env: { region: 'ap-northeast-1', account: '123456789012' } });
+  return Template.fromStack(stack);
+}
+
+describe('RelayStack', () => {
+  const prod = template('prod');
+  const dev = template('dev');
+
+  it('calls only the listed models in Japan, starting with DeepSeek V3.2 in Tokyo (ADR-AI-RELAY R-5)', () => {
+    const policies = JSON.stringify(prod.findResources('AWS::IAM::Policy'));
+    for (const name of [':bedrock:ap-northeast-1::foundation-model/deepseek.v3.2', 'inference-profile/jp.anthropic.claude-haiku-4-5-20251001-v1:0', 'ap-northeast-3::foundation-model/anthropic.claude-haiku-4-5']) {
+      expect(policies).toContain(name);
+    }
+    expect(policies).not.toContain('ap-northeast-3::foundation-model/deepseek');
+    expect(policies).not.toMatch(/bedrock:\*|"bedrock:InvokeModel","Resource":"\*"/);
+    prod.hasResourceProperties('AWS::Lambda::Function', {
+      Environment: { Variables: Match.objectLike({ DEFAULT_MODEL: 'deepseek-v3-2', INTEGRITY_SECRET_ID: 'yorisoi-ai-relay/prod/play-integrity' }) },
+    });
+    prod.hasResourceProperties('AWS::SSM::Parameter', { Name: '/yorisoi-ai-relay/prod/model', Value: 'deepseek-v3-2' });
+  });
+
+  it('keeps the daily limit and the budget in Parameter Store (R-14)', () => {
+    prod.hasResourceProperties('AWS::SSM::Parameter', { Name: '/yorisoi-ai-relay/prod/daily-limit', Value: '30' });
+    prod.hasResourceProperties('AWS::SSM::Parameter', { Name: '/yorisoi-ai-relay/prod/monthly-budget-usd' });
+  });
+
+  it('has the four operations of API-AI-RELAY', () => {
+    const methods = Object.values(prod.findResources('AWS::ApiGateway::Method')).map((m) => m.Properties.HttpMethod).sort();
+    expect(methods).toEqual(['GET', 'POST', 'POST', 'POST']);
+  });
+
+  it('puts WAF and Play Integrity in production only (R-9, AR-4)', () => {
+    prod.resourceCountIs('AWS::WAFv2::WebACLAssociation', 1);
+    dev.resourceCountIs('AWS::WAFv2::WebACLAssociation', 0);
+    const devEnv = JSON.stringify(dev.findResources('AWS::Lambda::Function'));
+    expect(devEnv).not.toContain('INTEGRITY_SECRET_ID');
+  });
+
+  it('tells the operator about the budget and bad settings', () => {
+    for (const name of ['SpendRatio', 'RelayPaused', 'InvalidSetting']) {
+      prod.hasResourceProperties('AWS::CloudWatch::Alarm', { MetricName: name, Namespace: 'YorisoiAiRelay' });
+    }
+  });
+});

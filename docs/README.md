@@ -39,6 +39,7 @@
 | AWS 費用の見積もり | [費用](operations/cost.md) |
 | 環境の配備 | [配備の手順](operations/deploy.md) |
 | ルート鍵・署名鍵の管理 | [鍵の手順書](operations/keys.md) |
+| 運営の AI（中継）の配備・上限・予算 | [運営の AI の手順](operations/ai-relay.md) |
 
 ## エコシステム共通の正本
 
