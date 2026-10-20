@@ -1,14 +1,23 @@
+/** A model the operator may switch to (ADR-AI-RELAY R-5): a Bedrock inference profile in Japan. */
+export interface RelayModel {
+  id: string;
+  profile: string;
+  /** The foundation model behind the profile, which the role must also be allowed to call. */
+  foundationModel: string;
+  /** Bedrock's price for the profile, USD per million tokens, for the month's spend (R-10). */
+  price: { inputPerMTok: number; outputPerMTok: number };
+}
+
 /** Settings of the operator's AI relay in one account (platform ADR-AI-RELAY, API-AI-RELAY). */
 export interface RelayConfig {
   name: 'dev' | 'prod';
   /** Optional: when set, the stack is pinned to this account. */
   account?: string;
   region: 'ap-northeast-1';
-  /** The Bedrock inference profile (ADR-AI-RELAY R-5) and its foundation model. */
-  modelId: string;
-  foundationModel: string;
-  /** USD per million tokens of the profile, for the month's spend (R-10). */
-  price: { inputPerMTok: number; outputPerMTok: number };
+  /** The models the operator may switch to in Parameter Store; the role may call only these. */
+  models: RelayModel[];
+  /** The model the relay starts with, and uses when the parameter names no model in `models`. */
+  model: string;
   /** Apps that may open a session. */
   packages: string[];
   /**
@@ -28,18 +37,28 @@ export interface RelayConfig {
   alarmEmail?: string;
 }
 
-const HAIKU_5_5_JP = {
-  modelId: 'jp.anthropic.claude-haiku-5-5',
-  foundationModel: 'anthropic.claude-haiku-5-5',
-  // Bedrock's price for the jp profile (ADR-AI-RELAY 注意点).
-  price: { inputPerMTok: 0.11, outputPerMTok: 0.55 },
-} as const;
+/** Claude Haiku on the jp profiles: 4.5 until the account gets a quota for 5.5 (ADR-AI-RELAY T-6). */
+const MODELS: RelayModel[] = [
+  {
+    id: 'haiku-4-5',
+    profile: 'jp.anthropic.claude-haiku-4-5-20251001-v1:0',
+    foundationModel: 'anthropic.claude-haiku-4-5-20251001-v1:0',
+    price: { inputPerMTok: 1.1, outputPerMTok: 5.5 },
+  },
+  {
+    id: 'haiku-5-5',
+    profile: 'jp.anthropic.claude-haiku-5-5',
+    foundationModel: 'anthropic.claude-haiku-5-5',
+    price: { inputPerMTok: 0.11, outputPerMTok: 0.55 },
+  },
+];
 
 export const relayConfigs: Record<RelayConfig['name'], RelayConfig> = {
   dev: {
     name: 'dev',
     region: 'ap-northeast-1',
-    ...HAIKU_5_5_JP,
+    models: MODELS,
+    model: 'haiku-4-5',
     packages: ['io.github.duwenji.yorisoi.sanpoguide'],
     dailyLimit: 30,
     monthlyBudgetUsd: 5,
@@ -51,7 +70,8 @@ export const relayConfigs: Record<RelayConfig['name'], RelayConfig> = {
   prod: {
     name: 'prod',
     region: 'ap-northeast-1',
-    ...HAIKU_5_5_JP,
+    models: MODELS,
+    model: 'haiku-4-5',
     packages: ['io.github.duwenji.yorisoi.sanpoguide'],
     integritySecretName: 'yorisoi-ai-relay/prod/play-integrity',
     dailyLimit: 30,

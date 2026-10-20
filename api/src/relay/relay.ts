@@ -55,10 +55,19 @@ export class RelayError extends Error {
   }
 }
 
-/** What the operator sets in Parameter Store (ADR-AI-RELAY R-14), already checked. */
+/** A model the operator may switch to: its Bedrock inference profile and price (ADR-AI-RELAY R-5). */
+export interface ModelChoice {
+  id: string;
+  profile: string;
+  /** USD per million tokens, for the month's spend (R-10). */
+  price: { inputPerMTok: number; outputPerMTok: number };
+}
+
+/** What the operator sets in Parameter Store (ADR-AI-RELAY R-5, R-14), already checked. */
 export interface Settings {
   dailyLimit: number;
   monthlyBudgetUsd: number;
+  model: ModelChoice;
 }
 
 export interface ModelReply {
@@ -85,9 +94,7 @@ export interface RelayPorts {
    */
   verifyIntegrity?: (token: string, expect: { packageName: string; requestHash: string; now: Date }) => Promise<string | undefined>;
   /** One call to the model; throws when the model's service fails. */
-  generate: (system: string, user: string) => Promise<ModelReply>;
-  /** USD per million tokens, for the month's spend (R-10). */
-  price: { inputPerMTok: number; outputPerMTok: number };
+  generate: (model: ModelChoice, system: string, user: string) => Promise<ModelReply>;
   /** A CloudWatch metric (embedded metric format); never carries prompts or ids. */
   metric: (name: string, value: number) => void;
 }
@@ -234,7 +241,7 @@ export async function generate(ports: RelayPorts, authorization: string | undefi
   }
 
   const now = ports.now();
-  const { dailyLimit, monthlyBudgetUsd } = await ports.settings();
+  const { dailyLimit, monthlyBudgetUsd, model } = await ports.settings();
   const spendKey = { PK: 'SPEND', SK: `MONTH#${monthOf(now)}` };
   const spent = Number((await ports.db.send(new GetCommand({ TableName: ports.table, Key: spendKey }))).Item?.microUsd ?? 0) / 1e6;
   if (spent >= monthlyBudgetUsd) {
@@ -268,18 +275,18 @@ export async function generate(ports: RelayPorts, authorization: string | undefi
   const started = Date.now();
   let reply: ModelReply;
   try {
-    reply = await ports.generate(system, user);
+    reply = await ports.generate(model, system, user);
   } catch (e) {
     await ports.db.send(
       new UpdateCommand({ TableName: ports.table, Key: key, UpdateExpression: 'ADD #n :minus', ExpressionAttributeNames: { '#n': 'count' }, ExpressionAttributeValues: { ':minus': -1 } }),
     );
     ports.metric('UpstreamError', 1);
     // The service's own message (access, quota, throttling); it never repeats the prompt.
-    console.error(JSON.stringify({ event: 'upstream_error', kind, error: (e as Error)?.name, status: (e as { status?: number })?.status, message: String((e as Error)?.message).slice(0, 300) }));
+    console.error(JSON.stringify({ event: 'upstream_error', kind, model: model.id, error: (e as Error)?.name, status: (e as { status?: number })?.status, message: String((e as Error)?.message).slice(0, 300) }));
     throw new RelayError('upstream_error', 'The AI service failed');
   }
 
-  const microUsd = Math.ceil(reply.inputTokens * ports.price.inputPerMTok + reply.outputTokens * ports.price.outputPerMTok);
+  const microUsd = Math.ceil(reply.inputTokens * model.price.inputPerMTok + reply.outputTokens * model.price.outputPerMTok);
   await ports.db.send(
     new UpdateCommand({
       TableName: ports.table,
@@ -294,7 +301,7 @@ export async function generate(ports: RelayPorts, authorization: string | undefi
   ports.metric('SpendRatio', Number(month.Attributes?.microUsd ?? 0) / 1e6 / monthlyBudgetUsd);
   ports.metric('Calls', 1);
   // Counts and sizes only: never the prompt, the reply or the install (ADR-AI-RELAY R-13).
-  console.log(JSON.stringify({ event: 'generate', kind, stop: reply.stop, inputTokens: reply.inputTokens, outputTokens: reply.outputTokens, ms: Date.now() - started }));
+  console.log(JSON.stringify({ event: 'generate', kind, model: model.id, stop: reply.stop, inputTokens: reply.inputTokens, outputTokens: reply.outputTokens, ms: Date.now() - started }));
 
   const left: Quota = { limit: dailyLimit, remaining: Math.max(0, dailyLimit - used), resetsAt: resetsAt(now) };
   if (reply.stop === 'refusal') throw new RelayError('model_refused', 'The AI declined', left);

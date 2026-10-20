@@ -4,20 +4,22 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { readSettings } from '../src/relay/aws.js';
 import { route } from '../src/relay/handler.js';
 import { checkVerdict, type IntegrityPayload } from '../src/relay/integrity.js';
-import { resetsAt, type ModelReply, type RelayPorts } from '../src/relay/relay.js';
+import { resetsAt, type ModelChoice, type ModelReply, type RelayPorts, type Settings } from '../src/relay/relay.js';
 import { freshTable, startDynamoLocal } from './dynamo-local.js';
 
 const PKG = 'io.github.duwenji.yorisoi.sanpoguide';
 const INSTALL = '0b6f3c1e-8a2d-4f0b-9a57-3c2e1d4b5a69';
+const HAIKU_45: ModelChoice = { id: 'haiku-4-5', profile: 'jp.anthropic.claude-haiku-4-5-20251001-v1:0', price: { inputPerMTok: 1.1, outputPerMTok: 5.5 } };
+const HAIKU_55: ModelChoice = { id: 'haiku-5-5', profile: 'jp.anthropic.claude-haiku-5-5', price: { inputPerMTok: 0.11, outputPerMTok: 0.55 } };
 
 let local: Awaited<ReturnType<typeof startDynamoLocal>>;
 let ports: RelayPorts;
 let now: Date;
 let reply: ModelReply | Error;
-let calls: { system: string; user: string }[];
+let calls: { model: string; system: string; user: string }[];
 let metrics: Record<string, number>;
 let integrity: ((token: string) => string | undefined) | undefined;
-let settings: { dailyLimit: number; monthlyBudgetUsd: number };
+let settings: Settings;
 let counter: number;
 
 beforeAll(async () => {
@@ -32,7 +34,7 @@ beforeEach(async () => {
   calls = [];
   metrics = {};
   integrity = undefined;
-  settings = { dailyLimit: 3, monthlyBudgetUsd: 5 };
+  settings = { dailyLimit: 3, monthlyBudgetUsd: 5, model: HAIKU_55 };
   counter = 0;
   ports = {
     db: fresh.db,
@@ -45,12 +47,11 @@ beforeEach(async () => {
     get verifyIntegrity() {
       return integrity ? async (token: string) => integrity!(token) : undefined;
     },
-    generate: async (system, user) => {
-      calls.push({ system, user });
+    generate: async (model, system, user) => {
+      calls.push({ model: model.profile, system, user });
       if (reply instanceof Error) throw reply;
       return reply;
     },
-    price: { inputPerMTok: 0.11, outputPerMTok: 0.55 },
     metric: (name, value) => {
       metrics[name] = (metrics[name] ?? 0) + value;
     },
@@ -152,7 +153,7 @@ describe('generating', () => {
     const res = await narrate(t, { system: '固定の指示', user: 'スポット' });
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ text: 'こんにちは', quota: { limit: 3, remaining: 2, resetsAt: '2026-10-19T15:00:00.000Z' }, usage: { inputTokens: 2000, outputTokens: 300 } });
-    expect(calls).toEqual([{ system: '固定の指示', user: 'スポット' }]);
+    expect(calls).toEqual([{ model: 'jp.anthropic.claude-haiku-5-5', system: '固定の指示', user: 'スポット' }]);
   });
 
   it('stops at the limit and starts again after midnight in Japan (V-03, V-04)', async () => {
@@ -198,7 +199,7 @@ describe('generating', () => {
   });
 
   it('pauses when the month’s spend reaches the budget (V-07)', async () => {
-    settings = { dailyLimit: 100, monthlyBudgetUsd: 0.001 };
+    settings = { dailyLimit: 100, monthlyBudgetUsd: 0.001, model: HAIKU_55 };
     const t = await token();
     // 2,000 × 0.11 + 300 × 0.55 = 385 micro-USD a call: the third call passes the budget.
     expect((await narrate(t)).status).toBe(200);
@@ -209,6 +210,15 @@ describe('generating', () => {
     expect(paused.body.code).toBe('relay_paused');
     expect(metrics.RelayPaused).toBe(1);
     expect(metrics.SpendRatio).toBeGreaterThan(1);
+  });
+
+  it('calls the model the operator chose and counts its price (R-5)', async () => {
+    settings = { dailyLimit: 100, monthlyBudgetUsd: 0.01, model: HAIKU_45 };
+    const t = await token();
+    // 2,000 × 1.1 + 300 × 5.5 = 3,850 micro-USD a call: the budget of 10,000 lasts three calls.
+    for (let i = 0; i < 3; i++) expect((await narrate(t)).status).toBe(200);
+    expect((await narrate(t)).body.code).toBe('relay_paused');
+    expect(calls.map((c) => c.model)).toEqual(Array(3).fill('jp.anthropic.claude-haiku-4-5-20251001-v1:0'));
   });
 
   it('keeps no prompt, reply or install id in the table (V-08)', async () => {
@@ -227,17 +237,28 @@ describe('generating', () => {
   });
 });
 
-describe('settings (R-14, V-12)', () => {
+describe('settings (R-5, R-14, V-12)', () => {
+  const defaults = { monthlyBudgetUsd: 5, models: [HAIKU_45, HAIKU_55], model: 'haiku-4-5' };
+  let seen: Record<string, number>;
+  const metric = (name: string, value: number) => (seen[name] = value);
+  beforeEach(() => (seen = {}));
+
   it('uses 5 to 100 as set, and 30 with a report otherwise', () => {
-    const seen: Record<string, number> = {};
-    const metric = (name: string, value: number) => (seen[name] = value);
-    expect(readSettings({ dailyLimit: '50', monthlyBudgetUsd: '20' }, 5, metric)).toEqual({ dailyLimit: 50, monthlyBudgetUsd: 20 });
+    expect(readSettings({ dailyLimit: '50', monthlyBudgetUsd: '20', model: 'haiku-5-5' }, defaults, metric)).toEqual({ dailyLimit: 50, monthlyBudgetUsd: 20, model: HAIKU_55 });
     expect(seen.InvalidSetting).toBe(0);
     for (const bad of ['4', '101', '30.5', 'many', undefined]) {
-      expect(readSettings({ dailyLimit: bad, monthlyBudgetUsd: '20' }, 5, metric).dailyLimit).toBe(30);
+      expect(readSettings({ dailyLimit: bad, monthlyBudgetUsd: '20', model: 'haiku-5-5' }, defaults, metric).dailyLimit).toBe(30);
       expect(seen.InvalidSetting).toBe(1);
     }
-    expect(readSettings({ dailyLimit: '30', monthlyBudgetUsd: '-1' }, 5, metric).monthlyBudgetUsd).toBe(5);
+    expect(readSettings({ dailyLimit: '30', monthlyBudgetUsd: '-1', model: 'haiku-5-5' }, defaults, metric).monthlyBudgetUsd).toBe(5);
+  });
+
+  it('switches only to a listed model, and keeps the default with a report otherwise', () => {
+    expect(readSettings({ dailyLimit: '30', monthlyBudgetUsd: '5', model: 'haiku-4-5' }, defaults, metric).model).toBe(HAIKU_45);
+    for (const bad of ['nova-2-lite', 'jp.anthropic.claude-haiku-5-5', '', undefined]) {
+      expect(readSettings({ dailyLimit: '30', monthlyBudgetUsd: '5', model: bad }, defaults, metric).model).toBe(HAIKU_45);
+      expect(seen.InvalidSetting).toBe(1);
+    }
   });
 });
 

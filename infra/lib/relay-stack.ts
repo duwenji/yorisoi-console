@@ -56,6 +56,11 @@ export class RelayStack extends Stack {
       stringValue: String(config.monthlyBudgetUsd),
       description: 'USD a month for the operator’s AI; the relay pauses when the month’s spend reaches it (ADR-AI-RELAY R-10)',
     });
+    const model = new ssm.StringParameter(this, 'Model', {
+      parameterName: `/yorisoi-ai-relay/${config.name}/model`,
+      stringValue: config.model,
+      description: `The model of the operator’s AI, one of: ${config.models.map((m) => m.id).join(', ')} (ADR-AI-RELAY R-5)`,
+    });
 
     const installSecret =
       config.installKey === 'secret'
@@ -90,13 +95,13 @@ export class RelayStack extends Stack {
       environment: {
         RELAY_ENV: config.name,
         TABLE_NAME: table.tableName,
-        MODEL_ID: config.modelId,
         PACKAGES: config.packages.join(','),
         PARAM_DAILY_LIMIT: dailyLimit.parameterName,
         PARAM_MONTHLY_BUDGET: monthlyBudget.parameterName,
+        PARAM_MODEL: model.parameterName,
         DEFAULT_MONTHLY_BUDGET_USD: String(config.monthlyBudgetUsd),
-        PRICE_INPUT_PER_MTOK: String(config.price.inputPerMTok),
-        PRICE_OUTPUT_PER_MTOK: String(config.price.outputPerMTok),
+        MODELS: JSON.stringify(config.models.map(({ id, profile, price }) => ({ id, profile, price }))),
+        DEFAULT_MODEL: config.model,
         ...(installSecret ? { INSTALL_KEY_SECRET_ARN: installSecret.secretArn } : { INSTALL_KEY: randomBytes(32).toString('base64url') }),
         ...(config.integritySecretName ? { INTEGRITY_SECRET_ID: config.integritySecretName } : {}),
         NODE_OPTIONS: '--enable-source-maps',
@@ -105,20 +110,22 @@ export class RelayStack extends Stack {
     table.grantReadWriteData(fn);
     dailyLimit.grantRead(fn);
     monthlyBudget.grantRead(fn);
+    model.grantRead(fn);
     installSecret?.grantRead(fn);
     if (config.integritySecretName) {
       // Put in by hand (docs/operations/ai-relay.md): it holds a Google private key.
       secrets.Secret.fromSecretNameV2(this, 'IntegrityAccount', config.integritySecretName).grantRead(fn);
     }
-    // R-5: the jp profile only, and the model in the regions it routes to (Tokyo and Osaka).
+    // R-5: the jp profiles of the listed models only, and the models in the regions they route to
+    // (Tokyo and Osaka).
     fn.addToRolePolicy(
       new iam.PolicyStatement({
         actions: ['bedrock:InvokeModel'],
-        resources: [
-          `arn:${this.partition}:bedrock:${this.region}:${this.account}:inference-profile/${config.modelId}`,
-          `arn:${this.partition}:bedrock:ap-northeast-1::foundation-model/${config.foundationModel}`,
-          `arn:${this.partition}:bedrock:ap-northeast-3::foundation-model/${config.foundationModel}`,
-        ],
+        resources: config.models.flatMap((m) => [
+          `arn:${this.partition}:bedrock:${this.region}:${this.account}:inference-profile/${m.profile}`,
+          `arn:${this.partition}:bedrock:ap-northeast-1::foundation-model/${m.foundationModel}`,
+          `arn:${this.partition}:bedrock:ap-northeast-3::foundation-model/${m.foundationModel}`,
+        ]),
       }),
     );
 
@@ -178,11 +185,12 @@ export class RelayStack extends Stack {
       }).addAlarmAction(new cwActions.SnsAction(alarms));
     alarm('BudgetNear', 'SpendRatio', 'Maximum', 0.8, 'The month’s spend on the operator’s AI passed 80% of the budget (ADR-AI-RELAY R-10)');
     alarm('Paused', 'RelayPaused', 'Sum', 1, 'The operator’s AI is paused: the month’s budget is used up (ADR-AI-RELAY R-10)');
-    alarm('BadSetting', 'InvalidSetting', 'Maximum', 1, 'A relay parameter is not valid; the relay uses 30 calls or the default budget (ADR-AI-RELAY R-14)');
+    alarm('BadSetting', 'InvalidSetting', 'Maximum', 1, 'A relay parameter is not valid; the relay uses 30 calls, the default budget or the default model (ADR-AI-RELAY R-5, R-14)');
     alarm('UpstreamErrors', 'UpstreamError', 'Sum', 10, 'Bedrock failed 10 times in 5 minutes');
 
     new CfnOutput(this, 'RelayUrl', { value: `${api.url}` });
     new CfnOutput(this, 'DailyLimitParameter', { value: dailyLimit.parameterName });
     new CfnOutput(this, 'MonthlyBudgetParameter', { value: monthlyBudget.parameterName });
+    new CfnOutput(this, 'ModelParameter', { value: model.parameterName });
   }
 }
