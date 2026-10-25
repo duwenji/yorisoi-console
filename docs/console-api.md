@@ -92,7 +92,7 @@ DES-011 による。
 | No. | 論点 | 決定 |
 |---|---|---|
 | C-24 | 申請・チャンネル・素材集の表示（DES-011 N-9） | 申請（`Submission`）に `activities`・`genres`・`requires`（機械審査の後）・`offeredIn`（このチャンネルが出るアプリの ID）。チャンネルに `offeredIn`。`latestApproved` に `activities`・`genres`・`requires`・`minAppVersions`。素材集の `latestApproved` に `grants.apps`・`minAppVersions` |
-| C-25 | 機械審査（DES-011 N-8） | `walk` を含まないチャンネルは見本を作らず、`sample-prompts` の応答の `scenarios` が空で `noRepresentativeApp`（チャンネルの `activities`）が付く |
+| C-25 | 機械審査（DES-011 N-8） | 見本は `activities` の代表のアプリのプロンプト・パックで作る（`walk` は SanpoGuide、`cycle` は CycleGuide、両方なら両方）。代表のアプリがない過ごし方だけのチャンネルは、`sample-prompts` の応答の `scenarios` が空で `noRepresentativeApp`（チャンネルの `activities`）が付く |
 | C-27 | 設定（C-21 の改訂。DM-001 M-27） | CDK の環境ごとの設定に、アプリの ID ごとの `appStageVersions` を置く。変えるときは PR を通して配備する。運営の画面からは変えない |
 
 ### 全体の流れ
@@ -312,7 +312,7 @@ sequenceDiagram
 
 ```json
 {
-  "generatedBy": "core-format 2.0.0, prompts 4.0.0",
+  "generatedBy": "core-format 2.15.0, sanpoguide prompts 4.2.0, cycleguide prompts 0.1.0",
   "scenarios": [
     { "id": "start-morning-sunny", "label": "散歩の開始（朝・晴れ）", "system": "…", "user": "…" },
     { "id": "guide-temple", "label": "初めてのスポットの解説（寺社）", "system": "…", "user": "…" }

@@ -77,7 +77,7 @@ class MachineReviewTest {
         outcome as Outcome.Passed
         assertEquals(3, outcome.version)
         val samples = JSONObject(outcome.samplePrompts)
-        assertEquals("core-format 2.0.0, prompts 4.0.0", samples.getString("generatedBy"))
+        assertEquals(MachineReview.VALIDATOR, samples.getString("generatedBy"))
         // The review policy's scenes (2.7), as the app would render them; this channel doesn't talk on rest.
         val ids = (0 until samples.getJSONArray("scenarios").length()).map { samples.getJSONArray("scenarios").getJSONObject(it).getString("id") }
         assertEquals(9, ids.size)
@@ -139,11 +139,21 @@ class MachineReviewTest {
         assertEquals(listOf("unsupported_format"), codes(MachineReview.review(upload, pkg(manifest().put("format", 2)), png())))
     }
 
+    private fun scenarioIds(outcome: Outcome): List<String> {
+        val scenarios = JSONObject((outcome as Outcome.Passed).samplePrompts).getJSONArray("scenarios")
+        return (0 until scenarios.length()).map { scenarios.getJSONObject(it).getString("id") }
+    }
+
     @Test
-    fun `a channel not for walking has no samples until its activity has a representative app (N-8)`() {
-        val outcome = MachineReview.review(upload, pkg(forActivities("cycle")), png()) as Outcome.Passed
-        val samples = JSONObject(outcome.samplePrompts)
-        assertEquals(0, samples.getJSONArray("scenarios").length())
-        assertEquals("cycle", samples.getJSONArray("noRepresentativeApp").getString(0))
+    fun `each activity's representative app renders its samples, both for a channel of both (X-6, AC-23)`() {
+        val walk = scenarioIds(MachineReview.review(upload, pkg(forActivities("walk")), png()))
+        val cycle = scenarioIds(MachineReview.review(upload, pkg(forActivities("cycle")), png()))
+        val both = scenarioIds(MachineReview.review(upload, pkg(forActivities("walk", "cycle")), png()))
+        assertTrue(walk.isNotEmpty() && walk.none { it.startsWith("ride-") })
+        assertTrue(cycle.isNotEmpty() && cycle.all { it.startsWith("ride-") })
+        assertEquals(walk + cycle, both)
+        val cycleOnly = JSONObject((MachineReview.review(upload, pkg(forActivities("cycle")), png()) as Outcome.Passed).samplePrompts)
+        assertTrue(!cycleOnly.has("noRepresentativeApp"))
+        assertTrue(cycleOnly.getJSONArray("scenarios").getJSONObject(0).getString("label").startsWith("自転車: "))
     }
 }
