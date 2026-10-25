@@ -94,7 +94,7 @@ platform ADR-ECOSYSTEM-PLATFORM（付き添いアプリのエコシステム）�
 | No. | 論点 | 決定 |
 |---|---|---|
 | M-26 | 絞り込みの情報（DES-011 N-3・N-11） | 機械審査が、パッケージの `activities`・`genres`・`requires.features` を申請の `listing` に書かれたとおりに記録し、承認が `latestApproved` に写す |
-| M-27 | アプリごとの版（DES-011 N-4〜N-6） | 段と版の対応表を、アプリの ID ごとの設定 `appStageVersions`（`{ sanpoguide: { 0: 1, 1: 1, 2: 9999, 3: 9999 } }`）にする。アプリの名前・過ごし方・機能は `packages/protocol` の `KNOWN_APPS`。承認は `latestApproved.minAppVersions`（アプリの ID → 版）を計算する: チャンネルは過ごし方と必要な機能が合うアプリだけ、素材集は `grants.apps` が含むアプリ（ないときはすべて） |
+| M-27 | アプリごとの版（DES-011 N-4〜N-6） | 段と版の対応表を、アプリの ID ごとの設定 `appStageVersions`（`{ sanpoguide: { 0: 1, 1: 1, 2: 9999, 3: 9999 }, cycleguide: { 0: 1, 1: 9999, 2: 9999, 3: 9999 } }`）にする。アプリの名前・過ごし方・機能は `packages/protocol` の `KNOWN_APPS`。承認は `latestApproved.minAppVersions`（アプリの ID → 版）を計算する: チャンネルは過ごし方と必要な機能が合うアプリだけ、素材集は `grants.apps` が含むアプリ（ないときはすべて） |
 | M-28 | 素材集の利用アプリと AI の根拠（DES-011 N-7、platform API-MATERIAL-PRODUCER I-13） | 機械審査が `grants.apps` と `grants.grounding`（真のときだけ）を読み、承認が `latestApproved.grants.apps` に写す。チャンネルが素材集を参照するときの確かめでは、アプリを見ない |
 
 ## 概念モデル（ERD）

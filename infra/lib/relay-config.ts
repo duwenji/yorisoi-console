@@ -66,7 +66,7 @@ export const relayConfigs: Record<RelayConfig['name'], RelayConfig> = {
     region: 'ap-northeast-1',
     models: MODELS,
     model: 'deepseek-v3-2',
-    packages: ['io.github.duwenji.yorisoi.sanpoguide'],
+    packages: ['io.github.duwenji.yorisoi.sanpoguide', 'io.github.duwenji.yorisoi.cycleguide'],
     dailyLimit: 30,
     monthlyBudgetUsd: 5,
     // Development keeps cost to the minimum: no WAF, and a key that changes with each deploy.
@@ -79,7 +79,7 @@ export const relayConfigs: Record<RelayConfig['name'], RelayConfig> = {
     region: 'ap-northeast-1',
     models: MODELS,
     model: 'deepseek-v3-2',
-    packages: ['io.github.duwenji.yorisoi.sanpoguide'],
+    packages: ['io.github.duwenji.yorisoi.sanpoguide', 'io.github.duwenji.yorisoi.cycleguide'],
     integritySecretName: 'yorisoi-ai-relay/prod/play-integrity',
     dailyLimit: 30,
     // Decided before production (ADR-AI-RELAY T-7).
