@@ -19,8 +19,10 @@ import { createKey, sha256, sign, signPackage, type PublisherKey } from '../../w
  * dialog, the report link (to the list's `contact`) and, with an AI key, the credit line
  * 「…の資料をもとに作成」 under a spot's narration.
  *
- * `--cycle` lists a cycling channel instead, for CycleGuide: no cues (the app has none), so the
- * collection's text only goes to the AI as grounds for a spot ahead, and the line's credit names it.
+ * `--cycle` lists a cycling channel instead, for CycleGuide (requirements F-32, AC-31・AC-32): the
+ * same point cue, of which the app reads out only the AI's narration on the collection's grounds
+ * (the card is never made), and a spot cue on 鎌倉聖ミカエル教会聖堂 that reads the channel's own text,
+ * too long for riding, so it waits for a stop. Ride from Kamakura station towards the shrine.
  *
  * `--cleanup` removes them and rebuilds the list (with `--cycle` for the cycling one).
  */
@@ -133,14 +135,23 @@ const channelJson = {
   spots: { prefer: ['shrine', 'temple'], skip: [] }, guide: { length: 'short' }, mood: { tone: false, sound: 'auto' },
   collections: [{ as: 'kamakura', id: collectionId, minVersion: 1 }],
   // Entering the area: the AI narrates on the collection's grounds, and the text itself is shown on a card.
-  ...(cycle ? {} : {
-    cues: [{
+  cues: [
+    {
       id: 'area', trigger: { type: 'point', lat: 35.3258, lon: 139.5564, radiusM: 300 }, repeat: 'oncePerWalk',
       present: [{ as: 'speak', source: ['builtin:ai-guide', 'builtin:fallback-text'] }, { as: 'card', source: ['kamakura#area'] }],
-    }],
-  }),
+    },
+    ...(cycle ? [{
+      id: 'michael', trigger: { type: 'spot', osm: 'way/191362910', name: '鎌倉聖ミカエル教会聖堂' }, repeat: 'oncePerWalk',
+      present: [{ as: 'speak', source: ['self#michael'] }],
+    }] : []),
+  ],
+  ...(cycle ? { resources: [{ id: 'michael', type: 'text', file: 'resources/text/michael.md' }] } : {}),
 };
-const channelZip = (await signPackage(zipSync({ 'channel.json': enc.encode(JSON.stringify(channelJson)) }), publisher, { channel: channelId })).zip;
+/** Longer than riding allows in pottering (75 characters): read out at the next stop. */
+const michaelText = 'こちらはチャンネルの文です。鎌倉聖ミカエル教会聖堂は、鎌倉市の景観重要建築物等に選ばれている教会です。走行中には長すぎるので、止まったときに読まれるかを確かめるため、少し長めに書いています。\n';
+const channelFiles: Record<string, Uint8Array> = { 'channel.json': enc.encode(JSON.stringify(channelJson)) };
+if (cycle) channelFiles['resources/text/michael.md'] = enc.encode(michaelText);
+const channelZip = (await signPackage(zipSync(channelFiles), publisher, { channel: channelId })).zip;
 const png = Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='), (c) => c.charCodeAt(0));
 
 const seeded = [
