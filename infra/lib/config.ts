@@ -58,8 +58,8 @@ export const configs: Record<EnvConfig['name'], Omit<EnvConfig, 'rootPublicKey'>
     // No sending domain in development: the notices are recorded, not sent.
     notify: { mode: 'log' },
     // SanpoGuide versionCode 1 shows stage 0 and 1 (text and images); audio and video wait.
-    // CycleGuide shows no images while riding: text only, from versionCode 1.
-    appStageVersions: { sanpoguide: { 0: 1, 1: 1, 2: 9999, 3: 9999 }, cycleguide: { 0: 1, 1: 9999, 2: 9999, 3: 9999 } },
+    // CycleGuide reads out a cue's text from versionCode 7 (1.4.0, F-32; images are passed over).
+    appStageVersions: { sanpoguide: { 0: 1, 1: 1, 2: 9999, 3: 9999 }, cycleguide: { 0: 1, 1: 7, 2: 9999, 3: 9999 } },
     // Development keeps cost to the minimum.
     cost: {
       waf: false,
@@ -78,7 +78,7 @@ export const configs: Record<EnvConfig['name'], Omit<EnvConfig, 'rootPublicKey'>
     // Switch to { mode: 'ses', from: … } once the domain (T-7) and SES production access (T-8) are ready.
     notify: { mode: 'log' },
     // SanpoGuide versionCode 1 shows stage 0 and 1 (text and images); audio and video wait.
-    // CycleGuide shows no images while riding: text only, from versionCode 1.
+    // CycleGuide: stage 1 (a cue's text read out) once 1.4.0 (7) is on Google Play.
     appStageVersions: { sanpoguide: { 0: 1, 1: 1, 2: 9999, 3: 9999 }, cycleguide: { 0: 1, 1: 9999, 2: 9999, 3: 9999 } },
     cost: { waf: true, pointInTimeRecovery: true, cursorKey: 'secret' },
   },
