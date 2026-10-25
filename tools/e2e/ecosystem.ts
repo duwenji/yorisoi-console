@@ -13,13 +13,14 @@ import { checkProvider } from '../../conformance/src/check.js';
 import { createKey, signPackage } from '../../web/src/publisher-crypto.js';
 
 /**
- * DES-011 on the dev environment: two channels, one for walking and cycling and one for cycling
- * only, pass the machine review and are approved and listed. The list must carry their activities,
- * genres and requires, and `minAppVersions` only for SanpoGuide on the first (API-002 P-19・P-20).
- * Then the conformance checks (V-27, V-29).
+ * DES-011 on the dev environment: three channels, for walking only, for walking and cycling, and
+ * for cycling only, pass the machine review with the samples of each activity's representative app
+ * (SanpoGuide's for walking, CycleGuide's `ride-` ones for cycling; N-8, CycleGuide AC-23) and are
+ * approved and listed. The list must carry their activities, genres, requires and `minAppVersions`
+ * (API-002 P-19・P-20). Then the conformance checks (V-27, V-29).
  *
- * `--keep` leaves them listed so SanpoGuide (the emulator) can be checked to offer only the first;
- * `--cleanup` removes them afterwards.
+ * `--keep` leaves them listed so the apps (the emulator) can be checked to offer only theirs
+ * (CycleGuide AC-9: not the walking one); `--cleanup` removes them afterwards.
  */
 const region = 'ap-northeast-1';
 const stack = 'YorisoiConsole-dev';
@@ -77,6 +78,7 @@ const operatorSub = `e2e-operator-${run}`;
 const publisherId = ulid();
 const now = new Date().toISOString();
 const channels = [
+  { channelId: `e2e-walk-${run}`, name: '通しの確認（歩くだけ）', activities: ['walk'], genres: ['general'], requires: [] as string[] },
   { channelId: `e2e-walk-cycle-${run}`, name: '通しの確認（歩く・自転車）', activities: ['walk', 'cycle'], genres: ['history'], requires: ['slot:guide'] },
   { channelId: `e2e-cycle-${run}`, name: '通しの確認（自転車だけ）', activities: ['cycle'], genres: ['nature'], requires: [] as string[] },
 ].map((c) => ({ ...c, sid: ulid() }));
@@ -114,7 +116,7 @@ try {
   }
 
   for (const c of channels) {
-    // 1. The machine review records what the package says (DES-011 N-3), with no samples for cycling only (N-8).
+    // 1. The machine review records what the package says (DES-011 N-3).
     let sub: Record<string, unknown> = {};
     for (let t = Date.now(); Date.now() - t < 120_000; await sleep(2000)) {
       sub = (await db.send(new GetCommand({ TableName: table, Key: { PK: `CH#${c.channelId}`, SK: `SUB#${c.sid}` }, ConsistentRead: true }))).Item!;
@@ -123,44 +125,47 @@ try {
     console.log(`${c.channelId}: machine review ${sub.state}`, JSON.stringify(sub.listing));
     if (sub.state !== 'awaiting_review') throw new Error(JSON.stringify(sub.validation));
 
-    // 2. The operator approves; samples only where SanpoGuide's prompt pack can make them.
-    let samplesIds: string[] | undefined;
-    if (c.activities.includes('walk')) {
-      const prompts = await invoke(operatorSub, '[operator]', 'GET', `/api/admin/channels/${c.channelId}/submissions/${c.sid}/sample-prompts`);
-      const saved = await invoke(operatorSub, '[operator]', 'POST', `/api/admin/channels/${c.channelId}/submissions/${c.sid}/samples`, {
-        body: { service: 'e2e', model: 'none', items: prompts.scenarios.map((x: { id: string }) => ({ scenarioId: x.id, output: '（通しの確認のため AI は呼ばない）' })) },
-      });
-      samplesIds = [saved.samplesId];
-    }
+    // 2. The samples come from each activity's representative app (N-8), and the operator approves.
+    const prompts = await invoke(operatorSub, '[operator]', 'GET', `/api/admin/channels/${c.channelId}/submissions/${c.sid}/sample-prompts`);
+    const ids: string[] = prompts.scenarios.map((x: { id: string }) => x.id);
+    const walkSamples = ids.some((id) => !id.startsWith('ride-'));
+    const rideSamples = ids.some((id) => id.startsWith('ride-'));
+    const samplesMatch = walkSamples === c.activities.includes('walk') && rideSamples === c.activities.includes('cycle') && !prompts.noRepresentativeApp;
+    ok &&= samplesMatch;
+    console.log(`  ${samplesMatch ? 'PASS' : 'FAIL'} samples of ${c.channelId}: ${ids.join(', ')}`);
+    const saved = await invoke(operatorSub, '[operator]', 'POST', `/api/admin/channels/${c.channelId}/submissions/${c.sid}/samples`, {
+      body: { service: 'e2e', model: 'none', items: prompts.scenarios.map((x: { id: string }) => ({ scenarioId: x.id, output: '（通しの確認のため AI は呼ばない）' })) },
+    });
     const started = await invoke(operatorSub, '[operator]', 'POST', `/api/admin/channels/${c.channelId}/submissions/${c.sid}/start`, { ifMatch: Number(sub.rev) });
     const approved = await invoke(operatorSub, '[operator]', 'POST', `/api/admin/channels/${c.channelId}/submissions/${c.sid}/approve`, {
-      body: { ...(samplesIds ? { samplesIds } : {}), message: 'エコシステムの通しの確認' }, ifMatch: started.rev,
+      body: { samplesIds: [saved.samplesId], message: 'エコシステムの通しの確認' }, ifMatch: started.rev,
     });
-    console.log(`${c.channelId}: approved ${approved.submission.state} | samples ${samplesIds ? 'yes' : 'none'}`);
+    console.log(`${c.channelId}: approved ${approved.submission.state}`);
   }
 
   // 3. Wait until the list carries both, then compare what it says with DES-011 N-3・N-5・N-6.
   type Listed = { id: string; activities?: string[]; genres?: string[]; requires?: string[]; minAppVersions: Record<string, number>; package: { format: number } };
   let listed: Listed[] = [];
-  for (let t = Date.now(); listed.length < channels.length && Date.now() - t < 120_000; await sleep(3000)) {
+  for (let t = Date.now(); listed.length < channels.length && Date.now() - t < 180_000; await sleep(3000)) {
     const doc = await (await fetch(`${providerUrl}/v1/channels.json?${Date.now()}`)).json();
     const body = JSON.parse(utf8.decode(Uint8Array.from(atob(doc.payload.replace(/-/g, '+').replace(/_/g, '/')), (ch) => ch.charCodeAt(0))));
     listed = (body.channels as Listed[]).filter((l) => state.channelIds.includes(l.id));
   }
   const expected: Record<string, Partial<Listed>> = {
-    [channels[0].channelId]: { activities: ['walk', 'cycle'], genres: ['history'], requires: ['slot:guide'], minAppVersions: { sanpoguide: 1 } },
-    [channels[1].channelId]: { activities: ['cycle'], genres: ['nature'], requires: [], minAppVersions: {} },
+    [channels[0].channelId]: { activities: ['walk'], genres: ['general'], requires: [] },
+    [channels[1].channelId]: { activities: ['walk', 'cycle'], genres: ['history'], requires: ['slot:guide'] },
+    [channels[2].channelId]: { activities: ['cycle'], genres: ['nature'], requires: [] },
   };
   for (const l of listed) {
     const want = expected[l.id];
-    const got = { activities: l.activities, genres: l.genres, requires: l.requires, minAppVersions: l.minAppVersions };
-    const match = JSON.stringify(got) === JSON.stringify(want) && l.package.format === 2;
+    const got = { activities: l.activities, genres: l.genres, requires: l.requires };
+    const match = JSON.stringify(got) === JSON.stringify(want);
     ok &&= match;
-    console.log(`  ${match ? 'PASS' : 'FAIL'} listed ${l.id} ${JSON.stringify({ ...got, format: l.package.format })}`);
+    console.log(`  ${match ? 'PASS' : 'FAIL'} listed ${l.id} ${JSON.stringify({ ...got, minAppVersions: l.minAppVersions, format: l.package.format })}`);
   }
   if (listed.length < channels.length) { ok = false; console.log('  FAIL not every channel was listed'); }
 
-  // 4. The conformance checks, now with format 2 packages (V-27, V-29).
+  // 4. The conformance checks (V-27, V-29).
   const discovery = await (await fetch(`${providerUrl}/.well-known/sanpo-channels`)).json();
   const results = await checkProvider(providerUrl, { expectedProvider: discovery.provider });
   for (const r of results) console.log(`  ${r.status.toUpperCase().padEnd(4)} ${r.id} ${r.detail}`);

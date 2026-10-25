@@ -19,11 +19,15 @@ import { createKey, sha256, sign, signPackage, type PublisherKey } from '../../w
  * dialog, the report link (to the list's `contact`) and, with an AI key, the credit line
  * 「…の資料をもとに作成」 under a spot's narration.
  *
- * `--cleanup` removes them and rebuilds the list.
+ * `--cycle` lists a cycling channel instead, for CycleGuide: no cues (the app has none), so the
+ * collection's text only goes to the AI as grounds for a spot ahead, and the line's credit names it.
+ *
+ * `--cleanup` removes them and rebuilds the list (with `--cycle` for the cycling one).
  */
 const region = 'ap-northeast-1';
 const stack = 'YorisoiConsole-dev';
-const stateFile = join(tmpdir(), 'sanpo-e2e-app-check.json');
+const cycle = process.argv.includes('--cycle');
+const stateFile = join(tmpdir(), cycle ? 'sanpo-e2e-app-check-cycle.json' : 'sanpo-e2e-app-check.json');
 const cfn = new CloudFormationClient({ region });
 const outputs = new Map(((await cfn.send(new DescribeStacksCommand({ StackName: stack }))).Stacks?.[0]?.Outputs ?? []).map((o) => [o.OutputKey!, o.OutputValue!]));
 const resources = (await cfn.send(new DescribeStackResourcesCommand({ StackName: stack }))).StackResources ?? [];
@@ -124,15 +128,17 @@ const collectionZip = await signCollection(
   producer, collectionId, 1,
 );
 const channelJson = {
-  format: 1, activities: ['walk'], id: channelId, version: 1, publisher: publisher.accountId, name: '資料で話す（確認用）', summary: '素材集の資料を根拠に解説する', lang: 'ja', greeting: '資料をもとにご案内します。',
+  format: 1, activities: [cycle ? 'cycle' : 'walk'], id: channelId, version: 1, publisher: publisher.accountId, name: cycle ? '資料で話す（自転車・確認用）' : '資料で話す（確認用）', summary: '素材集の資料を根拠に解説する', lang: 'ja', greeting: '資料をもとにご案内します。',
   talk: { level: 'chatty', events: { spot: true, revisit: false, milestone: false, rest: false, start: true, finish: true } },
   spots: { prefer: ['shrine', 'temple'], skip: [] }, guide: { length: 'short' }, mood: { tone: false, sound: 'auto' },
   collections: [{ as: 'kamakura', id: collectionId, minVersion: 1 }],
   // Entering the area: the AI narrates on the collection's grounds, and the text itself is shown on a card.
-  cues: [{
-    id: 'area', trigger: { type: 'point', lat: 35.3258, lon: 139.5564, radiusM: 300 }, repeat: 'oncePerWalk',
-    present: [{ as: 'speak', source: ['builtin:ai-guide', 'builtin:fallback-text'] }, { as: 'card', source: ['kamakura#area'] }],
-  }],
+  ...(cycle ? {} : {
+    cues: [{
+      id: 'area', trigger: { type: 'point', lat: 35.3258, lon: 139.5564, radiusM: 300 }, repeat: 'oncePerWalk',
+      present: [{ as: 'speak', source: ['builtin:ai-guide', 'builtin:fallback-text'] }, { as: 'card', source: ['kamakura#area'] }],
+    }],
+  }),
 };
 const channelZip = (await signPackage(zipSync({ 'channel.json': enc.encode(JSON.stringify(channelJson)) }), publisher, { channel: channelId })).zip;
 const png = Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='), (c) => c.charCodeAt(0));
