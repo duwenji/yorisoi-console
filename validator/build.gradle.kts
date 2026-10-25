@@ -17,8 +17,9 @@ kotlin {
 }
 
 dependencies {
-    implementation("io.github.duwenji.yorisoi:core-format:2.0.0")
+    implementation("io.github.duwenji.yorisoi:core-format:2.15.0")
     implementation("io.github.duwenji.yorisoi.sanpoguide:prompts:4.2.0")
+    implementation("io.github.duwenji.yorisoi.cycleguide:prompts:0.1.0")
     // core-format leaves org.json to its users (Android ships one).
     implementation("org.json:json:20240303")
     implementation("com.amazonaws:aws-lambda-java-core:1.4.0")

@@ -9,7 +9,8 @@ import io.github.duwenji.yorisoi.core.format.material.Grants
 import io.github.duwenji.yorisoi.core.format.material.MaterialType
 import io.github.duwenji.yorisoi.core.format.material.Regions
 import io.github.duwenji.yorisoi.core.format.material.ResourceLocation
-import io.github.duwenji.yorisoi.sanpoguide.prompt.ReviewSamples
+import io.github.duwenji.yorisoi.cycleguide.prompt.ReviewSamples as CycleSamples
+import io.github.duwenji.yorisoi.sanpoguide.prompt.ReviewSamples as WalkSamples
 import io.github.duwenji.yorisoi.core.format.ChannelList
 import io.github.duwenji.yorisoi.core.format.CollectionReferences
 import io.github.duwenji.yorisoi.core.format.CollectionStatus
@@ -154,7 +155,7 @@ sealed interface CollectionOutcome {
  * icon. Pure: the Lambda reads and writes, this decides.
  */
 object MachineReview {
-    const val VALIDATOR = "core-format 2.0.0, prompts 4.0.0"
+    const val VALIDATOR = "core-format 2.15.0, sanpoguide prompts 4.2.0, cycleguide prompts 0.1.0"
     const val MAX_PACKAGE = 2 * 1024 * 1024
     const val MAX_ICON = 100 * 1024
     const val MAX_ICON_SIDE = 256
@@ -354,20 +355,23 @@ object MachineReview {
     }
 
     /**
-     * The scenes the AI is asked to speak, with SanpoGuide's prompts: the representative app of
-     * walking (platform ADR-003 E-26). A channel not for walking has none until its activity
-     * has a representative app (DES-011 N-8); the operator reads its slots instead.
+     * The scenes the AI is asked to speak, with the prompts of each activity's representative app
+     * (platform ADR-ECOSYSTEM-PLATFORM E-26): SanpoGuide's for walking, CycleGuide's for cycling,
+     * both for a channel of both. A channel of neither has none (DES-011 N-8); the operator reads
+     * its slots instead.
      */
     private fun samplePrompts(ok: StationCheck.Ok): String {
         val scenarios = JSONArray()
-        val walking = Activity.WALK in ok.station.manifest.activities
-        if (walking) {
-            for (s in ReviewSamples.build(ok.station)) {
-                scenarios.put(JSONObject().put("id", s.id).put("label", s.label).put("system", s.system).put("user", s.user))
-            }
+        val activities = ok.station.manifest.activities
+        val walking = Activity.WALK in activities
+        val cycling = Activity.CYCLE in activities
+        val samples = (if (walking) WalkSamples.build(ok.station).map { listOf(it.id, it.label, it.system, it.user) } else emptyList()) +
+            (if (cycling) CycleSamples.build(ok.station).map { listOf(it.id, it.label, it.system, it.user) } else emptyList())
+        for ((id, label, system, user) in samples) {
+            scenarios.put(JSONObject().put("id", id).put("label", label).put("system", system).put("user", user))
         }
         return JSONObject().put("generatedBy", VALIDATOR).put("scenarios", scenarios)
-            .apply { if (!walking) put("noRepresentativeApp", JSONArray(ok.station.manifest.activities.map { it.json })) }
+            .apply { if (!walking && !cycling) put("noRepresentativeApp", JSONArray(activities.map { it.json })) }
             .toString()
     }
 
