@@ -24,6 +24,9 @@ export interface KnownApp {
 export const KNOWN_APPS: Record<string, KnownApp> = {
   // SanpoGuide's SanpoProfile: walking, every feature but recorded sound (its app stage 2).
   sanpoguide: { name: '散策ガイド', activity: 'walk', features: FEATURES.filter((f) => f !== 'present:play' && f !== 'present:ambient') },
+  // CycleGuide's profile: cycling, the channel's slots read out. Cues and what they show come with
+  // its app stage 2 (CycleGuide requirements F-26).
+  cycleguide: { name: 'サイクルガイド', activity: 'cycle', features: ['slot:guide', 'slot:companion', 'present:speak'] },
 };
 
 /** The apps a channel is offered in: for one of its activities, implementing all it requires (API-003 G-4). */

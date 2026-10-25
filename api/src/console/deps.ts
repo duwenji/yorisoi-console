@@ -55,7 +55,10 @@ export interface AppEntry extends KnownApp {
 }
 
 /** The versions until configured: SanpoGuide shows stage 0 and 1 (text and images) from versionCode 1. */
-export const DEFAULT_STAGE_VERSIONS: Record<string, Record<number, number>> = { sanpoguide: { 0: 1, 1: 1, 2: NO_APP_VERSION, 3: NO_APP_VERSION } };
+export const DEFAULT_STAGE_VERSIONS: Record<string, Record<number, number>> = {
+  sanpoguide: { 0: 1, 1: 1, 2: NO_APP_VERSION, 3: NO_APP_VERSION },
+  cycleguide: { 0: 1, 1: NO_APP_VERSION, 2: NO_APP_VERSION, 3: NO_APP_VERSION },
+};
 
 /** The known apps with their configured versions; an app without them shows no material yet. */
 export function appsWith(stageVersions: Record<string, Record<number, number>>): Record<string, AppEntry> {
