@@ -7,7 +7,8 @@
   "scripts": {
     "synth": "cdk synth --quiet",
     "cdk": "cdk",
-    "synth:relay": "cdk synth -a \"npx tsx bin/relay.ts\" --quiet"
+    "synth:relay": "cdk synth -a \"npx tsx bin/relay.ts\" --quiet",
+    "synth:tiles": "cdk synth -a \"npx tsx bin/tiles.ts\" --quiet"
   },
   "dependencies": {
     "aws-cdk-lib": "^2.272.0",

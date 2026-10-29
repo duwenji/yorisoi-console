@@ -9,6 +9,7 @@
 1. 独自ドメイン（[ADR-001](adr/ADR-001-aws-architecture.md) T-2）と、SES のサンドボックスの解除（T-3）。そのあと本番の `notify` を `ses` にする（DES-006 J-12・J-13）
 2. 鍵の移し替えの本人確認の手順（ADR-001 未決事項 No.5）
 3. 運営の AI の中継（ADR-001 A-21）: 月の予算と Play Integrity の鍵をそろえてから配備する（[運営の AI の手順](operations/ai-relay.md)「配備」）
+4. スポットのタイル（ADR-001 A-22）: 本番の配信を作る時期を決めてから配備する（platform ADR-SPOT-TILES T-6、[スポットのタイルの手順](operations/spot-tiles.md)「配備」）
 
 ## 確かめること
 

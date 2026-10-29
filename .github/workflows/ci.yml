@@ -57,3 +57,17 @@ jobs:
         run: |
           npm run synth:relay -- -c env=dev
           npm run synth:relay -- -c env=prod
+      - name: Synthesize the spot tiles
+        working-directory: infra
+        run: |
+          npm run synth:tiles -- -c env=dev
+          npm run synth:tiles -- -c env=prod
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test the spot tiles batch
+        working-directory: tiles
+        run: |
+          pip install -r requirements.txt pytest jsonschema
+          curl -fsSL -o /tmp/spot-tile.schema.json https://raw.githubusercontent.com/duwenji/yorisoi-platform/main/docs/api/spot-tile.schema.json
+          SPOT_TILE_SCHEMA=/tmp/spot-tile.schema.json PYTHONPATH=. python -m pytest -q test
