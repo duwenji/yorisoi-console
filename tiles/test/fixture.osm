@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- A few elements around Tsurugaoka (35.32, 139.55) for test_make_tiles.py; not real data. -->
+<osm version="0.6" generator="hand">
+  <!-- A spot as a node, with a Japanese name. -->
+  <node id="1" version="1" lat="35.3190" lon="139.5506">
+    <tag k="name" v="Shrine"/>
+    <tag k="name:ja" v="神社"/>
+    <tag k="amenity" v="place_of_worship"/>
+    <tag k="religion" v="shinto"/>
+  </node>
+  <!-- A spot without a name: left out. -->
+  <node id="2" version="1" lat="35.3191" lon="139.5507">
+    <tag k="historic" v="memorial"/>
+  </node>
+  <!-- Amenities: a toilet, a private toilet (left out), a bus stop roof, a ticket machine (left out), a bench with a historic tag (an amenity, not a spot). -->
+  <node id="3" version="1" lat="35.3180" lon="139.5510"><tag k="amenity" v="toilets"/></node>
+  <node id="4" version="1" lat="35.3181" lon="139.5511"><tag k="amenity" v="toilets"/><tag k="access" v="private"/></node>
+  <node id="5" version="1" lat="35.3170" lon="139.5530"><tag k="amenity" v="shelter"/><tag k="shelter_type" v="public_transport"/></node>
+  <node id="6" version="1" lat="35.3171" lon="139.5531"><tag k="amenity" v="vending_machine"/><tag k="vending" v="parking_tickets"/></node>
+  <node id="7" version="1" lat="35.3172" lon="139.5532"><tag k="amenity" v="bench"/><tag k="historic" v="yes"/><tag k="name" v="Old bench"/></node>
+  <!-- Shops: a cafe, a chain cafe (left out), a convenience store (an amenity). -->
+  <node id="8" version="1" lat="35.3175" lon="139.5520"><tag k="amenity" v="cafe"/><tag k="name" v="Kissa"/></node>
+  <node id="9" version="1" lat="35.3176" lon="139.5521"><tag k="amenity" v="cafe"/><tag k="name" v="Chain"/><tag k="brand" v="Chain"/></node>
+  <node id="10" version="1" lat="35.3177" lon="139.5522"><tag k="shop" v="convenience"/><tag k="name" v="Konbini"/></node>
+  <!-- A traffic signal. -->
+  <node id="11" version="1" lat="35.31655" lon="139.55012"><tag k="highway" v="traffic_signals"/></node>
+  <!-- A park, as a closed way. -->
+  <node id="100" version="1" lat="35.3200" lon="139.5490"/>
+  <node id="101" version="1" lat="35.3200" lon="139.5520"/>
+  <node id="102" version="1" lat="35.3180" lon="139.5520"/>
+  <node id="103" version="1" lat="35.3180" lon="139.5490"/>
+  <!-- A point almost on the edge: dropped when the outline is cut to 5m. -->
+  <node id="104" version="1" lat="35.31900" lon="139.549001"/>
+  <way id="200" version="1">
+    <nd ref="100"/><nd ref="101"/><nd ref="102"/><nd ref="103"/><nd ref="104"/><nd ref="100"/>
+    <tag k="name" v="Park"/>
+    <tag k="leisure" v="park"/>
+  </way>
+  <!-- An old wall, an open way. -->
+  <way id="201" version="1">
+    <nd ref="100"/><nd ref="101"/>
+    <tag k="name" v="Wall"/>
+    <tag k="historic" v="city_wall"/>
+  </way>
+  <!-- A pond as a multipolygon of one untagged way. -->
+  <node id="110" version="1" lat="35.3300" lon="139.5600"/>
+  <node id="111" version="1" lat="35.3300" lon="139.5620"/>
+  <node id="112" version="1" lat="35.3290" lon="139.5620"/>
+  <way id="210" version="1">
+    <nd ref="110"/><nd ref="111"/><nd ref="112"/><nd ref="110"/>
+  </way>
+  <relation id="300" version="1">
+    <member type="way" ref="210" role="outer"/>
+    <tag k="type" v="multipolygon"/>
+    <tag k="name" v="Pond"/>
+    <tag k="natural" v="water"/>
+  </relation>
+</osm>
