@@ -1,7 +1,8 @@
 // Draws docs/diagrams/*.png from the three CDK apps with cdk-dia (needs Graphviz's dot on PATH):
 //   npm run diagrams -w infra
-// Each stack gets two pictures: <name>.png keeps the parts worth reading, labelled in Japanese,
-// and <name>-all.png is cdk-dia's own drawing with every resource.
+// Each stack gets two pictures: <name>.png keeps the parts worth reading, labelled in Japanese, with
+// arrows from what uses to what is used and the people and services outside the stack; <name>-all.png
+// is cdk-dia's own drawing with every resource.
 import { spawnSync } from 'node:child_process';
 import { copyFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -19,6 +20,16 @@ const dummyRootKey = 'A'.repeat(43);
 const hiddenIcons = [/Cloudwatch_Logs/, /Identity-and-Access-Management/, /Amazon-CloudWatch_64/, /AWS-Budgets/, /AWS-CloudFormation/, /security_group/];
 const hiddenPaths = [/^Custom__CDKBucketDeployment/, /^BucketNotificationsHandler/, /\/DeployWeb\//, /\/(OperatorGroup|PublisherGroup|LoginBranding|ConsoleHeaders|SpaRoutes)$/];
 
+// Where a part stands, by its icon: the ways in, what runs, and what is used. Arrows point from the
+// first towards the last; a schedule has no icon and counts as a way in.
+const entryIcons = /CloudFront|API-Gateway|EventBridge/;
+const computeIcons = /AWS-Lambda|Elastic-Container-Service/;
+const rankOf = (image) => (!image || entryIcons.test(image) ? 1 : computeIcons.test(image) ? 2 : 3);
+
+const legend =
+  '矢印: 矢元が矢先を使う（呼ぶ・読み書きする・見張る）　破線: このスタックの外（利用者・ほかのサービス）\\l' +
+  'CDK のコードから cdk-dia で生成。ロググループ・IAM のロール・警報などは省いている\\l';
+
 const stacks = [
   {
     name: 'console',
@@ -26,6 +37,12 @@ const stacks = [
     context: { rootPublicKey: dummyRootKey },
     title: 'チャンネル管理システム（YorisoiConsole）',
     clusters: { Console: '管理の面（ログインが要る）' },
+    outside: [
+      { label: '運営・提供者\n（ブラウザ）', to: ['Console/ConsoleDistribution', 'Console/IntakeBucket'] },
+      { label: 'アプリ\n（散策者の端末）', to: ['PublicDistribution'] },
+      { label: 'Amazon SES\n（メールを送る）', from: ['Console/Notify'] },
+      { label: '運営のメール', from: ['OperatorAlarms'] },
+    ],
     labels: {
       Table: '申請・審査・公開の状態',
       PublicBucket: '公開用（リスト・パッケージ）',
@@ -54,6 +71,12 @@ const stacks = [
     context: {},
     title: '運営による AI の中継（YorisoiAiRelay）',
     clusters: {},
+    outside: [
+      { label: 'アプリ\n（散策者の端末）', to: ['Api'] },
+      { label: 'Amazon Bedrock\n（語りを作る）', from: ['Relay'] },
+      { label: 'Google Play Integrity\n（本物のアプリか）', from: ['Relay'] },
+      { label: '運営のメール', from: ['Alarms'] },
+    ],
     labels: {
       Table: '回数・nonce・トークン',
       DailyLimit: '1 日の上限（運営が変える）',
@@ -70,6 +93,11 @@ const stacks = [
     context: {},
     title: 'スポットのタイル配信（YorisoiSpotTiles）',
     clusters: {},
+    outside: [
+      { label: 'アプリ\n（散策者の端末）', to: ['Cdn'] },
+      { label: 'Geofabrik\n（OSM の日本の抽出）', from: ['Batch'] },
+      { label: '運営のメール', from: ['Alarms'] },
+    ],
     labels: {
       Tiles: 'タイルの置き場',
       Cdn: 'タイルの配信（アプリが読む）',
@@ -94,53 +122,77 @@ function labelFor(labels, rel) {
   return wildcard ? labels[wildcard] : undefined;
 }
 
+const dotLabel = (text) => text.replace(/\n/g, '\\n');
+
+// The arrow between two parts that refer to each other in CloudFormation (`refs` holds "a\nb" when a
+// refers to b). What runs points at what it refers to; otherwise the way in points at what it reaches,
+// so that a key or bucket policy naming a Lambda still reads "the Lambda uses the key".
+function arrow(a, b, refs, ranks) {
+  const ab = refs.has(`${a}\n${b}`);
+  const ba = refs.has(`${b}\n${a}`);
+  if (ab !== ba) {
+    const [from, to] = ab ? [a, b] : [b, a];
+    if (ranks.get(from) === 2 || ranks.get(from) === ranks.get(to)) return [from, to];
+  }
+  if (ranks.get(a) !== ranks.get(b)) return ranks.get(a) < ranks.get(b) ? [a, b] : [b, a];
+  return [a, b];
+}
+
 // cdk-dia writes one statement per block: `"id" [` ... `];`, edges as `"a" -> "b" [` ... `];`.
 function simplify(dot, stack, stackId, iconDir) {
   const lines = dot.split(/\r?\n/);
   const hidden = new Set();
-  // First pass: find the nodes to leave out.
+  const ranks = new Map();
+  const refs = new Set();
+  // First pass: find the nodes to leave out, where the others stand, and who refers to whom.
   for (let i = 0; i < lines.length; i++) {
+    const edge = lines[i].match(/^\s*"([^"]+)" -> "([^"]+)" \[$/);
+    if (edge) refs.add(`${edge[1]}\n${edge[2]}`);
     const node = lines[i].match(/^\s*"([^"]+)" \[$/);
     if (!node) continue;
     const rel = node[1].slice(stackId.length + 1);
     let image = '';
     for (let j = i + 1; !/^\s*\];$/.test(lines[j]); j++) if (/image = /.test(lines[j])) image = lines[j];
     if (hiddenIcons.some((r) => r.test(image)) || hiddenPaths.some((r) => r.test(rel))) hidden.add(node[1]);
+    else ranks.set(node[1], rankOf(image));
   }
 
   const out = [];
-  const seenPairs = new Set();
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    const edge = line.match(/^(\s*)"([^"]+)" -> "([^"]+)" \[$/);
-    const node = line.match(/^(\s*)"([^"]+)" \[$/);
-    if (edge || node) {
+    const block = line.match(/^(\s*)"([^"]+)"( -> "[^"]+")? \[$/);
+    if (block) {
       let end = i;
       while (!/^\s*\];$/.test(lines[end])) end++;
-      const block = lines.slice(i, end + 1);
+      const body = lines.slice(i + 1, end);
       i = end;
-      if (edge) {
-        const [, indent, a, b] = edge;
-        const pair = [a, b].sort().join('\n');
-        if (hidden.has(a) || hidden.has(b) || a === b || seenPairs.has(pair)) continue;
-        seenPairs.add(pair);
-        out.push(`${indent}"${a}" -> "${b}" [`, `${indent}  dir = "none";`, `${indent}];`);
-        continue;
-      }
-      const [, indent, id] = node;
-      if (hidden.has(id)) continue;
+      const [, indent, id, isEdge] = block;
+      if (isEdge || hidden.has(id)) continue;
       const rel = id.slice(stackId.length + 1);
-      const short = rel.split('/').pop();
       const ja = labelFor(stack.labels, rel);
-      const label = ja ? `${short}\\n${ja.replace(/\n/g, '\\n')}` : short;
-      const extraLines = ja ? ja.split('\n').length : 0;
-      const body = block.slice(1, -1).filter((l) => !/^\s*(label|height) = /.test(l));
+      const label = rel.split('/').pop() + (ja ? `\\n${dotLabel(ja)}` : '');
+      // One size for every icon: cdk-dia draws some smaller, with the label far below.
+      let image = body.find((l) => /image = /.test(l));
       // Schedules have no icon in cdk-dia; give them EventBridge's.
-      if (!body.some((l) => /image = /.test(l))) {
-        const icon = join(iconDir, 'Arch_App-Integration', 'Arch_64', 'Arch_Amazon-EventBridge_64@5x.png');
-        body.push(`${indent}  image = "${icon}";`, `${indent}  imagescale = "true";`, `${indent}  imagepos = "tc";`, `${indent}  penwidth = 0;`, `${indent}  shape = "node";`, `${indent}  fixedsize = "true";`, `${indent}  labelloc = "b";`, `${indent}  width = 2;`);
-      }
-      out.push(block[0], `${indent}  label = "${label}";`, `${indent}  height = ${(2.266 + 0.22 * extraLines).toFixed(3)};`, ...body, block.at(-1));
+      image ??= `${indent}  image = "${join(iconDir, 'Arch_App-Integration', 'Arch_64', 'Arch_Amazon-EventBridge_64@5x.png')}";`;
+      // The small resource icons blur when drawn large.
+      const width = /Res_/.test(image) ? 1.4 : 1.6;
+      const height = width + 0.3 + 0.2 * (ja ? ja.split('\n').length : 0);
+      out.push(
+        line,
+        `${indent}  label = "${label}";`,
+        image,
+        `${indent}  fontsize = 12;`,
+        `${indent}  imagescale = "true";`,
+        `${indent}  imagepos = "tc";`,
+        `${indent}  labelloc = "b";`,
+        `${indent}  penwidth = 0;`,
+        `${indent}  shape = "box";`,
+        `${indent}  fixedsize = "true";`,
+        `${indent}  width = ${width};`,
+        `${indent}  height = ${height.toFixed(2)};`,
+        lines[end],
+      );
       continue;
     }
     // Cluster titles: the stack and its constructs.
@@ -149,6 +201,31 @@ function simplify(dot, stack, stackId, iconDir) {
     else if (cluster && stack.clusters[cluster[2]]) out.push(`${cluster[1]}label = "${stack.clusters[cluster[2]]}";`);
     else out.push(line);
   }
+
+  // The arrows, one per pair of parts, and the people and services outside the stack.
+  const added = [];
+  const seenPairs = new Set();
+  for (const pair of refs) {
+    const [a, b] = pair.split('\n');
+    const key = [a, b].sort().join('\n');
+    if (hidden.has(a) || hidden.has(b) || a === b || seenPairs.has(key)) continue;
+    seenPairs.add(key);
+    const [from, to] = arrow(a, b, refs, ranks);
+    added.push(`  "${from}" -> "${to}" [ arrowhead = "normal"; arrowsize = 0.8; ];`);
+  }
+  const outsideStyle = 'shape = "box"; style = "rounded,dashed"; color = "#5A6B85"; fontcolor = "#1B2621"; fontsize = 12; margin = "0.15,0.08"; fixedsize = "false"; width = 0; height = 0;';
+  // Who comes in stands at the left edge; where things go out, at the right.
+  stack.outside.forEach((o, n) => {
+    const id = `outside/${n}`;
+    added.push(`  { rank = "${o.to ? 'min' : 'max'}"; "${id}" [ label = "${dotLabel(o.label)}"; ${outsideStyle} ]; }`);
+    for (const t of o.to ?? []) added.push(`  "${id}" -> "${stackId}/${t}" [ style = "dashed"; color = "#5A6B85"; arrowhead = "normal"; arrowsize = 0.8; ];`);
+    for (const f of o.from ?? []) added.push(`  "${stackId}/${f}" -> "${id}" [ style = "dashed"; color = "#5A6B85"; arrowhead = "normal"; arrowsize = 0.8; ];`);
+  });
+  const close = out.lastIndexOf('}');
+  out.splice(close, 0, ...added);
+  // The legend under the picture.
+  const open = out.findIndex((l) => l.startsWith('digraph'));
+  out.splice(open + 1, 0, `  label = "${legend}";`, '  labelloc = "b";', '  labeljust = "l";', '  fontsize = 13;');
   return out.join('\n');
 }
 
@@ -177,7 +254,7 @@ for (const stack of stacks) {
   const dot = readFileSync(join(workDir, `${stack.name}-cdk-dia.dot`), 'utf8');
   const stackId = dot.match(/subgraph "([^"]+)" \{/)[1];
   render(dot, 90, join(workDir, `${stack.name}-all.png`));
-  render(simplify(dot, stack, stackId, iconDir), 110, join(workDir, `${stack.name}.png`), 'LR');
+  render(simplify(dot, stack, stackId, iconDir), 150, join(workDir, `${stack.name}.png`), 'LR');
   for (const file of [`${stack.name}.png`, `${stack.name}-all.png`]) copyFileSync(join(workDir, file), join(outDir, file));
   console.log(`drew ${stack.name}.png and ${stack.name}-all.png`);
 }
