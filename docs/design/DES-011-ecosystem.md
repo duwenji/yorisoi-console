@@ -16,11 +16,11 @@
 
 ## 目的・背景
 
-[platform ADR-ECOSYSTEM-PLATFORM（旧 ADR-003）](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-ECOSYSTEM-PLATFORM.md)（付き添いアプリのエコシステム）で、チャンネル・素材集はアプリをまたいで使うものになった。管理システムはエコシステムで 1 つ、リストも 1 本（E-17）で、アプリが端末で絞り込む。契約:
+[platform ADR-ECOSYSTEM-PLATFORM](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-ECOSYSTEM-PLATFORM.md)（付き添いアプリのエコシステム）で、チャンネル・素材集はアプリをまたいで使うものになった。管理システムはエコシステムで 1 つ、リストも 1 本（E-17）で、アプリが端末で絞り込む。契約:
 
-- [platform API-CHANNEL-PACKAGE（旧 API-003）](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-PACKAGE.md): `activities`・`genres`・`requires.features`。審査は一覧にない値を拒む（G-3）
-- [platform API-CHANNEL-LIST（旧 API-002）](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-LIST.md): リストの `channels[].activities`・`genres`・`requires`（P-19）、`minAppVersions`（P-20）
-- [platform API-MATERIAL-PRODUCER（旧 API-004）](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-MATERIAL-PRODUCER.md): 素材集の `grants.apps`（I-11）
+- [platform API-CHANNEL-PACKAGE](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-PACKAGE.md): `activities`・`genres`・`requires.features`。審査は一覧にない値を拒む（G-3）
+- [platform API-CHANNEL-LIST](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-LIST.md): リストの `channels[].activities`・`genres`・`requires`（P-19）、`minAppVersions`（P-20）
+- [platform API-MATERIAL-PRODUCER](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-MATERIAL-PRODUCER.md): 素材集の `grants.apps`（I-11）
 
 本書は、管理システムがこれをどう実装するかを決める。
 
@@ -59,4 +59,4 @@
 
 - [DES-007](DES-007-materials-review.md)・[DES-008](DES-008-materials-api.md)・[DES-009](DES-009-materials-publish.md): 素材集の審査・API・公開
 - [DM-001](../data-model.md)、[API-001](../console-api.md)
-- [platform ADR-ECOSYSTEM-PLATFORM（旧 ADR-003）](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-ECOSYSTEM-PLATFORM.md)、platform API-CHANNEL-LIST・platform API-CHANNEL-PACKAGE・platform API-MATERIAL-PRODUCER
+- [platform ADR-ECOSYSTEM-PLATFORM](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-ECOSYSTEM-PLATFORM.md)、platform API-CHANNEL-LIST・platform API-CHANNEL-PACKAGE・platform API-MATERIAL-PRODUCER

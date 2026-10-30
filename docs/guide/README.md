@@ -30,30 +30,23 @@ flowchart LR
 | どの立場でも、まず | [仕組み](concepts.md) | 鍵と署名の関係、チャンネルが公開されるまでの流れ |
 | 全体を図で見たい | [構成図](../architecture.md)（HTML 版 `docs/architecture.html` も） | 利用者と AWS の部品、リポジトリ、申請から公開まで、データの置き場所 |
 
-## 「予定」の印
+## 使える機能
 
-このガイドは、システムの全体の流れが分かるように、まだ作っていない機能も書いています。そうした箇所には次の印を付けています。実装したら印を外します。
-
-| 印 | 意味 |
-|---|---|
-| （印なし） | 今使える |
-| 🚧 **予定** | 契約書（[API-001](../console-api.md)）で決まっているが、まだ作っていない。画面・操作の細部は変わることがある |
-
-使えるのは、運営の画面（チャンネルと素材集の審査・鍵の移し替えを含む）、チャンネル提供者の画面（登録・鍵・鍵の移し替え・チャンネル・申請・機械の確認・試用チケット・審査の結果・取り消し・退会）、素材提供者の画面（素材集の登録・申請・身元の確認・使っているチャンネル・毎日の確認の結果）、チャンネル提供者・素材提供者へのメール（開発用は記録だけ）、開発・保守の道具です。アプリでの試用チケットの読み込みも、SanpoGuide 側で実装済みです（2026-10-04）。
+使えるのは、運営の画面（チャンネルと素材集の審査・鍵の移し替えを含む）、チャンネル提供者の画面（登録・鍵・鍵の移し替え・チャンネル・申請・機械の確認・試用チケット・審査の結果・取り消し・退会）、素材提供者の画面（素材集の登録・申請・身元の確認・使っているチャンネル・毎日の確認の結果）、チャンネル提供者・素材提供者へのメール（開発用は記録だけ）、開発・保守の道具です。アプリでの試用チケットの読み込みも、SanpoGuide 側で実装済みです。
 
 ## 環境
 
 | 環境 | 運営の画面 | 公開 URL（アプリが取得する） | 状態 |
 |---|---|---|---|
 | 開発用（dev） | https://d32w19p7au8cu2.cloudfront.net | https://d32t2reyxml47d.cloudfront.net | 稼働中。アプリには内蔵しない |
-| 本番（prod） | — | — | 🚧 予定（本番用のアカウント、本番のルート鍵、独自ドメインがそろってから） |
+| 本番（prod） | — | — | まだない（本番用のアカウント、本番のルート鍵、独自ドメインがそろってから） |
 
 ## 用語集
 
 | 用語 | 意味 |
 |---|---|
 | チャンネル | 語り手・話題・話す量・雰囲気をまとめた設定。アプリで切り替えて使う。ID は英小文字・数字・`-` の 3〜40 文字（例 `kamakura-history`） |
-| パッケージ | 1 つのチャンネルの中身（`channel.json` とプロンプトの文章など）を ZIP にしたもの。形式は [platform API-CHANNEL-PACKAGE（旧 API-003）](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-PACKAGE.md) |
+| パッケージ | 1 つのチャンネルの中身（`channel.json` とプロンプトの文章など）を ZIP にしたもの。形式は [platform API-CHANNEL-PACKAGE](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-PACKAGE.md) |
 | 版（version） | パッケージの版の番号。更新のたびに、最後に承認された版より大きくする |
 | 申請 | パッケージを審査に出すこと。1 つのチャンネルに審査待ちの申請は 1 つまで |
 | チャンネル提供者 | チャンネルを作って申請する人・団体。1 つのログインのアカウントが 1 つのチャンネル提供者 |
@@ -68,7 +61,7 @@ flowchart LR
 | `seq` | リスト・鍵セットの通し番号。公開のたびに増える。アプリは小さくなったリストを拒む |
 | 取り下げ | 承認したチャンネルをリストから外すこと。アプリは理由とともに使用を止める |
 | アカウントID | チャンネル提供者の鍵の指紋（`sg1…`）。チャンネル提供者はパッケージにこの鍵で署名する |
-| 素材集 | 素材提供者が作る、テキスト・画像・音声・映像の素材のまとまり。チャンネルとは別に審査・公開され、チャンネルが ID や基準で指して使う。形式は [platform API-MATERIAL-PRODUCER（旧 API-004）](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-MATERIAL-PRODUCER.md) |
+| 素材集 | 素材提供者が作る、テキスト・画像・音声・映像の素材のまとまり。チャンネルとは別に審査・公開され、チャンネルが ID や基準で指して使う。形式は [platform API-MATERIAL-PRODUCER](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-MATERIAL-PRODUCER.md) |
 | 素材提供者 | 素材集を作って申請する人・団体。アカウントはチャンネル提供者と共通で、「素材提供者として始める」で役割が加わる |
 | 利用の記録 | どのチャンネルが、どの素材集のどの素材を使っているか。素材集の更新で使われている素材を消せないようにし、取り下げのときに知らせる先になる |
 | 試用チケット | 審査前のチャンネルを、チャンネル提供者が自分の端末で試すための QR コード。7 日で切れる。アプリの開発者モードで読み込む |
@@ -84,8 +77,8 @@ flowchart LR
 | [ADR-001](../adr/ADR-001-aws-architecture.md) | AWS の構成と、その理由 |
 | [DM-001](../data-model.md) | データの持ち方と状態の移り方 |
 | [API-001](../console-api.md)・[OpenAPI](../api/console.openapi.yaml) | 管理 API の契約 |
-| [platform API-CHANNEL-LIST（旧 API-002）](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-LIST.md) | 承認済みチャンネル・リストの形式（アプリとの約束） |
-| [platform API-CHANNEL-PACKAGE（旧 API-003）](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-PACKAGE.md) | パッケージの形式 |
+| [platform API-CHANNEL-LIST](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-LIST.md) | 承認済みチャンネル・リストの形式（アプリとの約束） |
+| [platform API-CHANNEL-PACKAGE](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-PACKAGE.md) | パッケージの形式 |
 | [platform チャンネル審査方針](https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/channel-review.md) | 何を確かめて承認・差し戻しにするか |
 | [配備の手順](../operations/deploy.md)・[費用](../operations/cost.md) | 環境ごとの値と手順 |
 | [鍵の手順書](../operations/keys.md) | ルート鍵の作成・保管、署名鍵の入れ替えの予定、失効、ルート鍵をなくしたとき |

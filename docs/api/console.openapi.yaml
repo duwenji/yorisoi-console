@@ -1513,7 +1513,7 @@ components:
         approvedAt: { type: string, format: date-time }
     MinAppVersions:
       type: object
-      description: DES-011 N-5。アプリの ID → 必要な versionCode（platform API-002 P-20）
+      description: DES-011 N-5。アプリの ID → 必要な versionCode（platform API-CHANNEL-LIST P-20）
       additionalProperties: { type: integer }
     OfferedIn:
       type: array
@@ -1585,9 +1585,9 @@ components:
             type: object
             required: [code, detail]
             properties:
-              code: { type: string, description: API-003 のエラーコード、または bad_icon・id_mismatch・publisher_mismatch・version_not_newer }
+              code: { type: string, description: API-CHANNEL-PACKAGE のエラーコード、または bad_icon・id_mismatch・publisher_mismatch・version_not_newer }
               detail: { type: string }
-        appStage: { type: integer, description: 必要なアプリの段（API-003 確認の手順 10。1.1 からは使う素材集の中身も数える） }
+        appStage: { type: integer, description: 必要なアプリの段（API-CHANNEL-PACKAGE 確認の手順 10。1.1 からは使う素材集の中身も数える） }
         collections:
           type: array
           description: （チャンネル）宣言した素材集ごとの解決の結果（C-19）
@@ -1772,7 +1772,7 @@ components:
                 - { type: string, const: '*' }
                 - { type: array, items: { $ref: '#/components/schemas/AccountId' } }
             apps: { type: array, items: { type: string }, description: DES-011 N-7。使ってよいアプリの ID（ないときはすべてのアプリ） }
-            grounding: { type: boolean, description: platform API-004 I-13。AI の根拠に使ってよいとき真（偽は書かない） }
+            grounding: { type: boolean, description: platform API-MATERIAL-PRODUCER I-13。AI の根拠に使ってよいとき真（偽は書かない） }
         package: { $ref: '#/components/schemas/ListedPackage' }
         appStage: { type: integer }
         minAppVersions: { $ref: '#/components/schemas/MinAppVersions' }
@@ -1847,7 +1847,7 @@ components:
       properties:
         submissionId: { $ref: '#/components/schemas/Ulid' }
         document: { $ref: '#/components/schemas/SignedDocument' }
-        qr: { type: string, description: QR コードにする文字列（API-002 の試用チケット） }
+        qr: { type: string, description: QR コードにする文字列（API-CHANNEL-LIST の試用チケット） }
         issuedAt: { type: string, format: date-time }
         expiresAt: { type: string, format: date-time }
 

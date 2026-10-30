@@ -18,7 +18,7 @@
 
 ## 目的・背景
 
-SanpoGuide のアプリは、第三者が配信するチャンネルのうち、運営が審査して署名したものだけを取り込む（[platform ADR-CHANNEL-CURATION（旧 ADR-001）](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-CHANNEL-CURATION.md)）。審査と公開はアプリとは別の**チャンネル管理システム**で行い、アプリとの境界は承認済みチャンネル・リストの契約（[platform API-CHANNEL-LIST（旧 API-002）](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-LIST.md)）だけにする。platform API-CHANNEL-LIST に準拠していれば、管理システムの実装方法と置き場所は問わない（platform ADR-CHANNEL-CURATION C-9）。
+SanpoGuide のアプリは、第三者が配信するチャンネルのうち、運営が審査して署名したものだけを取り込む（[platform ADR-CHANNEL-CURATION](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-CHANNEL-CURATION.md)）。審査と公開はアプリとは別の**チャンネル管理システム**で行い、アプリとの境界は承認済みチャンネル・リストの契約（[platform API-CHANNEL-LIST](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-LIST.md)）だけにする。platform API-CHANNEL-LIST に準拠していれば、管理システムの実装方法と置き場所は問わない（platform ADR-CHANNEL-CURATION C-9）。
 
 本書は、その管理システムの実装方法と置き場所を決める。条件は次のとおり。
 
@@ -207,8 +207,8 @@ flowchart LR
 
 ## 関連ドキュメント・参照リンク
 
-- [platform ADR-CHANNEL-CURATION（旧 ADR-001）](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-CHANNEL-CURATION.md): 第三者のチャンネルは運営の審査と署名を経たものだけ取り込む
-- [platform API-CHANNEL-LIST（旧 API-002）](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-LIST.md): 承認済みチャンネル・リスト
-- [platform API-CHANNEL-PACKAGE（旧 API-003）](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-PACKAGE.md): チャンネル・パッケージの形式
+- [platform ADR-CHANNEL-CURATION](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-CHANNEL-CURATION.md): 第三者のチャンネルは運営の審査と署名を経たものだけ取り込む
+- [platform API-CHANNEL-LIST](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-LIST.md): 承認済みチャンネル・リスト
+- [platform API-CHANNEL-PACKAGE](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-PACKAGE.md): チャンネル・パッケージの形式
 - [platform チャンネル審査方針](https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/channel-review.md): 審査基準
 - [AWS KMS Sign API](https://docs.aws.amazon.com/kms/latest/APIReference/API_Sign.html): 署名できる大きさ（4,096 バイト）と Ed25519

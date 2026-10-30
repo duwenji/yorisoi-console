@@ -21,7 +21,7 @@
 | KMS の署名鍵（1 つ） | 1 USD |
 | CloudWatch の警報（2 つ） | 約 0.3 USD |
 | Cognito（月 1 万人まで無料）、CloudFront（無料枠）、Lambda、API Gateway、S3、DynamoDB、EventBridge Scheduler、AWS Budgets（2 つまで無料） | ほぼ 0 |
-| **合計** | **約 1.5 USD**（WAF などを外す前は約 9 USD） |
+| **合計** | **約 1.5 USD** |
 
 公開されている単価からの目安。実際の額は、予算の通知と、請求の画面でタグ `project` を絞り込んで確かめる。
 

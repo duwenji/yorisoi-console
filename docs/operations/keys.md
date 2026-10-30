@@ -1,6 +1,6 @@
 # 鍵の手順書
 
-ルート鍵と署名鍵を作る・保管する・入れ替える・失効させる手順（[ADR-001](../adr/ADR-001-aws-architecture.md) A-8・A-9、[platform API-CHANNEL-LIST（旧 API-002）](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-LIST.md) P-1・P-2）。画面の操作は[運営ガイド 5 章](../guide/operator.md#5-署名鍵と鍵セット)、KMS の鍵の追加は[保守ガイド 8 章](../guide/maintainer.md#8-署名鍵を足す)にあり、この手順書はそれらをいつ・どの順で使うかと、画面の外で行うことを書く。
+ルート鍵と署名鍵を作る・保管する・入れ替える・失効させる手順（[ADR-001](../adr/ADR-001-aws-architecture.md) A-8・A-9、[platform API-CHANNEL-LIST](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-LIST.md) P-1・P-2）。画面の操作は[運営ガイド 5 章](../guide/operator.md#5-署名鍵と鍵セット)、KMS の鍵の追加は[保守ガイド 8 章](../guide/maintainer.md#8-署名鍵を足す)にあり、この手順書はそれらをいつ・どの順で使うかと、画面の外で行うことを書く。
 
 ## 1. 鍵と置き場所
 

@@ -1195,7 +1195,7 @@ export interface components {
             /** Format: date-time */
             approvedAt: string;
         };
-        /** @description DES-011 N-5。アプリの ID → 必要な versionCode（platform API-002 P-20） */
+        /** @description DES-011 N-5。アプリの ID → 必要な versionCode（platform API-CHANNEL-LIST P-20） */
         MinAppVersions: {
             [key: string]: number;
         };
@@ -1245,11 +1245,11 @@ export interface components {
         Validation: {
             ok: boolean;
             errors: {
-                /** @description API-003 のエラーコード、または bad_icon・id_mismatch・publisher_mismatch・version_not_newer */
+                /** @description API-CHANNEL-PACKAGE のエラーコード、または bad_icon・id_mismatch・publisher_mismatch・version_not_newer */
                 code: string;
                 detail: string;
             }[];
-            /** @description 必要なアプリの段（API-003 確認の手順 10。1.1 からは使う素材集の中身も数える） */
+            /** @description 必要なアプリの段（API-CHANNEL-PACKAGE 確認の手順 10。1.1 からは使う素材集の中身も数える） */
             appStage?: number;
             /** @description （チャンネル）宣言した素材集ごとの解決の結果（C-19） */
             collections?: {
@@ -1404,7 +1404,7 @@ export interface components {
                 publishers: "*" | components["schemas"]["AccountId"][];
                 /** @description DES-011 N-7。使ってよいアプリの ID（ないときはすべてのアプリ） */
                 apps?: string[];
-                /** @description platform API-004 I-13。AI の根拠に使ってよいとき真（偽は書かない） */
+                /** @description platform API-MATERIAL-PRODUCER I-13。AI の根拠に使ってよいとき真（偽は書かない） */
                 grounding?: boolean;
             };
             package: components["schemas"]["ListedPackage"];
@@ -1466,7 +1466,7 @@ export interface components {
         TestTicket: {
             submissionId: components["schemas"]["Ulid"];
             document: components["schemas"]["SignedDocument"];
-            /** @description QR コードにする文字列（API-002 の試用チケット） */
+            /** @description QR コードにする文字列（API-CHANNEL-LIST の試用チケット） */
             qr: string;
             /** Format: date-time */
             issuedAt: string;

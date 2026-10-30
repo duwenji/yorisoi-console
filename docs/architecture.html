@@ -123,7 +123,7 @@ td.files{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
       <span>DynamoDB <b>1 テーブル</b></span>
       <span>S3 <b>4 バケット</b></span>
     </div>
-    <p style="font-size:13.5px;color:var(--muted)">アプリとの境界は platform の API-002（承認済みチャンネル・リスト）だけです。アプリはこのシステムの API を呼ばず、公開された静的ファイルを取りに来ます。図はコードと CDK から手で書き起こしたもの（2026-10-12 時点。素材集と素材提供者は 2026-10-11 に追加）です。Lambda・バケット・申請の状態を足したり変えたりしたときは、この文書と <code>docs/architecture.md</code> も更新してください。</p>
+    <p style="font-size:13.5px;color:var(--muted)">アプリとの境界は platform の API-CHANNEL-LIST（承認済みチャンネル・リスト）だけです。アプリはこのシステムの API を呼ばず、公開された静的ファイルを取りに来ます。図はコードと CDK から手で書き起こしたもの（2026-10-12 時点。素材集と素材提供者は 2026-10-11 に追加）です。Lambda・バケット・申請の状態を足したり変えたりしたときは、この文書と <code>docs/architecture.md</code> も更新してください。</p>
   </header>
 
   <!-- 1. Overview -->
@@ -467,7 +467,7 @@ td.files{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
       </svg>
       </div>
       <figcaption>
-        <p>KMS は 4,096 バイトまでしか署名できないので、リストは本体ではなく<b>要約</b>に署名します（API-002 P-8）。要約が本体の SHA-256 と大きさを持つので、本体がどれだけ大きくても署名は 1 回で済みます。</p>
+        <p>KMS は 4,096 バイトまでしか署名できないので、リストは本体ではなく<b>要約</b>に署名します（API-CHANNEL-LIST P-8）。要約が本体の SHA-256 と大きさを持つので、本体がどれだけ大きくても署名は 1 回で済みます。</p>
         <p>アプリ側の確認は yorisoi-platform の <code>core-format</code>（<code>ProviderDocuments</code>）にあります。このリポジトリの <code>conformance/src/app-vectors.ts</code> が、同じ署名のコードで作った文書をアプリのテストに渡しているので、両側の解釈がずれると SanpoGuide のテストが落ちます。</p>
         <p>チャンネル提供者が鍵をなくしたら、運営が鍵とは別の経路で本人確認したうえで新しい鍵に移します。新しい鍵で署名した最初の版が承認されるまで、リストには古い版（古い鍵）のまま載り、<code>publisherChange</code> は出しません。出すと <code>from</code> と <code>publisher</code> が同じになり、準拠テスト V-16 に反するためです。</p>
       </figcaption>
@@ -640,7 +640,7 @@ td.files{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
     <div class="sec-head">
       <div class="eyebrow">素材集と素材提供者（DM-001 1.3）</div>
       <h2>素材集は、チャンネルと同じ仕組みに乗る別の単位</h2>
-      <p>素材集は、チャンネルが参照する文字・画像などの素材のまとまりです（platform の ADR-002・API-004）。素材提供者が自分の鍵で署名して申請し、運営がチャンネルとは別に審査・承認して、同じリストの <code>collections[]</code> に載せます。申請の状態の移り方（図 2）・信頼の鎖（図 3）・公開の処理（図 4）・メール（図 5）は、チャンネルと同じ仕組みを使います。違いだけをまとめます。</p>
+      <p>素材集は、チャンネルが参照する文字・画像などの素材のまとまりです（platform の ADR-MATERIAL-PRODUCERS・API-MATERIAL-PRODUCER）。素材提供者が自分の鍵で署名して申請し、運営がチャンネルとは別に審査・承認して、同じリストの <code>collections[]</code> に載せます。申請の状態の移り方（図 2）・信頼の鎖（図 3）・公開の処理（図 4）・メール（図 5）は、チャンネルと同じ仕組みを使います。違いだけをまとめます。</p>
     </div>
     <div class="tw">
       <table>
@@ -651,7 +651,7 @@ td.files{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
           <tr><td>受付・保管の S3</td><td><code>intake/</code>・<code>archive/</code></td><td><code>intake-col/</code>・<code>archive-col/</code>（同じ保持）</td></tr>
           <tr><td>公開の場所</td><td><code>pkg/{SHA-256}.zip</code>・<code>icons/</code></td><td><code>col/{SHA-256}.zip</code>（アイコンはない）</td></tr>
           <tr><td>審査</td><td>機械審査 → 運営（AI の見本あり）</td><td>機械審査（<code>MachineReview.kt</code>、外部の素材の確認 <code>External.kt</code>）→ 運営（AI の見本はない）</td></tr>
-          <tr><td>リスト</td><td><code>channels[]</code>・<code>revoked[]</code></td><td><code>collections[]</code>・<code>revokedCollections[]</code>（API-002 1.2）</td></tr>
+          <tr><td>リスト</td><td><code>channels[]</code>・<code>revoked[]</code></td><td><code>collections[]</code>・<code>revokedCollections[]</code>（API-CHANNEL-LIST 1.2）</td></tr>
           <tr><td>つながり</td><td colspan="2">チャンネルの承認のときに、使う素材集の版・素材を <b>利用の記録</b>（<code>COL#{id}</code> / <code>USEDBY#{channelId}</code>）に書く。素材集の新しい版・利用許諾の縮小・取り下げは、使っているチャンネル提供者にメールで知らせる。素材提供者は自分の素材集を使っているチャンネルを画面で見られる</td></tr>
           <tr><td>毎日の確認</td><td>—</td><td>公開の Lambda が、毎日の公開のあとで外部の素材の URL に HEAD を送り、新しい不具合を素材提供者に知らせる（公開は失敗にしない。DES-009 M-7）</td></tr>
           <tr><td>アプリの段</td><td colspan="2">素材の種類ごとに出せるアプリの版を <code>infra/lib/config.ts</code> の <code>appStageVersions</code> で決める。SanpoGuide は段 0・1（文字・画像）が versionCode 1。段 2（音声）・段 3（映像）は仮の大きな値で、そうした素材を使うものは、対応したアプリが出るまでどのアプリにも出ない</td></tr>
@@ -711,8 +711,8 @@ td.files{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
           <tr><td class="pk">web/src</td><td>画面（React + Vite）。運営・チャンネル提供者・素材提供者で 1 つの SPA。素材集は <code>pages/publisher/collections.tsx</code>（素材提供者）と <code>pages/collection-review.tsx</code>（運営）。鍵と署名は <code>publisher-crypto.ts</code>、AI の見本は <code>ai.ts</code></td><td><div class="loc"><span class="bar" style="width:95px"></span>3,065</div></td></tr>
           <tr><td class="pk">infra/lib</td><td>AWS CDK。共有部分と公開の面 <code>console-stack.ts</code>、管理の面 <code>console-app.ts</code>、環境ごとの設定 <code>config.ts</code></td><td><div class="loc"><span class="bar" style="width:24px"></span>783</div></td></tr>
           <tr><td class="pk">api/src/publish</td><td>公開の Lambda。DB・S3・CloudFront・KMS は差し替え口の後ろ（手元では Memory 版）。毎日の外部の素材の確認は <code>external.ts</code></td><td><div class="loc"><span class="bar" style="width:28px"></span>903</div></td></tr>
-          <tr><td class="pk">packages/protocol</td><td>API-002 の文書の作成と検証（署名・要約・鍵セット・ID・素材集）。公開・準拠テスト・CLI が共用</td><td><div class="loc"><span class="bar" style="width:18px"></span>589</div></td></tr>
-          <tr><td class="pk">conformance/src</td><td>API-002 の準拠テスト（任意のリストの URL に）と、アプリ用のテストベクタ</td><td><div class="loc"><span class="bar" style="width:14px"></span>435</div></td></tr>
+          <tr><td class="pk">packages/protocol</td><td>API-CHANNEL-LIST の文書の作成と検証（署名・要約・鍵セット・ID・素材集）。公開・準拠テスト・CLI が共用</td><td><div class="loc"><span class="bar" style="width:18px"></span>589</div></td></tr>
+          <tr><td class="pk">conformance/src</td><td>API-CHANNEL-LIST の準拠テスト（任意のリストの URL に）と、アプリ用のテストベクタ</td><td><div class="loc"><span class="bar" style="width:14px"></span>435</div></td></tr>
           <tr><td class="pk">validator/src</td><td>機械審査の Lambda（Kotlin、Java 21）。判定は yorisoi-platform の <code>core-format</code>。チャンネルと素材集、外部の素材の確認 <code>External.kt</code></td><td><div class="loc"><span class="bar" style="width:28px"></span>911</div></td></tr>
           <tr><td class="pk">tools/root-key · provision</td><td>ルート鍵の CLI（オフライン）、署名鍵と鍵セットの初期登録</td><td><div class="loc"><span class="bar" style="width:10px"></span>321</div></td></tr>
           <tr><td class="pk">api/src/notify</td><td>通知の Lambda（SQS → SES、開発用は記録だけ）</td><td><div class="loc"><span class="bar" style="width:6px"></span>180</div></td></tr>
@@ -758,7 +758,7 @@ td.files{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
           <tr><td>管理 API の操作を足す・変える</td><td><code>docs/api/console.openapi.yaml</code>（型を作り直す）→ <code>api/src/console/router.ts</code> と各ハンドラ。契約は <code>docs/console-api.md</code></td></tr>
           <tr><td>申請の状態の移り方を変える</td><td><code>api/src/console/publisher.ts</code>（申請・取り消し）、<code>review.ts</code>（審査）、<code>validator/</code>（機械審査）。DM-001 の状態図も</td></tr>
           <tr><td>機械で確かめる項目を変える</td><td>パッケージの形式なら yorisoi-platform の <code>core-format</code>、管理システムだけが知る確認（版・チャンネル提供者・アイコン）なら <code>validator/.../MachineReview.kt</code></td></tr>
-          <tr><td>リストに載せる項目を変える</td><td><code>api/src/publish/aws.ts</code>（<code>DynamoStore</code>）と <code>packages/protocol/src/types.ts</code>。形式は API-002 の改訂が要る</td></tr>
+          <tr><td>リストに載せる項目を変える</td><td><code>api/src/publish/aws.ts</code>（<code>DynamoStore</code>）と <code>packages/protocol/src/types.ts</code>。形式は API-CHANNEL-LIST の改訂が要る</td></tr>
           <tr><td>上限（チャンネル数・素材集の数・1 日の申請）を変える</td><td><code>api/src/console/shared.ts</code> の <code>DEFAULT_LIMITS</code>（アカウントごとは運営の画面から）</td></tr>
           <tr><td>素材集の操作・利用の記録を変える</td><td><code>api/src/console/collections.ts</code>・<code>uses.ts</code>。審査は <code>review.ts</code>（チャンネルと共通）</td></tr>
           <tr><td>アプリの版ごとに出せる素材の種類を変える</td><td><code>infra/lib/config.ts</code> の <code>appStageVersions</code>（PR を通して変える。DES-008 K-6）</td></tr>

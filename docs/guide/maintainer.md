@@ -232,8 +232,9 @@ aws cognito-idp admin-add-user-to-group --user-pool-id $P --username <メール>
 | [ADR-001](../adr/ADR-001-aws-architecture.md) | 構成を変えるとき。なぜ今の形かを知りたいとき |
 | [DM-001](../data-model.md) | テーブルの項目・キー・状態の移り方を変えるとき |
 | [API-001](../console-api.md)・[OpenAPI](../api/console.openapi.yaml) | 管理 API を変えるとき（OpenAPI が入出力の正本） |
-| [DES-001](../design/DES-001-publisher.md)〜[DES-010](../design/DES-010-materials-screens.md) | 実装の判断と検証の結果（素材集は DES-007〜DES-010） |
+| [DES-001](../design/DES-001-publisher.md)〜[DES-011](../design/DES-011-ecosystem.md) | 実装の判断と検証の結果（素材集は DES-007〜DES-010、複数のアプリは DES-011） |
 | [TODO](../TODO.md) | 残っている作業 |
 | [配備の手順](../operations/deploy.md)・[費用](../operations/cost.md) | 環境ごとの値、手順、費用 |
+| [運営の AI の手順](../operations/ai-relay.md)・[スポットのタイルの手順](../operations/spot-tiles.md) | 中継とタイルの配信の配備・上限・作り直し |
 | [鍵の手順書](../operations/keys.md) | 署名鍵の入れ替えの予定（4 月・10 月）と、失効・ルート鍵の事故の手順 |
 | platform API-CHANNEL-LIST・platform API-CHANNEL-PACKAGE・platform API-MATERIAL-PRODUCER・審査基準 | アプリとの約束（リスト・パッケージ・素材集・審査） |
