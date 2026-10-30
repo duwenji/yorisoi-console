@@ -9,6 +9,7 @@
 | 知りたいこと | 文書 |
 |---|---|
 | AWS 構成とコンポーネントの関係 | [構成図](architecture.md) |
+| CDK にある AWS 資源とつながり（生成した図） | [AWS 資源の図](aws-diagrams.md) |
 | 管理システムのアーキテクチャ判断 | [console ADR-001](adr/ADR-001-aws-architecture.md) |
 | 機能ごとの設計 | [console DES-001〜DES-011](design/) |
 | 管理画面が使う API | [console API-001](console-api.md) と [OpenAPI 定義](api/console.openapi.yaml) |
