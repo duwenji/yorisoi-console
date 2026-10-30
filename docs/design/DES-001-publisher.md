@@ -68,4 +68,4 @@
 ## 関連ドキュメント・参照リンク
 
 - [ADR-001](../adr/ADR-001-aws-architecture.md)、[DM-001](../data-model.md)、[API-001](../console-api.md)
-- [platform API-CHANNEL-LIST（旧 API-002）](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-LIST.md)
+- [platform API-CHANNEL-LIST](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-LIST.md)

@@ -16,7 +16,7 @@
 
 ## 目的・背景
 
-[platform ADR-MATERIAL-PRODUCERS（旧 ADR-002）](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-MATERIAL-PRODUCERS.md) で素材の素材提供者を切り出し、管理システムでは [DM-001](../data-model.md) と [API-001](../console-api.md) でデータと API を決めた。本書は、素材集と、素材・きっかけを持つチャンネルの機械審査を決める。`core-format` が、素材・きっかけ・素材集の確認と、リストを使った参照の解決を受け持つ。
+[platform ADR-MATERIAL-PRODUCERS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-MATERIAL-PRODUCERS.md) で素材の素材提供者を切り出し、管理システムでは [DM-001](../data-model.md) と [API-001](../console-api.md) でデータと API を決めた。本書は、素材集と、素材・きっかけを持つチャンネルの機械審査を決める。`core-format` が、素材・きっかけ・素材集の確認と、リストを使った参照の解決を受け持つ。
 
 ## 対応元ID（トレーサビリティ）
 
@@ -54,4 +54,4 @@
 
 - [DES-004](DES-004-machine-review.md): チャンネルの機械審査
 - [DM-001](../data-model.md)・[API-001](../console-api.md)
-- [platform ADR-MATERIAL-PRODUCERS（旧 ADR-002）](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-MATERIAL-PRODUCERS.md)・[platform API-CHANNEL-PACKAGE（旧 API-003）](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-PACKAGE.md)・[platform API-MATERIAL-PRODUCER（旧 API-004）](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-MATERIAL-PRODUCER.md)
+- [platform ADR-MATERIAL-PRODUCERS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-MATERIAL-PRODUCERS.md)・[platform API-CHANNEL-PACKAGE](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-PACKAGE.md)・[platform API-MATERIAL-PRODUCER](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-MATERIAL-PRODUCER.md)

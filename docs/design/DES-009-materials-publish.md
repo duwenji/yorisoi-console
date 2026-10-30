@@ -53,4 +53,4 @@
 ## 関連ドキュメント・参照リンク
 
 - [DES-001](DES-001-publisher.md)（公開の処理）、[DES-007](DES-007-materials-review.md)、[DES-008](DES-008-materials-api.md)
-- [platform API-CHANNEL-LIST（旧 API-002）](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-LIST.md)
+- [platform API-CHANNEL-LIST](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-LIST.md)

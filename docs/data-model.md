@@ -16,7 +16,7 @@
 
 ## 目的・背景
 
-[ADR-001](adr/ADR-001-aws-architecture.md) A-6 で、データは DynamoDB の 1 テーブルに置き、パッケージ・アイコン・リストの本体は S3 に置くと決めた。本書は、そのテーブルの項目の種類、キー、インデックス、状態の移り方、上限（A-18）を決める。素材提供者の役割と素材集（申請・審査・公開・取り下げ）、チャンネルが素材集を使う記録（依存）は、[platform ADR-MATERIAL-PRODUCERS（旧 ADR-002）](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-MATERIAL-PRODUCERS.md)（素材の素材提供者）による。
+[ADR-001](adr/ADR-001-aws-architecture.md) A-6 で、データは DynamoDB の 1 テーブルに置き、パッケージ・アイコン・リストの本体は S3 に置くと決めた。本書は、そのテーブルの項目の種類、キー、インデックス、状態の移り方、上限（A-18）を決める。素材提供者の役割と素材集（申請・審査・公開・取り下げ）、チャンネルが素材集を使う記録（依存）は、[platform ADR-MATERIAL-PRODUCERS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-MATERIAL-PRODUCERS.md)（素材の素材提供者）による。
 
 DynamoDB では、取り出し方（アクセスパターン）からキーを決める。本書は、先にアクセスパターンを挙げ、それを満たすキーを決める。
 
@@ -548,7 +548,7 @@ DynamoDB なので DDL はなく、テーブルとインデックスは CDK（`i
 ## 関連ドキュメント・参照リンク
 
 - [ADR-001](adr/ADR-001-aws-architecture.md): AWS の構成
-- [platform API-CHANNEL-LIST（旧 API-002）](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-LIST.md): 承認済みチャンネル・リスト
-- [platform API-CHANNEL-PACKAGE（旧 API-003）](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-PACKAGE.md): パッケージの形式
+- [platform API-CHANNEL-LIST](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-LIST.md): 承認済みチャンネル・リスト
+- [platform API-CHANNEL-PACKAGE](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-PACKAGE.md): パッケージの形式
 - [platform チャンネル審査方針](https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/channel-review.md): 審査基準
-- [platform ADR-MATERIAL-PRODUCERS（旧 ADR-002）](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-MATERIAL-PRODUCERS.md)・[platform API-MATERIAL-PRODUCER（旧 API-004）](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-MATERIAL-PRODUCER.md): 素材の素材提供者と素材集
+- [platform ADR-MATERIAL-PRODUCERS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-MATERIAL-PRODUCERS.md)・[platform API-MATERIAL-PRODUCER](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-MATERIAL-PRODUCER.md): 素材の素材提供者と素材集

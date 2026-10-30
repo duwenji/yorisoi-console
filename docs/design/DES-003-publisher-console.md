@@ -69,4 +69,4 @@
 ## 関連ドキュメント・参照リンク
 
 - [API-001](../console-api.md)、[DM-001](../data-model.md)、[DES-002](DES-002-operator-console.md)、[チャンネル提供者ガイド](../guide/publisher.md)
-- [platform API-CHANNEL-PACKAGE（旧 API-003）](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-PACKAGE.md)
+- [platform API-CHANNEL-PACKAGE](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-PACKAGE.md)
