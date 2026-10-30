@@ -8,7 +8,7 @@ yorisoi-console を 8 枚の図で説明する。図 1 で「誰が何を使い�
 
 **手で配置した図・凡例・コードから確かめた細部つきの版は [architecture.html](architecture.html)**（ブラウザで開く）。この Markdown 版は GitHub の上で読むためのもので、同じ構成を Mermaid で描いている。
 
-図はコードと CDK から手で書き起こしたもの。Lambda・バケット・項目の種類を足したり変えたりしたときは、この文書と architecture.html の両方を更新する。設計の理由は [ADR-001](adr/ADR-001-aws-architecture.md)、データの細部は [DM-001](data-model.md)、API は [API-001](console-api.md) を見る。
+図はコードと CDK から手で書き起こしたもの。CDK から機械的に描いた資源の図は [AWS 資源の図](aws-diagrams.md) にある。Lambda・バケット・項目の種類を足したり変えたりしたときは、この文書と architecture.html の両方を更新する。設計の理由は [ADR-001](adr/ADR-001-aws-architecture.md)、データの細部は [DM-001](data-model.md)、API は [API-001](console-api.md) を見る。
 
 ## 図 1 · 全体: 4 種類の利用者と、AWS の上の 2 つの面
 
