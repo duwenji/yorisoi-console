@@ -109,7 +109,7 @@ export interface Notice {
     // To the publishers of the channels that use the collection (API-001 C-20, D-18).
     | 'collection.updated' | 'collection.revoked_used' | 'collection.grants_narrowed'
     // The studio (DES-013 K-15, K-17).
-    | 'studio.approved' | 'studio.declined' | 'studio.suspended' | 'studio.revoked' | 'placement.published' | 'placement.rejected';
+    | 'studio.approved' | 'studio.declined' | 'studio.suspended' | 'studio.revoked' | 'placement.published' | 'placement.rejected' | 'placement.removed' | 'placement.restored';
   publisherId: string;
   channelId?: string;
   collectionId?: string;

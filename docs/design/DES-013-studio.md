@@ -103,6 +103,7 @@ platform のスタジオ（一言と掲載を場所に置き、近くに来た�
 | ブロック | `BLOCKS#{install}` | `B#{blockId}` | — | `target`（置いた人の値）・`createdAt` | 1 年 |
 | 1 日の一言の数 | `NOTES#{install}` | `DAY#{YYYY-MM-DD}` | — | `count` | 2 日 |
 | 締め出し | `BAN#{install}` | `BAN` | — | `until` | `until`（期間なしは消さない） |
+| 締め出しの一覧 | `BANS` | `{noteId}` | — | `author`・`reason`・`createdAt`・`until`。運営の画面には一言の ID だけを出し、`author` は解くときに使う | `until`（期間なしは消さない） |
 | 取り直しの制限 | `FETCH#{install}` | `LAST` | — | 区画の組のハッシュ・時刻 | 10 分 |
 | 置けない区画 | `AREA` | `{geohash5〜7}` | — | `reason`・`createdAt` | 消さない |
 | 運営の列 | `QUEUE#{APPEAL｜REPORTED_PLACEMENT｜REPORTED_NOTE}` | `{id}` | — | `type`・`firstAt`・`lastAt`・`reasons`（通報の理由の集合） | 対応したら消す |

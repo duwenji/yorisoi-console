@@ -87,6 +87,10 @@ export function render(notice: Notice, consoleUrl: string): { subject: string; b
         return ['申し出を受けて掲載を載せました', `確認で返した掲載について申し出を受け、運営が確かめて載せました。${message}`];
       case 'placement.rejected':
         return ['申し出を受けて掲載を載せないと決めました', `確認で返した掲載について申し出を受け、運営が確かめて、載せないと決めました。${message}`];
+      case 'placement.removed':
+        return ['通報を受けて掲載を消しました', `掲載について通報を受け、運営が確かめて、掲載の決まりに反するため消しました。${message}`];
+      case 'placement.restored':
+        return ['通報で止めた掲載を戻しました', `通報を受けて止めていた掲載を、運営が確かめて戻しました。期間の中であれば、また届きます。${message}`];
       case 'transfer.rejected':
         return ['鍵の移し替えを認めませんでした', `鍵の移し替えの申し出を認めませんでした。新しい鍵の紐づけは外しました。${message}`];
     }
