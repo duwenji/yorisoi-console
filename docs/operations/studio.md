@@ -89,7 +89,7 @@ MSYS_NO_PATHCONV=1 aws ssm put-parameter --name /yorisoi-studio/dev/paused --val
 | 項目 | 目安 |
 |---|---|
 | 運営の AI（一言と掲載の確認） | 1 回あたり DeepSeek V3.2 で約 0.0005 USD。中継の月の予算に含まれ、中継と一緒に止まる |
-| Amazon Transcribe | 掲載の音声 1 本（30 秒まで）で約 0.012 USD（1 分 0.024 USD、15 秒単位で切り上げ）。月の合計は CloudWatch のメトリクス `YorisoiStudio` / `TranscribeSeconds` で見る |
+| Amazon Transcribe | 掲載の音声の長さ（1 本 30 秒まで）に応じてかかる。単価は[料金のページ](https://aws.amazon.com/jp/transcribe/pricing/)を東京リージョンにして確かめる。月に文字に起こした秒数は CloudWatch のメトリクス `YorisoiStudio` / `TranscribeSeconds` で見る |
 | 警報 4 つ | 約 0.4 USD/月 |
 | 本番の WAF | 約 7 USD/月 |
 | API Gateway・Lambda・DynamoDB・S3・CloudFront | 使った分だけ。開発用はほぼ 0 |
