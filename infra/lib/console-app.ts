@@ -19,6 +19,7 @@ import * as s3n from 'aws-cdk-lib/aws-s3-notifications';
 import * as secrets from 'aws-cdk-lib/aws-secretsmanager';
 import type * as sns from 'aws-cdk-lib/aws-sns';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
+import * as ssm from 'aws-cdk-lib/aws-ssm';
 import * as wafv2 from 'aws-cdk-lib/aws-wafv2';
 import { Construct } from 'constructs';
 import { existsSync } from 'node:fs';
@@ -199,6 +200,13 @@ export class ConsoleApp extends Construct {
     const authDomain = `${domain.domainName}.auth.${stack.region}.amazoncognito.com`;
     const issuer = `https://cognito-idp.${stack.region}.${stack.urlSuffix}/${userPool.userPoolId}`;
 
+    // The studio stack's names (DES-013 K-2): it is deployed before the console.
+    const studioParam = (name: string) => ssm.StringParameter.valueForStringParameter(this, `/yorisoi-studio/${config.name}/${name}`);
+    const studio = config.studio
+      ? { table: studioParam('table-name'), intake: studioParam('intake-bucket'), check: studioParam('check-function') }
+      : undefined;
+    const studioIntake = studio ? ` https://${studio.intake}.s3.${stack.region}.${stack.urlSuffix}` : '';
+
     // Security headers for the SPA; the CSP allows only this origin and Cognito (aws-auth).
     const headers = new cloudfront.ResponseHeadersPolicy(this, 'ConsoleHeaders', {
       securityHeadersBehavior: {
@@ -211,7 +219,7 @@ export class ConsoleApp extends Construct {
             // The icon of a submission under review comes from a presigned URL on the intake bucket.
             `img-src 'self' data: https://${intakeBucket.bucketRegionalDomainName}`,
             // The review samples call the AI from the browser with the operator's key (ADR-001 D-4, DES-005).
-            `connect-src 'self' https://${authDomain} https://cognito-idp.${stack.region}.${stack.urlSuffix} https://${intakeBucket.bucketRegionalDomainName} https://api.openai.com https://api.deepseek.com`,
+            `connect-src 'self' https://${authDomain} https://cognito-idp.${stack.region}.${stack.urlSuffix} https://${intakeBucket.bucketRegionalDomainName}${studioIntake} https://api.openai.com https://api.deepseek.com`,
             `form-action 'self' https://${authDomain}`,
             "frame-ancestors 'none'",
             "base-uri 'none'",
@@ -330,6 +338,23 @@ export class ConsoleApp extends Construct {
     // Leaving deletes the user (API-001 C-4).
     consoleFn.addToRolePolicy(new iam.PolicyStatement({ actions: ['cognito-idp:AdminDeleteUser'], resources: [userPool.userPoolArn] }));
     props.table.grantReadWriteData(consoleFn);
+    if (studio) {
+      consoleFn.addEnvironment('STUDIO_TABLE', studio.table);
+      consoleFn.addEnvironment('STUDIO_INTAKE_BUCKET', studio.intake);
+      consoleFn.addEnvironment('STUDIO_CHECK_FUNCTION', studio.check);
+      const tableArn = `arn:${stack.partition}:dynamodb:${stack.region}:${stack.account}:table/${studio.table}`;
+      consoleFn.addToRolePolicy(
+        new iam.PolicyStatement({
+          actions: ['dynamodb:GetItem', 'dynamodb:PutItem', 'dynamodb:UpdateItem', 'dynamodb:DeleteItem', 'dynamodb:Query', 'dynamodb:ConditionCheckItem'],
+          resources: [tableArn, `${tableArn}/index/*`],
+        }),
+      );
+      // Presigning the audio's POST needs the right to put it (K-16).
+      consoleFn.addToRolePolicy(new iam.PolicyStatement({ actions: ['s3:PutObject'], resources: [`arn:${stack.partition}:s3:::${studio.intake}/uploads/*`] }));
+      consoleFn.addToRolePolicy(
+        new iam.PolicyStatement({ actions: ['lambda:InvokeFunction'], resources: [`arn:${stack.partition}:lambda:${stack.region}:${stack.account}:function:${studio.check}`] }),
+      );
+    }
     props.publisher.grantInvoke(consoleFn);
     for (const key of props.signingKeys) key.grant(consoleFn, 'kms:GetPublicKey', 'kms:DescribeKey');
     // Registering a signing key reads any KMS key the operator names, in this account only.

@@ -44,6 +44,17 @@ export interface Deps {
   publishCollection: (packageKey: string, sha256: string) => Promise<string>;
   /** The apps of the ecosystem the console knows (DES-011 N-4), by app id. */
   apps: Record<string, AppEntry>;
+  /** The studio's table, intake and check (DES-013 K-2); absent where the studio isn't deployed. */
+  studio?: StudioDeps;
+}
+
+/** What the console uses of the studio stack (DES-013 K-2, K-16). */
+export interface StudioDeps {
+  table: string;
+  /** A presigned S3 POST into the studio's intake bucket, for one placement's audio. */
+  presignAudio: (key: string, maxBytes: number) => Promise<{ url: string; fields: Record<string, string> }>;
+  /** Starts the placement check's Lambda without waiting: a check, or going up after an appeal. */
+  invokeCheck: (event: { check: string } | { publish: string }) => Promise<void>;
 }
 
 /**
@@ -96,13 +107,16 @@ export interface Notice {
     // To the producer (API-001 C-20).
     | 'collection.approved' | 'collection.returned' | 'collection.rejected' | 'collection.revoked' | 'collection.external_failed'
     // To the publishers of the channels that use the collection (API-001 C-20, D-18).
-    | 'collection.updated' | 'collection.revoked_used' | 'collection.grants_narrowed';
+    | 'collection.updated' | 'collection.revoked_used' | 'collection.grants_narrowed'
+    // The studio (DES-013 K-15, K-17).
+    | 'studio.approved' | 'studio.declined' | 'studio.suspended' | 'studio.revoked' | 'placement.published' | 'placement.rejected';
   publisherId: string;
   channelId?: string;
   collectionId?: string;
   submissionId?: string;
   version?: number;
   transferId?: string;
+  placementId?: string;
   /** The operator's message or reason, shown to the publisher. */
   message?: string;
   findings?: { item: string; detail: string }[];

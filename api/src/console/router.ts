@@ -5,6 +5,7 @@ import * as col from './collections.js';
 import * as op from './operator.js';
 import * as pub from './publisher.js';
 import * as review from './review.js';
+import * as studio from './studio.js';
 import * as transfer from './transfer.js';
 
 type Handler = (deps: Deps, req: Request) => Promise<Response>;
@@ -92,6 +93,17 @@ const ROUTES: [string, string, Handler][] = [
   ['GET', '/api/admin/publications', op.listPublications],
   ['POST', '/api/admin/publications', op.republish],
   ['GET', '/api/admin/audit', op.listAudit],
+  // The studio (DES-013 K-14〜K-17).
+  ['GET', '/api/studio', studio.getMyStudio],
+  ['POST', '/api/studio/application', studio.applyForStudio],
+  ['GET', '/api/studio/placements', studio.listMyPlacements],
+  ['POST', '/api/studio/placements', studio.createPlacement],
+  ['POST', '/api/studio/placements/{placementId}/{action}', studio.actOnPlacement],
+  ['GET', '/api/admin/studio/applications', studio.listStudioApplications],
+  ['GET', '/api/admin/publishers/{publisherId}/studio', studio.getPublisherStudio],
+  ['POST', '/api/admin/publishers/{publisherId}/studio/{decision}', studio.decideStudio],
+  ['GET', '/api/admin/studio/appeals', studio.listPlacementAppeals],
+  ['POST', '/api/admin/studio/placements/{placementId}/{decision}', studio.decideAppeal],
 ];
 
 const PARAM: Record<string, RegExp> = {
@@ -100,6 +112,9 @@ const PARAM: Record<string, RegExp> = {
   publisherId: /^[0-9A-HJKMNP-TV-Z]{26}$/,
   submissionId: /^[0-9A-HJKMNP-TV-Z]{26}$/,
   transferId: /^[0-9A-HJKMNP-TV-Z]{26}$/,
+  placementId: /^[0-9A-HJKMNP-TV-Z]{26}$/,
+  action: /^(submit|stop|appeal)$/,
+  decision: /^(approve|decline|suspend|resume|revoke|publish|reject)$/,
 };
 
 function match(pattern: string, path: string): Record<string, string> | null {

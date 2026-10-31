@@ -31,7 +31,7 @@ describe('StudioStack', () => {
   it('serves only the checked audio, never the intake (K-5)', () => {
     prod.resourceCountIs('AWS::CloudFront::Distribution', 1);
     prod.resourceCountIs('AWS::S3::Bucket', 2);
-    prod.hasResourceProperties('AWS::S3::Bucket', { LifecycleConfiguration: { Rules: [Match.objectLike({ ExpirationInDays: 1 })] } });
+    prod.hasResourceProperties('AWS::S3::Bucket', { LifecycleConfiguration: { Rules: Match.arrayWith([Match.objectLike({ Prefix: 'uploads/', ExpirationInDays: 1 })]) } });
     const policies = JSON.stringify(prod.findResources('AWS::S3::BucketPolicy'));
     expect(policies.match(/cloudfront\.amazonaws\.com/g)).toHaveLength(1);
   });
@@ -40,6 +40,19 @@ describe('StudioStack', () => {
     for (const name of ['terms-version', 'terms-url', 'terms-updated-at', 'paused', 'table-name', 'intake-bucket', 'audio-bucket']) {
       prod.hasResourceProperties('AWS::SSM::Parameter', { Name: `/yorisoi-studio/prod/${name}` });
     }
+  });
+
+  it('checks placements with Transcribe and hears back only about its own jobs (K-11)', () => {
+    prod.hasResourceProperties('AWS::Events::Rule', {
+      EventPattern: { source: ['aws.transcribe'], 'detail-type': ['Transcribe Job State Change'], detail: { TranscriptionJobName: [{ prefix: 'studio-prod-' }] } },
+    });
+    const policies = JSON.stringify(prod.findResources('AWS::IAM::Policy'));
+    expect(policies).toContain('transcribe:StartTranscriptionJob');
+    expect(policies.match(/"dynamodb:LeadingKeys":\["TOKEN#\*","SPEND"\]/g)).toHaveLength(2);
+    prod.hasResourceProperties('AWS::SSM::Parameter', { Name: '/yorisoi-studio/prod/check-function' });
+    prod.hasResourceProperties('AWS::S3::Bucket', {
+      LifecycleConfiguration: { Rules: Match.arrayWith([Match.objectLike({ Prefix: 'held/', ExpirationInDays: 30 })]) },
+    });
   });
 
   it('puts WAF and kept data on production only', () => {

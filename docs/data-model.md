@@ -236,6 +236,7 @@ stateDiagram-v2
 | 試用チケット | `CH#{channelId}` | `SUB#{submissionId}#TICKET#{issuedAt}` | — | — |
 | 取り下げ | `CH#{channelId}` | `REVOKE#{revokedAt}` | — | 7 日のあいだ `REVOKED` / `{revokedAt}#{channelId}` |
 | 鍵の移し替え | `PUB#{publisherId}` | `TRANSFER#{transferId}` | `TRANSFERS` / `{requestedAt}#{transferId}`（過去の申し出の一覧） | `requested` のとき `QUEUE#TRANSFER` / `{requestedAt}#{transferId}` |
+| スタジオの承認 | `PUB#{publisherId}` | `STUDIO` | — | 審査待ちのとき `QUEUE#STUDIO` / `{requestedAt}#{publisherId}` |
 | 送ったメール | `NOTICE#{noticeId}` | `NOTICE` | — | — |
 | 公開の先頭 | `PUBLICATION` | `HEAD` | — | — |
 | 公開の履歴 | `PUBLICATION` | `SEQ#{seq を 10 桁で 0 埋め}` | — | — |

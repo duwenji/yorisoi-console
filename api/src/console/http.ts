@@ -50,6 +50,7 @@ const STATUS: Record<ProblemCode, number> = {
   payload_too_large: 413,
   quota_exceeded: 429,
   throttled: 429,
+  studio_not_approved: 403,
   internal: 500,
 };
 
