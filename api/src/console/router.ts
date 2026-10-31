@@ -6,6 +6,8 @@ import * as op from './operator.js';
 import * as pub from './publisher.js';
 import * as review from './review.js';
 import * as studio from './studio.js';
+import * as ops from './studio-ops.js';
+import type { Request as Req } from './http.js';
 import * as transfer from './transfer.js';
 
 type Handler = (deps: Deps, req: Request) => Promise<Response>;
@@ -19,6 +21,12 @@ async function me(deps: Deps, req: Request): Promise<Response> {
     if (pub) publisher = { publisherId: pub.publisherId, displayName: pub.displayName, status: pub.status, rev: pub.rev };
   }
   return json(200, { sub: req.caller.sub, roles: req.caller.roles, publisher });
+}
+
+/** A placement's appeal is answered with publish or reject; a report with restore or remove. */
+function placementDecision(deps: Deps, req: Req): Promise<Response> {
+  const d = req.params.decision;
+  return d === 'restore' || d === 'remove' ? ops.decideReportedPlacement(deps, req, d) : studio.decideAppeal(deps, req);
 }
 
 const ROUTES: [string, string, Handler][] = [
@@ -103,7 +111,17 @@ const ROUTES: [string, string, Handler][] = [
   ['GET', '/api/admin/publishers/{publisherId}/studio', studio.getPublisherStudio],
   ['POST', '/api/admin/publishers/{publisherId}/studio/{decision}', studio.decideStudio],
   ['GET', '/api/admin/studio/appeals', studio.listPlacementAppeals],
-  ['POST', '/api/admin/studio/placements/{placementId}/{decision}', studio.decideAppeal],
+  ['POST', '/api/admin/studio/placements/{placementId}/{decision}', placementDecision],
+  // The studio after things are up (DES-013 K-17, K-18).
+  ['GET', '/api/studio/placements/{placementId}/stats', ops.placementStats],
+  ['GET', '/api/admin/studio/reported-placements', ops.listReportedPlacements],
+  ['GET', '/api/admin/studio/reported-notes', ops.listReportedNotes],
+  ['POST', '/api/admin/studio/notes/{noteId}/{decision}', ops.decideReportedNote],
+  ['GET', '/api/admin/studio/bans', ops.listBans],
+  ['DELETE', '/api/admin/studio/bans/{noteId}', ops.liftBan],
+  ['GET', '/api/admin/studio/areas', ops.listAreas],
+  ['POST', '/api/admin/studio/areas', ops.closeArea],
+  ['DELETE', '/api/admin/studio/areas/{cell}', ops.openArea],
 ];
 
 const PARAM: Record<string, RegExp> = {
@@ -114,7 +132,9 @@ const PARAM: Record<string, RegExp> = {
   transferId: /^[0-9A-HJKMNP-TV-Z]{26}$/,
   placementId: /^[0-9A-HJKMNP-TV-Z]{26}$/,
   action: /^(submit|stop|appeal)$/,
-  decision: /^(approve|decline|suspend|resume|revoke|publish|reject)$/,
+  decision: /^(approve|decline|suspend|resume|revoke|publish|reject|restore|remove)$/,
+  noteId: /^[0-9A-HJKMNP-TV-Z]{26}$/,
+  cell: /^[0123456789bcdefghjkmnpqrstuvwxyz]{5,7}$/,
 };
 
 function match(pattern: string, path: string): Record<string, string> | null {

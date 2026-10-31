@@ -1168,16 +1168,163 @@ export interface paths {
             header?: never;
             path: {
                 placementId: components["parameters"]["PlacementId"];
-                /** @description publish（載せる）・reject（載せない） */
-                decision: "publish" | "reject";
+                /** @description 申し出には publish（載せる）・reject（載せない。message が要る）、通報には restore（戻す）・remove（消す。reason が要る） */
+                decision: "publish" | "reject" | "restore" | "remove";
             };
             cookie?: never;
         };
         get?: never;
         put?: never;
-        /** 申し出を受けて、載せるか載せないかを決める（掲載の決まり 3）。reject には message が要る */
+        /** 申し出に答える（掲載の決まり 3）か、通報された掲載を戻す・消す（同 4.3） */
         post: operations["decideAppeal"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/studio/placements/{placementId}/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                placementId: components["parameters"]["PlacementId"];
+            };
+            cookie?: never;
+        };
+        /** 掲載の日ごとの聞いた数・開いた数（概数。DES-013 K-18） */
+        get: operations["getPlacementStats"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/studio/reported-placements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 通報された掲載（最初の通報の順） */
+        get: operations["listReportedPlacements"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/studio/reported-notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 通報された一言（最初の通報の順）。置いた端末は出さない */
+        get: operations["listReportedNotes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/studio/notes/{noteId}/{decision}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                noteId: components["schemas"]["Ulid"];
+                /** @description restore（隠したのを戻す）・remove（消す。本文も消す。reason が要る。ban で置いた端末を締め出せる） */
+                decision: "restore" | "remove";
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 通報された一言に答える（一言の利用規約 3） */
+        post: operations["decideReportedNote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/studio/bans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 締め出し（もとの一言で示す。端末は出さない） */
+        get: operations["listBans"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/studio/bans/{noteId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                noteId: components["schemas"]["Ulid"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** 締め出しを解く */
+        delete: operations["liftBan"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/studio/areas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 一言・掲載を置けない区画（REQ-STUDIO F-15） */
+        get: operations["listClosedAreas"];
+        put?: never;
+        /** 区画を置けないようにする（アプリには 5 分以内に効く） */
+        post: operations["closeArea"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/studio/areas/{cell}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cell: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** 置けない区画を外す */
+        delete: operations["openArea"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1347,6 +1494,70 @@ export interface components {
                 };
                 maxBytes: number;
             };
+        };
+        /** @description 概数。3 未満は null、3 以上は 3・10・30・100・300・1,000 の区切りの下限（API-STUDIO「概数」） */
+        Approx: {
+            atLeast: number;
+        } | null;
+        PlacementStats: {
+            placementId: components["schemas"]["Ulid"];
+            total: {
+                heard: components["schemas"]["Approx"];
+                opened: components["schemas"]["Approx"];
+            };
+            days: {
+                /** @description 日本時間の日付 */
+                date: string;
+                heard: components["schemas"]["Approx"];
+                opened: components["schemas"]["Approx"];
+            }[];
+        };
+        ReportedPlacement: {
+            placement: components["schemas"]["Placement"];
+            /** @description 通報した端末の数 */
+            reports: number;
+            /** Format: date-time */
+            firstAt: string;
+            /** Format: date-time */
+            lastAt: string;
+            /** @description danger・harassment・ad・rights・inappropriate・other */
+            reasons: string[];
+        };
+        ReportedNote: {
+            noteId: components["schemas"]["Ulid"];
+            /** @description 消した一言にはない */
+            text?: string;
+            cell: string;
+            spotName?: string;
+            /** @description active・hidden（3 台の通報で隠した）・removed・deleted */
+            state: string;
+            /** Format: date-time */
+            expiresAt: string;
+            /** Format: date-time */
+            createdAt: string;
+            reports: number;
+            /** Format: date-time */
+            firstAt: string;
+            /** Format: date-time */
+            lastAt: string;
+            reasons: string[];
+        };
+        Ban: {
+            noteId: components["schemas"]["Ulid"];
+            reason: string;
+            /** Format: date-time */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description ないときは期限なし
+             */
+            until?: string;
+        };
+        ClosedArea: {
+            cell: string;
+            reason: string;
+            /** Format: date-time */
+            createdAt: string;
         };
         Me: {
             sub: string;
@@ -3713,8 +3924,8 @@ export interface operations {
             };
             path: {
                 placementId: components["parameters"]["PlacementId"];
-                /** @description publish（載せる）・reject（載せない） */
-                decision: "publish" | "reject";
+                /** @description 申し出には publish（載せる）・reject（載せない。message が要る）、通報には restore（戻す）・remove（消す。reason が要る） */
+                decision: "publish" | "reject" | "restore" | "remove";
             };
             cookie?: never;
         };
@@ -3722,11 +3933,239 @@ export interface operations {
             content: {
                 "application/json": {
                     message?: string;
+                    reason?: string;
                 };
             };
         };
         responses: {
             200: components["responses"]["Placement"];
+            default: components["responses"]["Error"];
+        };
+    };
+    getPlacementStats: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                placementId: components["parameters"]["PlacementId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 数 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlacementStats"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    listReportedPlacements: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 通報された掲載 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["ReportedPlacement"][];
+                    };
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    listReportedNotes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 通報された一言 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["ReportedNote"][];
+                    };
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    decideReportedNote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                noteId: components["schemas"]["Ulid"];
+                /** @description restore（隠したのを戻す）・remove（消す。本文も消す。reason が要る。ban で置いた端末を締め出せる） */
+                decision: "restore" | "remove";
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    reason?: string;
+                    /** @description 置いた端末を締め出す。days がなければ期限なし */
+                    ban?: {
+                        days?: number;
+                    };
+                };
+            };
+        };
+        responses: {
+            /** @description 答えた */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        noteId: string;
+                        state: string;
+                        ban?: {
+                            /** Format: date-time */
+                            until?: string;
+                        };
+                    };
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    listBans: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 締め出し */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["Ban"][];
+                    };
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    liftBan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                noteId: components["schemas"]["Ulid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 解いた */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    listClosedAreas: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 置けない区画 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["ClosedArea"][];
+                    };
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    closeArea: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    cell: string;
+                    reason: string;
+                };
+            };
+        };
+        responses: {
+            /** @description 置けなくした */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClosedArea"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    openArea: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cell: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 外した */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             default: components["responses"]["Error"];
         };
     };

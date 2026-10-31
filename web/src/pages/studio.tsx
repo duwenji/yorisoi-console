@@ -176,6 +176,7 @@ function Placements({ approved }: { approved: boolean }) {
           </dl>
           {p.state === 'live' && <button className="danger" onClick={() => window.confirm('この掲載を止めますか？止めた掲載は戻せません。') && void act(p, 'stop')}>止める</button>}
           {p.state === 'returned' && <Appeal onSubmit={(message) => act(p, 'appeal', message)} />}
+          {(p.state === 'live' || p.state === 'stopped' || p.state === 'suspended' || p.state === 'removed') && <Stats placementId={p.placementId} />}
         </article>
       ))}
       <button onClick={() => list.reload()}>読み込み直す</button>
@@ -308,6 +309,10 @@ export function OperatorStudio() {
       <Status error={appeals.error} loading={appeals.loading} />
       {appeals.data?.items.length === 0 && <Empty>ありません。</Empty>}
       {appeals.data?.items.map((p) => <AppealReview key={p.placementId} placement={p} onDone={appeals.reload} />)}
+      <ReportedPlacements />
+      <ReportedNotes />
+      <Bans />
+      <ClosedAreas />
     </section>
   );
 }
@@ -466,6 +471,233 @@ export function PublisherStudioAdmin({ publisherId }: { publisherId: string }) {
           <p className="muted">重い違反・なりすまし・権利侵害の繰り返しのとき（掲載の決まり 4.3）。載っている掲載を消し、申し込み直しは 1 年後からです。</p>
         </ReasonForm>
       )}
+    </>
+  );
+}
+
+// ---- after things are up (K-17, K-18) ----
+
+const REASON: Record<string, string> = {
+  danger: '安全を損なう', harassment: '人を傷つける・つきまとい', ad: '宣伝・勧誘', rights: '権利の侵害', inappropriate: '聞かせるのに合わない', other: 'そのほか',
+};
+const reasons = (list: string[]) => list.map((r) => REASON[r] ?? r).join('・');
+const count = (a: Schemas['Approx']) => (a ? `${a.atLeast} 人以上` : '3 人未満');
+
+/** The provider's day counts of a placement, as approximate numbers (K-18). */
+function Stats({ placementId }: { placementId: string }) {
+  const { api } = useSession();
+  const [open, setOpen] = useState(false);
+  const stats = useLoad(async () => (open ? (await api.GET('/api/studio/placements/{placementId}/stats', { params: { path: { placementId } } })).data : undefined), [api, placementId, open]);
+  if (!open) return <button className="link" onClick={() => setOpen(true)}>聞いた数を見る</button>;
+  const s = stats.data;
+  return (
+    <div className="small">
+      <Status error={stats.error} loading={stats.loading} />
+      {s && (
+        <>
+          <p>合計: 聞いた {count(s.total.heard)}、開いた {count(s.total.opened)}（少ない数は、聞いた人の居場所の手がかりになるので出しません）</p>
+          {s.days.length > 0 && (
+            <table>
+              <thead><tr><th>日</th><th>聞いた</th><th>開いた</th></tr></thead>
+              <tbody>{s.days.map((d) => <tr key={d.date}><td>{d.date}</td><td>{count(d.heard)}</td><td>{count(d.opened)}</td></tr>)}</tbody>
+            </table>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function ReportedPlacements() {
+  const { api } = useSession();
+  const list = useLoad(async () => (await api.GET('/api/admin/studio/reported-placements')).data, [api]);
+  const [error, setError] = useState<string>();
+  const decide = async (p: Schemas['Placement'], decision: 'restore' | 'remove', reason?: string) => {
+    setError(undefined);
+    try {
+      await api.POST('/api/admin/studio/placements/{placementId}/{decision}', { params: { path: { placementId: p.placementId, decision }, header: ifMatch(p.rev) }, body: reason ? { reason } : {} });
+      list.reload();
+    } catch (err) {
+      setError(describe(err));
+      throw err;
+    }
+  };
+  return (
+    <>
+      <h2>通報された掲載</h2>
+      <p className="muted small">3 台以上から、または「安全」「権利」で通報された掲載は、届けるのを止めています（掲載の決まり 4.1）。判断の目安は、重いもの 24 時間・軽いもの 7 日です。</p>
+      <Status error={list.error} loading={list.loading} />
+      {list.data?.items.length === 0 && <Empty>ありません。</Empty>}
+      {list.data?.items.map(({ placement: p, reports, reasons: rs, firstAt }) => (
+        <article key={p.placementId} className="card">
+          <p><span className={`tag ${p.state}`}>{PLACEMENT_STATE[p.state]}</span> {p.text}</p>
+          <dl className="facts">
+            <dt>掲載者</dt>
+            <dd><Link to={`/publishers/${p.publisherId}`}>{p.providerName}</Link></dd>
+            <dt>通報</dt>
+            <dd>{reports} 台（{reasons(rs)}）、最初の通報 <Time value={firstAt} /></dd>
+            <dt>期間・区画</dt>
+            <dd><Time value={p.startsAt} /> 〜 <Time value={p.endsAt} />、{p.cells.join(' ')}</dd>
+            {p.check?.transcript !== undefined && (<><dt>音声の書き起こし</dt><dd>{p.check.transcript}</dd></>)}
+          </dl>
+          <button onClick={() => void decide(p, 'restore').catch(() => undefined)}>{p.state === 'suspended' ? '問題なし（戻す）' : '問題なし'}</button>
+          <ReasonForm label="消す" danger submit={(reason) => decide(p, 'remove', reason)}>
+            <p className="muted">理由（掲載の決まりの項目番号）は掲載者にメールで伝わります。繰り返すときは、提供者の画面で承認を止める・取り消すも考えてください。</p>
+          </ReasonForm>
+        </article>
+      ))}
+      {error && <p className="error" role="alert">{error}</p>}
+    </>
+  );
+}
+
+function ReportedNotes() {
+  const { api } = useSession();
+  const list = useLoad(async () => (await api.GET('/api/admin/studio/reported-notes')).data, [api]);
+  const [ban, setBan] = useState<Record<string, string>>({});
+  const [error, setError] = useState<string>();
+  const decide = async (noteId: string, decision: 'restore' | 'remove', reason?: string) => {
+    setError(undefined);
+    const days = ban[noteId] ?? '';
+    try {
+      await api.POST('/api/admin/studio/notes/{noteId}/{decision}', {
+        params: { path: { noteId, decision } },
+        body: { ...(reason ? { reason } : {}), ...(decision === 'remove' && days !== '' ? { ban: days === 'forever' ? {} : { days: Number(days) } } : {}) },
+      });
+      list.reload();
+    } catch (err) {
+      setError(describe(err));
+      throw err;
+    }
+  };
+  return (
+    <>
+      <h2>通報された一言</h2>
+      <p className="muted small">3 台以上から通報された一言は、だれにも届けていません（隠している）。置いた端末は運営にも分かりません。消すと本文も消え、置いた端末を締め出せます。</p>
+      <Status error={list.error} loading={list.loading} />
+      {list.data?.items.length === 0 && <Empty>ありません。</Empty>}
+      {list.data?.items.map((n) => (
+        <article key={n.noteId} className="card">
+          <p><span className={`tag ${n.state === 'hidden' ? 'suspended' : n.state}`}>{n.state === 'hidden' ? '隠している' : n.state}</span> {n.text ?? <span className="muted">（本文なし）</span>}</p>
+          <dl className="facts">
+            <dt>場所</dt>
+            <dd><code>{n.cell}</code> {n.spotName}</dd>
+            <dt>通報</dt>
+            <dd>{n.reports} 台（{reasons(n.reasons)}）、最初の通報 <Time value={n.firstAt} /></dd>
+            <dt>置いた・期限</dt>
+            <dd><Time value={n.createdAt} /> 〜 <Time value={n.expiresAt} /></dd>
+          </dl>
+          {n.state === 'hidden' && <button onClick={() => void decide(n.noteId, 'restore').catch(() => undefined)}>問題なし（戻す）</button>}
+          <ReasonForm label="消す" danger submit={(reason) => decide(n.noteId, 'remove', reason)}>
+            <label>
+              置いた端末の締め出し
+              <select value={ban[n.noteId] ?? ''} onChange={(e) => setBan({ ...ban, [n.noteId]: e.target.value })}>
+                <option value="">締め出さない</option>
+                <option value="7">7 日</option>
+                <option value="30">30 日</option>
+                <option value="90">90 日</option>
+                <option value="forever">期限なし</option>
+              </select>
+            </label>
+          </ReasonForm>
+        </article>
+      ))}
+      {error && <p className="error" role="alert">{error}</p>}
+    </>
+  );
+}
+
+function Bans() {
+  const { api } = useSession();
+  const list = useLoad(async () => (await api.GET('/api/admin/studio/bans')).data, [api]);
+  const [error, setError] = useState<string>();
+  const lift = async (noteId: string) => {
+    if (!window.confirm('締め出しを解きますか？')) return;
+    setError(undefined);
+    try {
+      await api.DELETE('/api/admin/studio/bans/{noteId}', { params: { path: { noteId } } });
+      list.reload();
+    } catch (err) {
+      setError(describe(err));
+    }
+  };
+  return (
+    <>
+      <h2>締め出し</h2>
+      <p className="muted small">もとの一言で示します。アプリを入れ直すと別の端末として扱われる点に注意してください。</p>
+      <Status error={list.error} loading={list.loading} />
+      {list.data?.items.length === 0 && <Empty>ありません。</Empty>}
+      {list.data && list.data.items.length > 0 && (
+        <table>
+          <thead><tr><th>もとの一言</th><th>理由</th><th>締め出した</th><th>期限</th><th></th></tr></thead>
+          <tbody>
+            {list.data.items.map((b) => (
+              <tr key={b.noteId}>
+                <td><code>{b.noteId}</code></td>
+                <td>{b.reason}</td>
+                <td><Time value={b.createdAt} /></td>
+                <td>{b.until ? <Time value={b.until} /> : '期限なし'}</td>
+                <td><button className="link" onClick={() => void lift(b.noteId)}>解く</button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      {error && <p className="error" role="alert">{error}</p>}
+    </>
+  );
+}
+
+function ClosedAreas() {
+  const { api } = useSession();
+  const list = useLoad(async () => (await api.GET('/api/admin/studio/areas')).data, [api]);
+  const [cell, setCell] = useState('');
+  const [reason, setReason] = useState('');
+  const [error, setError] = useState<string>();
+  const close = async (e: FormEvent) => {
+    e.preventDefault();
+    setError(undefined);
+    try {
+      await api.POST('/api/admin/studio/areas', { body: { cell, reason } });
+      setCell('');
+      setReason('');
+      list.reload();
+    } catch (err) {
+      setError(describe(err));
+    }
+  };
+  const open = async (c: string) => {
+    setError(undefined);
+    try {
+      await api.DELETE('/api/admin/studio/areas/{cell}', { params: { path: { cell: c } } });
+      list.reload();
+    } catch (err) {
+      setError(describe(err));
+    }
+  };
+  return (
+    <>
+      <h2>置けない区画</h2>
+      <p className="muted small">学校・病院・私有地の周りなど。一言は置けず、掲載もその区画を選べなくなります（アプリには 5 分以内に効きます）。区画は geohash の 5〜7 文字（5 文字は約 5 km 四方、6 文字は約 1.2 km × 0.6 km、7 文字は約 150 m 四方）。</p>
+      <Status error={list.error} loading={list.loading} />
+      {list.data?.items.length === 0 && <Empty>ありません。</Empty>}
+      <ul className="plain">
+        {list.data?.items.map((a) => (
+          <li key={a.cell}><code>{a.cell}</code> {a.reason} <span className="muted small"><Time value={a.createdAt} /></span> <button className="link" onClick={() => void open(a.cell)}>外す</button></li>
+        ))}
+      </ul>
+      <form className="action" onSubmit={(e) => void close(e)}>
+        <label>
+          区画（geohash 5〜7 文字）
+          <input required pattern="[0-9b-hjkmnp-z]{5,7}" value={cell} onChange={(e) => setCell(e.target.value.trim().toLowerCase())} />
+        </label>
+        <label>
+          理由
+          <input required maxLength={500} value={reason} onChange={(e) => setReason(e.target.value)} />
+        </label>
+        <button>置けないようにする</button>
+        {error && <p className="error" role="alert">{error}</p>}
+      </form>
     </>
   );
 }

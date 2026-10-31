@@ -1229,17 +1229,130 @@ paths:
       - name: decision
         in: path
         required: true
-        description: publish（載せる）・reject（載せない）
-        schema: { type: string, enum: [publish, reject] }
+        description: 申し出には publish（載せる）・reject（載せない。message が要る）、通報には restore（戻す）・remove（消す。reason が要る）
+        schema: { type: string, enum: [publish, reject, restore, remove] }
     post:
       tags: [admin-studio]
       operationId: decideAppeal
-      summary: 申し出を受けて、載せるか載せないかを決める（掲載の決まり 3）。reject には message が要る
+      summary: 申し出に答える（掲載の決まり 3）か、通報された掲載を戻す・消す（同 4.3）
       parameters: [{ $ref: '#/components/parameters/IfMatch' }]
       requestBody:
-        content: { application/json: { schema: { type: object, properties: { message: { type: string, maxLength: 1000 } } } } }
+        content: { application/json: { schema: { type: object, properties: { message: { type: string, maxLength: 1000 }, reason: { type: string, maxLength: 1000 } } } } }
       responses:
         '200': { $ref: '#/components/responses/Placement' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /api/studio/placements/{placementId}/stats:
+    parameters: [{ $ref: '#/components/parameters/PlacementId' }]
+    get:
+      tags: [studio]
+      operationId: getPlacementStats
+      summary: 掲載の日ごとの聞いた数・開いた数（概数。DES-013 K-18）
+      responses:
+        '200': { description: 数, content: { application/json: { schema: { $ref: '#/components/schemas/PlacementStats' } } } }
+        default: { $ref: '#/components/responses/Error' }
+
+  /api/admin/studio/reported-placements:
+    get:
+      tags: [admin-studio]
+      operationId: listReportedPlacements
+      summary: 通報された掲載（最初の通報の順）
+      responses:
+        '200': { description: 通報された掲載, content: { application/json: { schema: { type: object, required: [items], properties: { items: { type: array, items: { $ref: '#/components/schemas/ReportedPlacement' } } } } } } }
+        default: { $ref: '#/components/responses/Error' }
+
+  /api/admin/studio/reported-notes:
+    get:
+      tags: [admin-studio]
+      operationId: listReportedNotes
+      summary: 通報された一言（最初の通報の順）。置いた端末は出さない
+      responses:
+        '200': { description: 通報された一言, content: { application/json: { schema: { type: object, required: [items], properties: { items: { type: array, items: { $ref: '#/components/schemas/ReportedNote' } } } } } } }
+        default: { $ref: '#/components/responses/Error' }
+
+  /api/admin/studio/notes/{noteId}/{decision}:
+    parameters:
+      - name: noteId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Ulid' }
+      - name: decision
+        in: path
+        required: true
+        description: restore（隠したのを戻す）・remove（消す。本文も消す。reason が要る。ban で置いた端末を締め出せる）
+        schema: { type: string, enum: [restore, remove] }
+    post:
+      tags: [admin-studio]
+      operationId: decideReportedNote
+      summary: 通報された一言に答える（一言の利用規約 3）
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason: { type: string, maxLength: 1000 }
+                ban: { type: object, description: 置いた端末を締め出す。days がなければ期限なし, properties: { days: { type: integer, minimum: 1, maximum: 365 } } }
+      responses:
+        '200':
+          description: 答えた
+          content: { application/json: { schema: { type: object, required: [noteId, state], properties: { noteId: { type: string }, state: { type: string }, ban: { type: object, properties: { until: { type: string, format: date-time } } } } } } }
+        default: { $ref: '#/components/responses/Error' }
+
+  /api/admin/studio/bans:
+    get:
+      tags: [admin-studio]
+      operationId: listBans
+      summary: 締め出し（もとの一言で示す。端末は出さない）
+      responses:
+        '200': { description: 締め出し, content: { application/json: { schema: { type: object, required: [items], properties: { items: { type: array, items: { $ref: '#/components/schemas/Ban' } } } } } } }
+        default: { $ref: '#/components/responses/Error' }
+
+  /api/admin/studio/bans/{noteId}:
+    parameters:
+      - name: noteId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Ulid' }
+    delete:
+      tags: [admin-studio]
+      operationId: liftBan
+      summary: 締め出しを解く
+      responses:
+        '204': { description: 解いた }
+        default: { $ref: '#/components/responses/Error' }
+
+  /api/admin/studio/areas:
+    get:
+      tags: [admin-studio]
+      operationId: listClosedAreas
+      summary: 一言・掲載を置けない区画（REQ-STUDIO F-15）
+      responses:
+        '200': { description: 置けない区画, content: { application/json: { schema: { type: object, required: [items], properties: { items: { type: array, items: { $ref: '#/components/schemas/ClosedArea' } } } } } } }
+        default: { $ref: '#/components/responses/Error' }
+    post:
+      tags: [admin-studio]
+      operationId: closeArea
+      summary: 区画を置けないようにする（アプリには 5 分以内に効く）
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, required: [cell, reason], properties: { cell: { type: string, pattern: '^[0-9b-hjkmnp-z]{5,7}$' }, reason: { type: string, minLength: 1, maxLength: 500 } } } } }
+      responses:
+        '201': { description: 置けなくした, content: { application/json: { schema: { $ref: '#/components/schemas/ClosedArea' } } } }
+        default: { $ref: '#/components/responses/Error' }
+
+  /api/admin/studio/areas/{cell}:
+    parameters:
+      - name: cell
+        in: path
+        required: true
+        schema: { type: string, pattern: '^[0-9b-hjkmnp-z]{5,7}$' }
+    delete:
+      tags: [admin-studio]
+      operationId: openArea
+      summary: 置けない区画を外す
+      responses:
+        '204': { description: 外した }
         default: { $ref: '#/components/responses/Error' }
 
 components:
@@ -1606,6 +1719,66 @@ components:
             url: { type: string }
             fields: { type: object, additionalProperties: { type: string } }
             maxBytes: { type: integer }
+
+    Approx:
+      type: [object, 'null']
+      description: 概数。3 未満は null、3 以上は 3・10・30・100・300・1,000 の区切りの下限（API-STUDIO「概数」）
+      required: [atLeast]
+      properties:
+        atLeast: { type: integer }
+
+    PlacementStats:
+      type: object
+      required: [placementId, total, days]
+      properties:
+        placementId: { $ref: '#/components/schemas/Ulid' }
+        total: { type: object, required: [heard, opened], properties: { heard: { $ref: '#/components/schemas/Approx' }, opened: { $ref: '#/components/schemas/Approx' } } }
+        days:
+          type: array
+          items: { type: object, required: [date, heard, opened], properties: { date: { type: string, description: 日本時間の日付 }, heard: { $ref: '#/components/schemas/Approx' }, opened: { $ref: '#/components/schemas/Approx' } } }
+
+    ReportedPlacement:
+      type: object
+      required: [placement, reports, firstAt, lastAt, reasons]
+      properties:
+        placement: { $ref: '#/components/schemas/Placement' }
+        reports: { type: integer, description: 通報した端末の数 }
+        firstAt: { type: string, format: date-time }
+        lastAt: { type: string, format: date-time }
+        reasons: { type: array, items: { type: string }, description: danger・harassment・ad・rights・inappropriate・other }
+
+    ReportedNote:
+      type: object
+      required: [noteId, cell, state, expiresAt, createdAt, reports, firstAt, lastAt, reasons]
+      properties:
+        noteId: { $ref: '#/components/schemas/Ulid' }
+        text: { type: string, description: 消した一言にはない }
+        cell: { type: string }
+        spotName: { type: string }
+        state: { type: string, description: active・hidden（3 台の通報で隠した）・removed・deleted }
+        expiresAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+        reports: { type: integer }
+        firstAt: { type: string, format: date-time }
+        lastAt: { type: string, format: date-time }
+        reasons: { type: array, items: { type: string } }
+
+    Ban:
+      type: object
+      required: [noteId, reason, createdAt]
+      properties:
+        noteId: { $ref: '#/components/schemas/Ulid' }
+        reason: { type: string }
+        createdAt: { type: string, format: date-time }
+        until: { type: string, format: date-time, description: ないときは期限なし }
+
+    ClosedArea:
+      type: object
+      required: [cell, reason, createdAt]
+      properties:
+        cell: { type: string }
+        reason: { type: string }
+        createdAt: { type: string, format: date-time }
 
     Me:
       type: object

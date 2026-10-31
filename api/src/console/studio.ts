@@ -22,7 +22,7 @@ const LIST_MAX = 50;
 const GEOHASH6 = /^[0123456789bcdefghjkmnpqrstuvwxyz]{6}$/;
 const HHMM = /^([01][0-9]|2[0-3]):[0-5][0-9]$/;
 
-function studioOf(deps: Deps): StudioDeps {
+export function studioOf(deps: Deps): StudioDeps {
   return deps.studio ?? fail('not_found', 'the studio is not set up here');
 }
 
@@ -198,7 +198,7 @@ async function takeDown(deps: Deps, publisherId: string, to: 'suspended' | 'remo
   }
 }
 
-function downItems(studio: StudioDeps, p: Item, to: string, at: string): TransactItems {
+export function downItems(studio: StudioDeps, p: Item, to: string, at: string): TransactItems {
   const id = String(p.id);
   return [
     {
@@ -249,7 +249,7 @@ async function placementsOf(deps: Deps, studio: StudioDeps, publisherId: string)
   return out.Items ?? [];
 }
 
-async function loadPlacement(deps: Deps, studio: StudioDeps, id: string): Promise<Item> {
+export async function loadPlacement(deps: Deps, studio: StudioDeps, id: string): Promise<Item> {
   const out = await deps.db.send(new GetCommand({ TableName: studio.table, Key: { PK: `PLACEMENT#${id}`, SK: 'PLACEMENT' }, ConsistentRead: true }));
   return out.Item ?? fail('not_found', `no placement ${id}`);
 }
@@ -340,7 +340,7 @@ async function myPlacement(deps: Deps, req: Request): Promise<{ studio: StudioDe
   return { studio, placement, rev };
 }
 
-function stateChange(studio: StudioDeps, id: string, rev: number, from: string, to: string, at: string, extra: Record<string, unknown> = {}) {
+export function stateChange(studio: StudioDeps, id: string, rev: number, from: string, to: string, at: string, extra: Record<string, unknown> = {}) {
   const names: Record<string, string> = { '#s': 'state' };
   const values: Record<string, unknown> = { ':to': to, ':from': from, ':rev': rev, ':now': at, ':one': 1 };
   const sets = Object.entries(extra).map(([k, v], i) => {
