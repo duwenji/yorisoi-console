@@ -185,6 +185,13 @@ export class RelayStack extends Stack {
     alarm('BadSetting', 'InvalidSetting', 'Maximum', 1, 'A relay parameter is not valid; the relay uses 30 calls, the default budget or the default model (ADR-AI-RELAY R-5, R-14)');
     alarm('UpstreamErrors', 'UpstreamError', 'Sum', 10, 'Bedrock failed 10 times in 5 minutes');
 
+    // The studio reads tokens here and adds its AI's cost to the month (console DES-013 K-2, K-3).
+    new ssm.StringParameter(this, 'TableNameParameter', {
+      parameterName: `/yorisoi-ai-relay/${config.name}/table-name`,
+      stringValue: table.tableName,
+      description: 'The relay’s table, read by the studio stack (DES-013 K-3)',
+    });
+
     new CfnOutput(this, 'RelayUrl', { value: `${api.url}` });
     new CfnOutput(this, 'DailyLimitParameter', { value: dailyLimit.parameterName });
     new CfnOutput(this, 'MonthlyBudgetParameter', { value: monthlyBudget.parameterName });

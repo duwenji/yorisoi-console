@@ -11,7 +11,7 @@
 | 作成日 | 2026-10-31 |
 | 作成者 | Claude（開発者との検討） |
 | 承認者 | 開発者 |
-| ステータス | 草案（未承認） |
+| ステータス | 承認済（2026-10-31） |
 | 版 | 1.0 |
 
 ## 目的・背景
@@ -105,7 +105,7 @@ platform のスタジオ（一言と掲載を場所に置き、近くに来た�
 | 締め出し | `BAN#{install}` | `BAN` | — | `until` | `until`（期間なしは消さない） |
 | 取り直しの制限 | `FETCH#{install}` | `LAST` | — | 区画の組のハッシュ・時刻 | 10 分 |
 | 置けない区画 | `AREA` | `{geohash5〜7}` | — | `reason`・`createdAt` | 消さない |
-| 運営の列 | `QUEUE#{APPEAL｜REPORTED_PLACEMENT｜REPORTED_NOTE}` | `{at}#{id}` | — | — | 対応したら消す |
+| 運営の列 | `QUEUE#{APPEAL｜REPORTED_PLACEMENT｜REPORTED_NOTE}` | `{id}` | — | `type`・`firstAt`・`lastAt`・`reasons`（通報の理由の集合） | 対応したら消す |
 
 - 一言を消す・隠すときは、`NOTE#` と `CELL#` の両方を条件付きで書き換える（`TransactWrite`）
 - 掲載が `live` になるとき `CELL#…`/`P#…` を区画の数だけ書き、`live` を出るときに消す
