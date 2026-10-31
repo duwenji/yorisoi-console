@@ -90,6 +90,7 @@ SanpoGuide のアプリは、第三者が配信するチャンネルのうち、
 | A-17 | 配備 | AWS CDK（TypeScript）で両方のアカウントに配備する。GitHub Actions から OIDC で AWS に入る（長期のアクセスキーを持たない）。本番への配備は手動で承認する |
 | A-21 | 運営の AI の中継（platform ADR-AI-RELAY・API-AI-RELAY） | 管理システムと同じアカウントに、別のスタック `YorisoiAiRelay-<env>`（別の CDK アプリ `infra/bin/relay.ts`）で置く。API Gateway は AWS WAF を付けられる REST API にする（HTTP API には付けられない）。Lambda（`api/src/relay/`）が Bedrock のモデルを、日本の中で処理する形（東京リージョンのモデルか jp 推論プロファイル）で、ロールで呼ぶ（Converse API）。呼べるモデルは設定の一覧（DeepSeek V3.2 と Claude Haiku 4.5）に限り、どれを使うかと 1 日の上限・月の予算は Parameter Store に置く（配備し直さずに切り替える）。月の費用は中継がトークン数から足し上げ、予算に達したらその場で止める（AWS Budgets は反映が遅いため使わない）。手順は [運営の AI の手順](../operations/ai-relay.md) |
 | A-22 | 運営のスポットのタイル（platform ADR-SPOT-TILES・API-SPOT-TILES） | 管理システムと同じアカウントに、別のスタック `YorisoiSpotTiles-<env>`（別の CDK アプリ `infra/bin/tiles.ts`）で置く。S3 のバケットを CloudFront（OAC、アクセスログなし）で配り、範囲外のタイルが 404 になるようバケットの一覧も許す。毎週、EventBridge Scheduler が ECS Fargate のタスク（`tiles/`。osmium-tool・pyosmium）を動かし、Geofabrik の日本の抽出からタイルを作って、中身が変わったものだけ上げる。前回より 1 割を超えて減ったら上げずに止め、運営に知らせる。VPC は公開サブネットだけで NAT は置かない。手順は [スポットのタイルの手順](../operations/spot-tiles.md) |
+| A-23 | スタジオ（platform ADR-STUDIO・API-STUDIO、DES-013） | 管理システムと同じアカウントに、別のスタック `YorisoiStudio-<env>`（別の CDK アプリ `infra/bin/studio.ts`）で置く。API Gateway は AWS WAF を付けられる REST API にする。トークン・運営の AI のモデルと月の予算は中継のものを使い、中継の表と Parameter Store を読む（費用は中継の月の合計に足す）。一言・掲載は DynamoDB の表に、掲載の音声は S3 に置いて CloudFront で配る。掲載の音声は Amazon Transcribe で文字に起こして確かめる。配備は中継 → スタジオ → 管理システムの順 |
 
 ```mermaid
 flowchart LR
