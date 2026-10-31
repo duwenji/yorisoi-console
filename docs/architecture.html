@@ -661,6 +661,27 @@ td.files{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
     </div>
   </section>
 
+  <!-- studio -->
+  <section>
+    <div class="sec-head">
+      <div class="eyebrow">スタジオ（DES-013、別のスタック YorisoiStudio）</div>
+      <h2>掲載と一言は別のスタックに置き、管理システムは提供者と運営の操作だけを受け持つ</h2>
+      <p>スタジオは、散策者・走る人が場所に残した一言と、運営が承認した提供者の掲載を、近くを通る人に読み上げる仕組みです（platform の REQ-STUDIO・API-STUDIO）。アプリはスタジオの API を中継のトークンで直接呼び、管理システムは通りません。管理システムは配備のときに Parameter Store からスタジオの表・バケット・確認の Lambda の名前を読み、次を受け持ちます。資源の図は <code>docs/aws-diagrams.md</code>、手順は <code>docs/operations/studio.md</code> にあります。</p>
+    </div>
+    <div class="tw">
+      <table>
+        <thead><tr><th></th><th>提供者（チャンネル提供者・素材提供者）</th><th>運営</th></tr></thead>
+        <tbody>
+          <tr><td>承認</td><td>掲載を出す承認を申し込む（掲載の決まりに同意）。承認の項目は管理システムの表の <code>PUB#{id}</code> / <code>STUDIO</code></td><td>本人確認など 4 項目を確かめて承認・見送り。あとから期間を決めて止める・取り消す</td></tr>
+          <tr><td>掲載</td><td>文字・音声（M4A、30 秒・512 KB まで）・区画（地図で 9 つまで）・期間・時間帯を入れて載せる。音声は署名付き POST で受け取り用のバケットへ。掲載は審査なしに自分の責任で載る</td><td>—</td></tr>
+          <tr><td>確認</td><td>確認の Lambda（長さ・形式 → Transcribe → 運営の AI）に当たると返る。直して作り直すか、申し出る</td><td>申し出の列で、AI の指摘と書き起こしを見て載せる・載せない</td></tr>
+          <tr><td>通報</td><td>—</td><td>3 台から（「安全」「権利」は 1 台から）通報された掲載、3 台から通報された一言の列。戻す・消す、一言を置いた端末の締め出し（7・30・90 日・期限なし）</td></tr>
+          <tr><td>そのほか</td><td>掲載ごとの日ごとの聞いた数・開いた数（3 未満は出さない概数）</td><td>置けない区画（geohash 5〜7 文字）</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
   <!-- data -->
   <section>
     <div class="sec-head">
@@ -766,6 +787,8 @@ td.files{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
           <tr><td>審査の見本の AI を足す</td><td><code>web/src/ai.ts</code> の <code>AI_SERVICES</code> と、<code>infra/lib/console-app.ts</code> の CSP（<code>connect-src</code>）</td></tr>
           <tr><td>メールの文面を変える</td><td><code>api/src/notify/notify.ts</code> の <code>render()</code></td></tr>
           <tr><td>環境ごとの守りや費用を変える</td><td><code>infra/lib/config.ts</code>（<code>cost</code>・<code>notify</code>）。費用は <code>docs/operations/cost.md</code></td></tr>
+          <tr><td>スタジオの提供者・運営の操作を変える</td><td><code>api/src/console/studio.ts</code>（提供者）・<code>studio-ops.ts</code>（運営）、画面は <code>web/src/pages/studio.tsx</code>。アプリ向けは <code>api/src/studio/</code>、資源は <code>infra/lib/studio-stack.ts</code></td></tr>
+          <tr><td>一言・掲載の確認を変える</td><td><code>api/src/studio/check.ts</code>（決まった形と AI への指示）・<code>placement.ts</code>（掲載の確認の順番）。指示を変えたら確認の見本のテストも</td></tr>
           <tr><td>署名鍵を入れ替える</td><td>KMS に鍵を作り <code>config.ts</code> の <code>signingKeyIds</code> に足す → 画面で登録 → ルート鍵で鍵セットに署名して登録</td></tr>
         </tbody>
       </table>

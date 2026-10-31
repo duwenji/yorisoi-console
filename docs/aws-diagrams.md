@@ -1,9 +1,9 @@
 # AWS 資源の図（CDK から生成）
 
-infra の 3 つの CDK アプリを [cdk-dia](https://github.com/pistazie/cdk-dia) で描いた図。CDK のコードから機械的に作るので、**いま配備される資源とそのつながり** がそのまま出る。
+infra の 4 つの CDK アプリを [cdk-dia](https://github.com/pistazie/cdk-dia) で描いた図。CDK のコードから機械的に作るので、**いま配備される資源とそのつながり** がそのまま出る。
 
 - 処理の流れ（誰が何をして、どの順に動くか）は手で描いた [構成図](architecture.md) を見る。この文書は「その流れを支える AWS の資源が、CDK の上で実際にどう組まれているか」を確かめるためのもの
-- 3 つのスタックは別々に配備する。管理システム（YorisoiConsole）・AI の中継（YorisoiAiRelay）・スポットのタイル（YorisoiSpotTiles）の間に、CDK の上のつながりはない
+- 4 つのスタックは別々に配備する。管理システム（YorisoiConsole）・AI の中継（YorisoiAiRelay）・スタジオ（YorisoiStudio）・スポットのタイル（YorisoiSpotTiles）の間に、CDK の上のつながりはない。スタジオは中継の表、管理システムはスタジオの表・バケットを、配備のときに Parameter Store から名前で読む
 
 ## 図の読み方
 
@@ -47,6 +47,17 @@ infra の 3 つの CDK アプリを [cdk-dia](https://github.com/pistazie/cdk-di
 - Table は回数・nonce・トークンを持ち、どれも期限で消える
 - 予算に近い・止まっている・設定がおかしい・上流のエラー、は Alarms からメールで運営に届く（警報そのものは主要な図では省いている）
 
+## スタジオ（YorisoiStudio）
+
+![スタジオの AWS 資源](diagrams/studio.png)
+
+全部の図: [studio-all.png](diagrams/studio-all.png)
+
+- アプリは Api（API Gateway の REST API。本番は ApiWaf で送信元ごとに回数を絞る）を中継のトークンで呼び、Studio が一言を置く・区画の一覧・反応・通報・ブロックを Table に読み書きする。一言を置くときは Bedrock で確かめる
+- 掲載の音声は、提供者が管理システムの画面から Intake に送る。管理システムが PlacementCheck を呼ぶと、長さ・形式を見て Transcribe に文字起こしを頼み、終わりを TranscribeDone が拾って PlacementCheck に戻す。Bedrock で確かめて通ったら Audio に写し、アプリは AudioCdn から読む
+- 運営は Parameter Store の TermsVersion・TermsUrl・TermsUpdatedAt（一言の利用規約）と Paused（スタジオを止める）を配備し直さずに変えられる。TableNameParameter など 4 つは管理システムが配備のときに読む
+- 一言の確認の失敗が続く・設定がおかしい・通報で一言が隠れた・通報で掲載が止まった、は Alarms からメールで運営に届く
+
 ## スポットのタイル（YorisoiSpotTiles）
 
 ![スポットのタイルの AWS 資源](diagrams/tiles.png)
@@ -62,6 +73,6 @@ infra の 3 つの CDK アプリを [cdk-dia](https://github.com/pistazie/cdk-di
 CDK の資源を足したり名前を変えたりしたら作り直す。
 
 1. [Graphviz](https://graphviz.org/download/) を入れ、`dot` を PATH に通す
-2. `npm run diagrams -w infra` を実行する。3 つのアプリを開発用の設定で synth し、`docs/diagrams/` の 6 枚を書き換える。AWS の認証は要らない
+2. `npm run diagrams -w infra` を実行する。4 つのアプリを開発用の設定で synth し、`docs/diagrams/` の 8 枚を書き換える。AWS の認証は要らない
 
 日本語の役割・省く資源・枠の名前は [infra/tools/diagrams.mjs](../infra/tools/diagrams.mjs) にある。役割のない資源は英語の名前だけで出るので、新しい資源には役割を足す。

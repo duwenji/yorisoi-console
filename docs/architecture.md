@@ -1,10 +1,10 @@
 # チャンネル管理システムの構成図
 
-yorisoi-console を 8 枚の図で説明する。図 1 で「誰が何を使い、どこに何があるか」をつかみ、図 2〜3 でリポジトリと信頼の仕組み、図 4〜8 で申請から公開まで・公開の処理・データの置き場所・メールと警報・環境を追う。
+yorisoi-console を 9 枚の図で説明する。図 1 で「誰が何を使い、どこに何があるか」をつかみ、図 2〜3 でリポジトリと信頼の仕組み、図 4〜8 で申請から公開まで・公開の処理・データの置き場所・メールと警報・環境を追い、図 9 でスタジオ（場所に残る一言と提供者の掲載）の管理を見る。
 
 - 何をするシステムか: SanpoGuide のアプリに第三者のチャンネルと素材集を届けるため、チャンネル提供者・素材提供者の申請を審査し、承認したものだけを署名したリスト（承認済みチャンネル・リスト）で公開する
 - アプリとの境界は [platform API-CHANNEL-LIST](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-LIST.md) だけ。アプリはこのシステムの API を呼ばず、公開された静的ファイルを取りに来る
-- 規模: ソース 71 ファイル・約 10,440 行（TypeScript と Kotlin。テスト・生成した型・e2e を除く）、テスト 16 ファイル・約 2,920 行。Lambda 5 つ、画面 1 つ（運営・チャンネル提供者・素材提供者で共用）、管理 API 66 操作、DynamoDB のテーブル 1 つ、S3 のバケット 4 つ
+- 規模: ソース 126 ファイル・約 15,870 行（TypeScript と Kotlin。中継・タイル・スタジオのスタックを含み、テスト・生成した型・e2e を除く）、テスト 26 ファイル・約 4,600 行。管理システムの Lambda 5 つ、画面 1 つ（運営・チャンネル提供者・素材提供者で共用）、管理 API 85 操作、DynamoDB のテーブル 1 つ、S3 のバケット 4 つ
 
 **手で配置した図・凡例・コードから確かめた細部つきの版は [architecture.html](architecture.html)**（ブラウザで開く）。この Markdown 版は GitHub の上で読むためのもので、同じ構成を Mermaid で描いている。
 
@@ -264,9 +264,36 @@ flowchart LR
 
 配備の手順は [docs/operations/deploy.md](operations/deploy.md)、鍵の手順は [docs/operations/keys.md](operations/keys.md)、費用は [docs/operations/cost.md](operations/cost.md)。
 
+## 図 9 · スタジオ: 管理の面から、別のスタックの掲載と一言を扱う
+
+スタジオ（platform [REQ-STUDIO](https://github.com/duwenji/yorisoi-platform/blob/main/docs/requirements/REQ-STUDIO.md)）は別のスタック `YorisoiStudio-<env>` にあり、アプリはその API を直接呼ぶ（[DES-013](design/DES-013-studio.md)）。管理システムは、配備のときに Parameter Store からスタジオの表・バケット・確認の Lambda の名前を読み、提供者の掲載と運営の対応を受け持つ。
+
+```mermaid
+flowchart LR
+  PUB["提供者<br/>承認の申し込み・掲載を作る・数を見る"] --> CAPI["管理 API の Lambda<br/>api/src/console/studio.ts"]
+  OP["運営<br/>承認・申し出・通報・締め出し・置けない区画"] --> CAPI
+  CAPI -->|承認の項目 PUB#…/STUDIO| CDDB[("管理システムの DynamoDB")]
+  CAPI -->|掲載・運営の列・締め出し| SDDB[("スタジオの DynamoDB")]
+  PUB -->|署名付き POST で音声| INT[("受け取り用 S3<br/>uploads/")]
+  CAPI -->|載せる| CHK["掲載の確認の Lambda<br/>長さ・形式 → Transcribe → 運営の AI"]
+  CHK --> INT
+  CHK -->|通ったら写す| AUD[("配信用 S3<br/>placements/")]
+  CHK -->|live・returned| SDDB
+  AUD --> CDN["CloudFront"]
+  APP["アプリ<br/>（散策者・走る人の端末）"] -->|中継のトークン| SAPI["スタジオの API<br/>一言を置く・区画の一覧・反応・通報・ブロック"]
+  SAPI --> SDDB
+  APP -->|音声| CDN
+  SAPI -->|一言の確認| AI["Bedrock（中継と同じモデル・予算）"]
+  CHK --> AI
+```
+
+- 提供者は、運営が掲載を出すことを承認したあと、掲載ごとの審査なしに自分の責任で載せる。確認に当たった掲載は提供者に返り、提供者が申し出ると運営が決める
+- 一言は事前の審査がない。確認の Lambda（一言はスタジオの Lambda の中）と通報で守り、3 台から通報されると隠れて運営の列に入る
+- 配備の順番は 中継 → スタジオ → 管理システム（スタジオは中継の表、管理システムはスタジオの表を Parameter Store から読む）。手順は [スタジオの手順](operations/studio.md)
+
 ## 関連する文書
 
-- 使い方: [利用ガイド](guide/README.md)（運営・チャンネル提供者・開発と保守）
+- 使い方: [利用ガイド](guide/README.md)（運営・チャンネル提供者・素材提供者・掲載者・開発と保守）
 - 設計の決定: [ADR-001](adr/ADR-001-aws-architecture.md)、データ: [DM-001](data-model.md)、管理 API: [API-001](console-api.md)
-- 実装ごとの設計: [DES-001](design/DES-001-publisher.md)（公開）〜 [DES-006](design/DES-006-transfer-notify.md)（鍵の移し替えとメール）、素材集は [DES-007](design/DES-007-materials-review.md)（機械審査）〜 [DES-010](design/DES-010-materials-screens.md)（画面）
+- 実装ごとの設計: [DES-001](design/DES-001-publisher.md)（公開）〜 [DES-006](design/DES-006-transfer-notify.md)（鍵の移し替えとメール）、素材集は [DES-007](design/DES-007-materials-review.md)（機械審査）〜 [DES-010](design/DES-010-materials-screens.md)（画面）、スタジオは [DES-013](design/DES-013-studio.md)
 - アプリとの境界: [platform API-CHANNEL-LIST](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-LIST.md)（リスト）・[platform API-CHANNEL-PACKAGE](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-PACKAGE.md)（パッケージ）・[platform API-MATERIAL-PRODUCER](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-MATERIAL-PRODUCER.md)（素材集）

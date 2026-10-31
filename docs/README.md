@@ -25,6 +25,7 @@
 | 運営 | [運営ガイド](guide/operator.md) |
 | チャンネル提供者 | [チャンネル提供者ガイド](guide/publisher.md) |
 | 素材提供者 | [素材提供者ガイド](guide/producer.md) |
+| 掲載者（スタジオ） | [掲載者ガイド](guide/studio.md) |
 | 開発・保守 | [開発・保守ガイド](guide/maintainer.md) |
 
 ## サンプルデータ
@@ -42,6 +43,7 @@
 | ルート鍵・署名鍵の管理 | [鍵の手順書](operations/keys.md) |
 | 運営の AI（中継）の配備・上限・予算 | [運営の AI の手順](operations/ai-relay.md) |
 | スポットのタイルの配備・作り直し | [スポットのタイルの手順](operations/spot-tiles.md) |
+| スタジオの配備・利用規約の版・止め方 | [スタジオの手順](operations/studio.md) |
 
 ## エコシステム共通の正本
 
@@ -51,6 +53,7 @@
 | API・データ形式の境界 | [platform API 契約一覧](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/README.md) |
 | 関係者の呼び方 | [関係者と共通用語](https://github.com/duwenji/yorisoi-platform/blob/main/docs/overview/roles-and-vocabulary.md) |
 | チャンネル審査方針 | [審査方針](https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/channel-review.md) |
+| スタジオの決まり | [一言の利用規約](https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/studio-note-terms.md)・[掲載の決まり](https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/studio-placement.md) |
 | SanpoGuide の使い方と運用 | [SanpoGuide 手引き](https://github.com/duwenji/yorisoi-platform/blob/main/docs/apps/sanpoguide/manual/README.md) |
 
 文書 ID はリポジトリごとに管理します。たとえば `console ADR-001` と `platform ADR-CHANNEL-CURATION` は別の文書です。platform 文書の旧番号は、リンク表示に履歴情報として併記する場合がありますが、共有契約を指すときは canonical ID を使います。
