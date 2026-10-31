@@ -137,6 +137,7 @@ npx cdk deploy -c env=dev -c rootPublicKey=<ルート鍵の公開鍵>
 - `rootPublicKey` を間違えると、公開の処理が鍵セットを拒み、公開できなくなります（署名を誤って出すことはありません）
 - 本番（`-c env=prod`）はまだ配備しません。本番用のアカウント、本番のルート鍵（ADR-001 T-1）、独自ドメイン（ADR-001 T-2）、SES（ADR-001 T-3）がそろってから
 - 開発用のカーソルの鍵は合成のたびに変わるので、配備すると画面の「さらに読み込む」の続きが切れます（読み込み直せば直る）
+- スタジオを使う環境（`infra/lib/config.ts` の `studio` が `true`）では、管理システムは配備のときにスタジオの表・バケットの名前を Parameter Store から読みます。**中継 → スタジオ → 管理システム** の順に配備します（[スタジオの手順](../operations/studio.md)「配備」）
 
 ## 6. リストの初期設定
 
@@ -232,9 +233,9 @@ aws cognito-idp admin-add-user-to-group --user-pool-id $P --username <メール>
 | [ADR-001](../adr/ADR-001-aws-architecture.md) | 構成を変えるとき。なぜ今の形かを知りたいとき |
 | [DM-001](../data-model.md) | テーブルの項目・キー・状態の移り方を変えるとき |
 | [API-001](../console-api.md)・[OpenAPI](../api/console.openapi.yaml) | 管理 API を変えるとき（OpenAPI が入出力の正本） |
-| [DES-001](../design/DES-001-publisher.md)〜[DES-011](../design/DES-011-ecosystem.md) | 実装の判断と検証の結果（素材集は DES-007〜DES-010、複数のアプリは DES-011） |
+| [DES-001](../design/DES-001-publisher.md)〜[DES-013](../design/DES-013-studio.md) | 実装の判断と検証の結果（素材集は DES-007〜DES-010、複数のアプリは DES-011、スタジオは DES-013） |
 | [TODO](../TODO.md) | 残っている作業 |
 | [配備の手順](../operations/deploy.md)・[費用](../operations/cost.md) | 環境ごとの値、手順、費用 |
-| [運営の AI の手順](../operations/ai-relay.md)・[スポットのタイルの手順](../operations/spot-tiles.md) | 中継とタイルの配信の配備・上限・作り直し |
+| [運営の AI の手順](../operations/ai-relay.md)・[スポットのタイルの手順](../operations/spot-tiles.md)・[スタジオの手順](../operations/studio.md) | 中継・タイルの配信・スタジオの配備・上限・作り直し・止め方 |
 | [鍵の手順書](../operations/keys.md) | 署名鍵の入れ替えの予定（4 月・10 月）と、失効・ルート鍵の事故の手順 |
 | platform API-CHANNEL-LIST・platform API-CHANNEL-PACKAGE・platform API-MATERIAL-PRODUCER・審査基準 | アプリとの約束（リスト・パッケージ・素材集・審査） |

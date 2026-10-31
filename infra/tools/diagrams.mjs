@@ -1,4 +1,4 @@
-// Draws docs/diagrams/*.png from the three CDK apps with cdk-dia (needs Graphviz's dot on PATH):
+// Draws docs/diagrams/*.png from the four CDK apps with cdk-dia (needs Graphviz's dot on PATH):
 //   npm run diagrams -w infra
 // Each stack gets two pictures: <name>.png keeps the parts worth reading, labelled in Japanese, with
 // arrows from what uses to what is used and the people and services outside the stack; <name>-all.png
@@ -85,6 +85,42 @@ const stacks = [
       Relay: '中継の Lambda\n（Bedrock を呼ぶ）',
       Api: '中継の API（アプリが呼ぶ）',
       Alarms: '運営への警報（メール）',
+    },
+  },
+  {
+    name: 'studio',
+    app: 'npx tsx bin/studio.ts',
+    context: {},
+    title: 'スタジオ（YorisoiStudio）',
+    clusters: {},
+    outside: [
+      { label: 'アプリ\n（散策者・走る人の端末）', to: ['Api', 'AudioCdn'] },
+      { label: '提供者\n（管理システムの画面から音声を送る）', to: ['Intake'] },
+      { label: 'チャンネル管理システム\n（掲載・運営の対応）', to: ['PlacementCheck', 'Table'] },
+      { label: '運営の AI の中継\n（トークン・予算・モデル）', from: ['Studio', 'PlacementCheck'] },
+      { label: 'Amazon Bedrock\n（一言と掲載の確認）', from: ['Studio', 'PlacementCheck'] },
+      { label: 'Amazon Transcribe\n（音声を文字に）', from: ['PlacementCheck'] },
+      { label: '運営のメール', from: ['Alarms'] },
+    ],
+    labels: {
+      Table: '一言・掲載・数・ブロック・締め出し',
+      Intake: '受け取り用（音声・書き起こし）',
+      Audio: '配信用（確かめた音声）',
+      AudioCdn: '音声の配信（アプリが読む）',
+      Api: 'スタジオの API（アプリが呼ぶ）',
+      Studio: 'スタジオの Lambda\n（一言の確認を含む）',
+      PlacementCheck: '掲載の確認の Lambda',
+      TranscribeDone: '書き起こしの終わりを拾う',
+      TermsVersion: '一言の利用規約の版（運営が変える）',
+      TermsUrl: '一言の利用規約の URL',
+      TermsUpdatedAt: '利用規約を変えた日',
+      Paused: 'スタジオを止める（運営が変える）',
+      ApiWaf: '送信元ごとの回数の制限（本番）',
+      Alarms: '運営への警報（メール）',
+      TableNameParameter: '表の名前（管理システムが読む）',
+      IntakeBucketParameter: '受け取り用の名前（管理システムが読む）',
+      AudioBucketParameter: '配信用の名前（管理システムが読む）',
+      CheckFunctionParameter: '確認の Lambda の名前（管理システムが読む）',
     },
   },
   {
