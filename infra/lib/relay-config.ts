@@ -43,7 +43,7 @@ export interface RelayConfig {
 }
 
 /** DeepSeek V3.2 in Tokyo for now, and Claude Haiku 4.5 to switch to (ADR-AI-RELAY R-5). */
-const MODELS: RelayModel[] = [
+export const MODELS: RelayModel[] = [
   {
     id: 'deepseek-v3-2',
     profile: 'deepseek.v3.2',
