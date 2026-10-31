@@ -1015,6 +1015,174 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/studio": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 自分のスタジオの承認の状態（DES-013 K-14） */
+        get: operations["getMyStudio"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/studio/application": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 掲載を出す承認を申し込む（REQ-STUDIO F-24、掲載の決まり 1.2） */
+        post: operations["applyForStudio"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/studio/placements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 自分の掲載の一覧（新しい順、50 件まで） */
+        get: operations["listMyPlacements"];
+        put?: never;
+        /** 掲載を作る（音声があれば、アップロードの先を返す。なければすぐ確認を始める。K-16） */
+        post: operations["createPlacement"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/studio/placements/{placementId}/{action}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                placementId: components["parameters"]["PlacementId"];
+                /** @description submit（音声を送り終えて確認を始める。uploading → checking）・stop（載っている掲載を止める。F-20）・appeal（確認の誤りを運営に申し出る。掲載の決まり 3。message が要る） */
+                action: "submit" | "stop" | "appeal";
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 自分の掲載を確認に出す・止める・申し出る */
+        post: operations["actOnPlacement"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/studio/applications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 承認の審査待ち（申し込んだ順） */
+        get: operations["listStudioApplications"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/publishers/{publisherId}/studio": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                publisherId: components["parameters"]["PublisherId"];
+            };
+            cookie?: never;
+        };
+        /** 提供者のスタジオの承認の状態 */
+        get: operations["getPublisherStudio"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/publishers/{publisherId}/studio/{decision}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                publisherId: components["parameters"]["PublisherId"];
+                /** @description approve（承認）・decline（見送り）・suspend（期間を決めて止める）・resume（止めたのを戻す）・revoke（取り消す） */
+                decision: "approve" | "decline" | "suspend" | "resume" | "revoke";
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 提供者の承認を決める（掲載の決まり 1.4・4.3）。止める・取り消すと載っている掲載も届けない */
+        post: operations["decideStudio"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/studio/appeals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 掲載者の申し出（申し出た順） */
+        get: operations["listPlacementAppeals"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/studio/placements/{placementId}/{decision}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                placementId: components["parameters"]["PlacementId"];
+                /** @description publish（載せる）・reject（載せない） */
+                decision: "publish" | "reject";
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 申し出を受けて、載せるか載せないかを決める（掲載の決まり 3）。reject には message が要る */
+        post: operations["decideAppeal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1035,12 +1203,150 @@ export interface components {
             /** @description 問い合わせ用の要求 ID */
             instance?: string;
             /** @enum {string} */
-            code: "invalid_request" | "invalid_signature" | "challenge_invalid" | "keyset_invalid" | "unauthorized" | "forbidden" | "publisher_not_active" | "role_required" | "not_found" | "already_registered" | "channel_id_taken" | "collection_id_taken" | "producer_not_verified" | "resource_in_use" | "account_id_taken" | "key_already_bound" | "transfer_pending" | "limit_reached" | "pending_submission_exists" | "invalid_state" | "version_not_newer" | "precondition_failed" | "precondition_required" | "payload_too_large" | "quota_exceeded" | "throttled" | "internal";
+            code: "invalid_request" | "invalid_signature" | "challenge_invalid" | "keyset_invalid" | "unauthorized" | "forbidden" | "publisher_not_active" | "role_required" | "not_found" | "already_registered" | "channel_id_taken" | "collection_id_taken" | "producer_not_verified" | "resource_in_use" | "account_id_taken" | "key_already_bound" | "transfer_pending" | "limit_reached" | "pending_submission_exists" | "invalid_state" | "version_not_newer" | "precondition_failed" | "precondition_required" | "payload_too_large" | "quota_exceeded" | "throttled" | "studio_not_approved" | "internal";
             errors?: {
                 /** @description JSON Pointer */
                 path: string;
                 message: string;
             }[];
+        };
+        /**
+         * @description none（申し込んでいない）・requested（審査待ち）・approved・declined（見送り）・suspended（期間を決めて止めた）・revoked（取り消した）
+         * @enum {string}
+         */
+        StudioStatus: "none" | "requested" | "approved" | "declined" | "suspended" | "revoked";
+        StudioAccount: {
+            publisherId: components["schemas"]["Ulid"];
+            status: components["schemas"]["StudioStatus"];
+            /** @description 掲載の読み上げに使う名前 */
+            displayName?: string;
+            description?: string;
+            plans?: string;
+            /** @description 同意した掲載の決まりの版 */
+            agreedVersion?: number;
+            /** Format: date-time */
+            requestedAt?: string;
+            /** Format: date-time */
+            decidedAt?: string;
+            /** @description 見送り・止めた・取り消した理由 */
+            reason?: string;
+            checks?: components["schemas"]["StudioChecks"];
+            /** Format: date-time */
+            suspendedUntil?: string;
+            /**
+             * Format: date-time
+             * @description 取り消したあと、申し込み直せる時刻
+             */
+            reapplyAfter?: string;
+            /** @description 申し込む前は 0 */
+            rev: number;
+        };
+        StudioApplication: {
+            displayName: string;
+            /** @description どんな団体・人か、どこで活動しているか、本人確認の手がかり */
+            description: string;
+            /** @description どんなお知らせを、どの辺りで、どれくらいの頻度で */
+            plans: string;
+            agreedVersion: number;
+        };
+        /** @description 掲載の決まり 1.3 の 4 項目。承認にはすべて true が要る */
+        StudioChecks: {
+            identity: boolean;
+            name: boolean;
+            content: boolean;
+            history: boolean;
+        };
+        StudioDecision: {
+            checks?: components["schemas"]["StudioChecks"];
+            /** @description decline・suspend・revoke に要る */
+            reason?: string;
+            /**
+             * Format: date-time
+             * @description suspend に要る（1〜3 か月先）
+             */
+            until?: string;
+            message?: string;
+        };
+        /**
+         * @description uploading（音声待ち）・checking（確認中）・returned（返した）・appealed（申し出中）・live（載っている）・stopped（掲載者が止めた）・suspended（通報や承認を止めたことで止まった）・removed（運営が消した）・rejected（申し出を受けて載せないと決めた）
+         * @enum {string}
+         */
+        PlacementState: "uploading" | "checking" | "returned" | "appealed" | "live" | "stopped" | "suspended" | "removed" | "rejected";
+        PlacementInput: {
+            text: string;
+            cells: string[];
+            /**
+             * Format: date-time
+             * @description 今から 30 日以内
+             */
+            startsAt: string;
+            /**
+             * Format: date-time
+             * @description startsAt から 1 日〜30 日
+             */
+            endsAt: string;
+            hours?: components["schemas"]["PlacementHours"];
+            audio?: {
+                bytes: number;
+            };
+        };
+        PlacementHours: {
+            from: string;
+            to: string;
+        };
+        Placement: {
+            placementId: components["schemas"]["Ulid"];
+            publisherId: components["schemas"]["Ulid"];
+            providerName: string;
+            text: string;
+            cells: string[];
+            /** Format: date-time */
+            startsAt: string;
+            /** Format: date-time */
+            endsAt: string;
+            hours?: components["schemas"]["PlacementHours"];
+            audio?: {
+                durationSec?: number;
+                bytes?: number;
+            };
+            state: components["schemas"]["PlacementState"];
+            /** @description 自動の確認の結果。items は当たった掲載の決まりの項目（2.2.x）か、audio_missing・audio_format・audio_length・transcribe_failed・check_unavailable・unclear */
+            check?: {
+                items: string[];
+                /** @description 音声を文字に起こしたもの */
+                transcript?: string;
+                /** Format: date-time */
+                checkedAt?: string;
+            };
+            appeal?: {
+                message: string;
+                /** Format: date-time */
+                at: string;
+            };
+            decision?: {
+                message?: string;
+                /** Format: date-time */
+                at: string;
+            };
+            rev: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        PlacementList: {
+            items: components["schemas"]["Placement"][];
+        };
+        PlacementCreated: {
+            placement: components["schemas"]["Placement"];
+            /** @description 音声があるとき。S3 への POST（15 分）。送り終えたら submit を呼ぶ */
+            upload?: {
+                url: string;
+                fields: {
+                    [key: string]: string;
+                };
+                maxBytes: number;
+            };
         };
         Me: {
             sub: string;
@@ -1586,6 +1892,35 @@ export interface components {
         };
     };
     responses: {
+        /** @description スタジオの承認 */
+        StudioAccount: {
+            headers: {
+                ETag: components["headers"]["ETag"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["StudioAccount"];
+            };
+        };
+        /** @description 掲載 */
+        Placement: {
+            headers: {
+                ETag: components["headers"]["ETag"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Placement"];
+            };
+        };
+        /** @description 掲載の一覧 */
+        PlacementList: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["PlacementList"];
+            };
+        };
         /** @description エラー（RFC 9457） */
         Error: {
             headers: {
@@ -1731,6 +2066,7 @@ export interface components {
         CollectionId: components["schemas"]["CollectionId"];
         PublisherId: components["schemas"]["Ulid"];
         TransferId: components["schemas"]["Ulid"];
+        PlacementId: components["schemas"]["Ulid"];
     };
     requestBodies: never;
     headers: {
@@ -3195,6 +3531,202 @@ export interface operations {
         requestBody?: never;
         responses: {
             200: components["responses"]["AuditPage"];
+            default: components["responses"]["Error"];
+        };
+    };
+    getMyStudio: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["StudioAccount"];
+            default: components["responses"]["Error"];
+        };
+    };
+    applyForStudio: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StudioApplication"];
+            };
+        };
+        responses: {
+            200: components["responses"]["StudioAccount"];
+            default: components["responses"]["Error"];
+        };
+    };
+    listMyPlacements: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["PlacementList"];
+            default: components["responses"]["Error"];
+        };
+    };
+    createPlacement: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlacementInput"];
+            };
+        };
+        responses: {
+            /** @description 作った */
+            201: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlacementCreated"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    actOnPlacement: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description 取得したときの `ETag`。ないと 428、違うと 412 */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                placementId: components["parameters"]["PlacementId"];
+                /** @description submit（音声を送り終えて確認を始める。uploading → checking）・stop（載っている掲載を止める。F-20）・appeal（確認の誤りを運営に申し出る。掲載の決まり 3。message が要る） */
+                action: "submit" | "stop" | "appeal";
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    message?: string;
+                };
+            };
+        };
+        responses: {
+            200: components["responses"]["Placement"];
+            default: components["responses"]["Error"];
+        };
+    };
+    listStudioApplications: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 審査待ち */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["StudioAccount"][];
+                    };
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    getPublisherStudio: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                publisherId: components["parameters"]["PublisherId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["StudioAccount"];
+            default: components["responses"]["Error"];
+        };
+    };
+    decideStudio: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description 取得したときの `ETag`。ないと 428、違うと 412 */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                publisherId: components["parameters"]["PublisherId"];
+                /** @description approve（承認）・decline（見送り）・suspend（期間を決めて止める）・resume（止めたのを戻す）・revoke（取り消す） */
+                decision: "approve" | "decline" | "suspend" | "resume" | "revoke";
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["StudioDecision"];
+            };
+        };
+        responses: {
+            200: components["responses"]["StudioAccount"];
+            default: components["responses"]["Error"];
+        };
+    };
+    listPlacementAppeals: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["PlacementList"];
+            default: components["responses"]["Error"];
+        };
+    };
+    decideAppeal: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description 取得したときの `ETag`。ないと 428、違うと 412 */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                placementId: components["parameters"]["PlacementId"];
+                /** @description publish（載せる）・reject（載せない） */
+                decision: "publish" | "reject";
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    message?: string;
+                };
+            };
+        };
+        responses: {
+            200: components["responses"]["Placement"];
             default: components["responses"]["Error"];
         };
     };

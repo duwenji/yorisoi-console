@@ -13,7 +13,7 @@ import { kmsSigner } from '../publish/aws.js';
 import type { SigningKeyRecord } from '../publish/ports.js';
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { createHash } from 'node:crypto';
-import { appsWith, DEFAULT_STAGE_VERSIONS, type AppEntry, type Deps } from './deps.js';
+import { appsWith, DEFAULT_STAGE_VERSIONS, type AppEntry, type Deps, type StudioDeps } from './deps.js';
 import { ApiError, problem } from './http.js';
 import { callerFrom, route } from './router.js';
 import { CursorCodec } from './util.js';
@@ -144,12 +144,33 @@ async function load(): Promise<Deps> {
       return `${env('PROVIDER_URL')}/${key}`;
     },
     apps: apps(),
+    ...(process.env.STUDIO_TABLE ? { studio: studio() } : {}),
     deleteUser: async (sub) => {
       // Sign-in is by email, so the user name is the sub.
       await cognito.send(new AdminDeleteUserCommand({ UserPoolId: env('USER_POOL_ID'), Username: sub }));
     },
     notify: async (notice) => {
       await sqs.send(new SendMessageCommand({ QueueUrl: env('NOTIFY_QUEUE_URL'), MessageBody: JSON.stringify(notice) }));
+    },
+  };
+}
+
+/** The studio stack's table, intake and check (DES-013 K-2), when the console is deployed with it. */
+function studio(): StudioDeps {
+  return {
+    table: env('STUDIO_TABLE'),
+    presignAudio: async (key, maxBytes) => {
+      const post = await createPresignedPost(s3, {
+        Bucket: env('STUDIO_INTAKE_BUCKET'),
+        Key: key,
+        Conditions: [['content-length-range', 1, maxBytes], ['eq', '$Content-Type', 'audio/mp4']],
+        Fields: { 'Content-Type': 'audio/mp4' },
+        Expires: 15 * 60,
+      });
+      return { url: post.url, fields: post.fields };
+    },
+    invokeCheck: async (event) => {
+      await lambda.send(new InvokeCommand({ FunctionName: env('STUDIO_CHECK_FUNCTION'), InvocationType: 'Event', Payload: JSON.stringify(event) }));
     },
   };
 }

@@ -35,7 +35,7 @@ export function render(notice: Notice, consoleUrl: string): { subject: string; b
   const channel = notice.channelId ? `チャンネル ${notice.channelId} ` : notice.collectionId ? `素材集 ${notice.collectionId} ` : '';
   const used = notice.collectionId ? `素材集 ${notice.collectionId} ` : '';
   const what = notice.version !== undefined ? `${channel}の版 ${notice.version} ` : channel;
-  const link = notice.channelId ? `${consoleUrl}/channels/${notice.channelId}` : notice.collectionId ? `${consoleUrl}/collections/${notice.collectionId}` : `${consoleUrl}/`;
+  const link = notice.channelId ? `${consoleUrl}/channels/${notice.channelId}` : notice.collectionId ? `${consoleUrl}/collections/${notice.collectionId}` : notice.event.startsWith('studio.') || notice.placementId ? `${consoleUrl}/studio` : `${consoleUrl}/`;
   const message = notice.message ? `\n\n運営からのメッセージ:\n${notice.message}` : '';
   const findings = notice.findings?.length ? `\n\n指摘（審査基準の項目）:\n${notice.findings.map((f) => `・${f.item}: ${f.detail}`).join('\n')}` : '';
   const lines = ((): [string, string] => {
@@ -75,6 +75,18 @@ export function render(notice: Notice, consoleUrl: string): { subject: string; b
         return [`${channel}が使う${used}が取り下げられました`, `${channel}が使う${used}が公開のリストから取り下げられました。その素材は出なくなり、次の候補（AI の解説など）に代わります。${message}`];
       case 'collection.grants_narrowed':
         return [`${channel}は${used}を使えなくなりました`, `${used}の利用許諾が変わり、${channel}は使えなくなりました。その素材は出なくなり、次の候補に代わります。${message}`];
+      case 'studio.approved':
+        return ['スタジオの掲載を出せるようになりました', `掲載を出す申し込みを承認しました。管理システムの「スタジオ」から掲載を作れます。掲載の決まりを守ってください。${message}`];
+      case 'studio.declined':
+        return ['スタジオの掲載の申し込みを見送りました', `掲載を出す申し込みを、今は見送りました。直せるものは、直して申し込み直せます。${message}`];
+      case 'studio.suspended':
+        return ['スタジオの掲載を止めました', `掲載の決まりに反することがあったため、期間を決めて掲載を止めました。載っていた掲載も届けていません。${message}`];
+      case 'studio.revoked':
+        return ['スタジオの掲載の承認を取り消しました', `掲載の決まりに反することがあったため、掲載を出す承認を取り消しました。載っていた掲載も消しました。${message}`];
+      case 'placement.published':
+        return ['申し出を受けて掲載を載せました', `確認で返した掲載について申し出を受け、運営が確かめて載せました。${message}`];
+      case 'placement.rejected':
+        return ['申し出を受けて掲載を載せないと決めました', `確認で返した掲載について申し出を受け、運営が確かめて、載せないと決めました。${message}`];
       case 'transfer.rejected':
         return ['鍵の移し替えを認めませんでした', `鍵の移し替えの申し出を認めませんでした。新しい鍵の紐づけは外しました。${message}`];
     }

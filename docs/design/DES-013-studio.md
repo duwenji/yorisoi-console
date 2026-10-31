@@ -81,9 +81,9 @@ platform のスタジオ（一言と掲載を場所に置き、近くに来た�
 
 | No. | 判断 | 理由 |
 |---|---|---|
-| K-14 | **提供者の承認**: アカウント（`PUB#`）に `studio`（`status`: `requested`・`approved`・`declined`・`suspended`・`revoked`、出す名前、申し込みの中身、同意した掲載の決まりの版、`suspendedUntil`・`reapplyAfter`）を足す。チャンネル提供者・素材提供者のどちらの役割でも申し込める。運営の審査待ちは疎なインデックス（`QUEUE#STUDIO`）で並べる | DM-001 M-16 のアカウントの形を使う。役割を増やさない |
+| K-14 | **提供者の承認**: アカウントの下に承認の項目（`PUB#{publisherId}` / `STUDIO`）を作る。`status`（`requested`・`approved`・`declined`・`suspended`・`revoked`）、出す名前、申し込みの中身、同意した掲載の決まりの版、運営が確かめた 4 項目、`suspendedUntil`・`reapplyAfter`、`rev` を持つ。チャンネル提供者・素材提供者のどちらの役割でも申し込める。審査待ちは GSI2 の `QUEUE#STUDIO` で並べる。止めた期間が過ぎたら承認されているものとして扱う | DM-001 M-16 のアカウントを使い、役割を増やさない。アカウントの項目は GSI2 を提供者の一覧（`PUBLISHERS`）に使っているので、別の項目にする |
 | K-15 | **承認の審査**: 運営の画面で、申し込みの中身と、掲載の決まり 1.3 の 4 項目のチェック欄を見て、承認か見送り（理由と項目番号）を決める。結果はメールで知らせる（DES-006 の通知） | 掲載の決まり 1.4 |
-| K-16 | **掲載を作る**: 承認された提供者だけが、文字・音声・区画（地図で選ぶ。geohash6 を 9 つまで）・期間・時間帯を入れて「載せる」。状態は `checking` → `live` か `returned`。`returned` は直して載せ直すか、申し出る（`appealed`）。載っている掲載は掲載者が止められる（`stopped`）。中身を変えるときは新しい掲載として載せ直す | REQ-STUDIO F-18〜F-20 |
+| K-16 | **掲載を作る**: 承認された提供者だけが、文字・音声・区画（地図で選ぶ。geohash6 を 9 つまで）・期間（今から 30 日以内に始まり、1〜30 日）・時間帯を入れて「載せる」。状態は、音声があれば `uploading`（署名付きの POST で送る）→ `submit` で `checking`、なければすぐ `checking`。そこから `live` か `returned`。`returned` は直して載せ直すか、申し出る（`appealed`）。申し出を受けた運営が載せる（確認の Lambda が `live` にする）か、載せない（`rejected`）。載っている掲載は掲載者が止められる（`stopped`）。提供者の承認を止める・取り消すと `suspended`・`removed` になる。中身を変えるときは新しい掲載として載せ直す | REQ-STUDIO F-18〜F-20 |
 | K-17 | **運営の対応**: 運営の画面に、申し出・通報された掲載・通報された一言の 3 つの列を置く。掲載は「載せる・戻す・消す・承認を期間を決めて止める・承認を取り消す」、一言は「戻す・消す・置いた端末を締め出す（期間）」を選ぶ。置けない区画（geohash5〜7）の一覧を編集できる | 掲載の決まり 4.3、REQ-STUDIO F-14・F-15 |
 | K-18 | **数の画面**: 掲載者は掲載ごとに、日ごとの聞いた数・開いた数を、API-STUDIO の概数で見る | REQ-STUDIO D-23・F-21 |
 | K-19 | **利用規約の版**: 一言の利用規約の版と URL は、スタジオの Parameter Store に置き、`GET /v1/studio/terms` で返す。版を上げるのは運営が Parameter Store で行う | 配備し直さずに版を上げられる |
@@ -96,7 +96,7 @@ platform のスタジオ（一言と掲載を場所に置き、近くに来た�
 |---|---|---|---|---|---|
 | 一言 | `NOTE#{id}` | `NOTE` | `AUTHOR#{install}` / `{expiresAt}` | `text`・`cell`（geohash7）・`spotName`・`expiresAt`・`author`・`state`（`active`・`hidden`・`removed`）・`likes`・`reports` | 期限から 7 日（ブロックのため） |
 | 区画の一言 | `CELL#{geohash6}` | `N#{id}` | — | 一覧に返す項目の写し・`author`・`state` | 期限 |
-| 掲載 | `PLACEMENT#{id}` | `PLACEMENT` | `PROVIDER#{publisherId}` / `{createdAt}` | 掲載の項目・`state`（`checking`・`returned`・`appealed`・`live`・`stopped`・`suspended`・`removed`）・`check`（当たった項目・文字起こしの秒数）・`reports` | 期間の終わりから 90 日 |
+| 掲載 | `PLACEMENT#{id}` | `PLACEMENT` | `PROVIDER#{publisherId}` / `{createdAt}` | 掲載の項目・`state`（`uploading`・`checking`・`returned`・`appealed`・`live`・`stopped`・`suspended`・`removed`・`rejected`）・`audio`（置き場所・秒数・大きさ・ハッシュ）・`jobName`（Transcribe）・`check`（当たった項目・文字起こし）・`appeal`・`decision`・`reports`・`rev` | 期間の終わりから 90 日 |
 | 区画の掲載 | `CELL#{geohash6}` | `P#{id}` | — | 一覧に返す項目の写し（`live` の間だけ置く） | 期間の終わり |
 | 日ごとの数 | `STATS#{id}` | `DAY#{YYYY-MM-DD}` | — | `heard`・`opened` | 一言は期限、掲載は期間の終わりから 90 日 |
 | いいね・通報の重複の守り | `SEEN#{id}` | `LIKE#{install}`・`REPORT#{install}` | — | `reason`（通報） | 一言・掲載の期限、通報は 30 日 |
@@ -110,6 +110,7 @@ platform のスタジオ（一言と掲載を場所に置き、近くに来た�
 - 一言を消す・隠すときは、`NOTE#` と `CELL#` の両方を条件付きで書き換える（`TransactWrite`）
 - 掲載が `live` になるとき `CELL#…`/`P#…` を区画の数だけ書き、`live` を出るときに消す
 - 提供者の承認（K-14）は管理システムの表に置き、掲載の項目には作ったときの `publisherId` と出す名前を写す
+- 受け取り用のバケットは `uploads/`（1 日）・`held/`（確認を始めた音声、30 日）・`transcripts/`（30 日）、配信用は `placements/{id}/audio.m4a`（62 日）
 
 ## アプリ向けの API
 

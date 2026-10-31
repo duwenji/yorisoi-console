@@ -5,6 +5,8 @@ import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as cloudwatch from 'aws-cdk-lib/aws-cloudwatch';
 import * as cwActions from 'aws-cdk-lib/aws-cloudwatch-actions';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
+import * as events from 'aws-cdk-lib/aws-events';
+import * as targets from 'aws-cdk-lib/aws-events-targets';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as nodejs from 'aws-cdk-lib/aws-lambda-nodejs';
@@ -57,18 +59,27 @@ export class StudioStack extends Stack {
     });
 
     // K-5: providers upload to the intake bucket; only checked audio is copied to the served one.
+    // Uploads go in a day; held audio and transcripts stay 30 days, so an appeal can still be met.
+    // CORS allows any origin, as the console's intake does: a POST still needs the presigned policy.
     const intake = new s3.Bucket(this, 'Intake', {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       encryption: s3.BucketEncryption.S3_MANAGED,
       enforceSSL: true,
-      lifecycleRules: [{ expiration: Duration.days(1) }],
+      cors: [{ allowedMethods: [s3.HttpMethods.POST], allowedOrigins: ['*'], allowedHeaders: ['*'], maxAge: 3600 }],
+      lifecycleRules: [
+        { prefix: 'uploads/', expiration: Duration.days(1) },
+        { prefix: 'held/', expiration: Duration.days(30) },
+        { prefix: 'transcripts/', expiration: Duration.days(30) },
+      ],
       removalPolicy: RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
     });
+    // A placement starts within 30 days and runs at most 30: its audio is gone soon after it ends.
     const audio = new s3.Bucket(this, 'Audio', {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       encryption: s3.BucketEncryption.S3_MANAGED,
       enforceSSL: true,
+      lifecycleRules: [{ prefix: 'placements/', expiration: Duration.days(62) }],
       removalPolicy: removal,
       autoDeleteObjects: !config.retainData,
     });
@@ -143,14 +154,16 @@ export class StudioStack extends Stack {
     });
     table.grantReadWriteData(fn);
     for (const p of [termsVersion, termsUrl, termsUpdatedAt, paused]) p.grantRead(fn);
-    fn.addToRolePolicy(
+    // Both functions read the relay's settings, add to its month and call its models (K-3).
+    const relayAccess: iam.PolicyStatement[] = [];
+    relayAccess.push(
       new iam.PolicyStatement({
         actions: ['ssm:GetParameters'],
         resources: [parameterArn(relayParam('monthly-budget-usd')), parameterArn(relayParam('model'))],
       }),
     );
     // K-3: in the relay's table, only tokens are read and only the month's spend is added to.
-    fn.addToRolePolicy(
+    relayAccess.push(
       new iam.PolicyStatement({
         actions: ['dynamodb:GetItem', 'dynamodb:UpdateItem'],
         resources: [`arn:${this.partition}:dynamodb:${this.region}:${this.account}:table/${relayTableName}`],
@@ -158,7 +171,7 @@ export class StudioStack extends Stack {
       }),
     );
     // The relay's models only, as the relay calls them (ADR-AI-RELAY R-5).
-    fn.addToRolePolicy(
+    relayAccess.push(
       new iam.PolicyStatement({
         actions: ['bedrock:InvokeModel'],
         resources: config.models.flatMap((m) =>
@@ -172,6 +185,61 @@ export class StudioStack extends Stack {
         ),
       }),
     );
+
+    // ---- the placement check (K-11) ----
+    const jobPrefix = `studio-${config.name}-`;
+    const checkFn = new nodejs.NodejsFunction(this, 'PlacementCheck', {
+      projectRoot: repoRoot,
+      depsLockFilePath: `${repoRoot}package-lock.json`,
+      entry: `${repoRoot}api/src/studio/placement-handler.ts`,
+      runtime: lambda.Runtime.NODEJS_22_X,
+      architecture: lambda.Architecture.ARM_64,
+      bundling: { format: nodejs.OutputFormat.ESM, target: 'node22', minify: true, sourceMap: true },
+      memorySize: 512,
+      timeout: Duration.minutes(1),
+      logGroup: new logs.LogGroup(this, 'PlacementCheckLogs', {
+        retention: prod ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.TWO_WEEKS,
+        removalPolicy: RemovalPolicy.DESTROY,
+      }),
+      environment: {
+        STUDIO_ENV: config.name,
+        TABLE_NAME: table.tableName,
+        RELAY_TABLE_NAME: relayTableName,
+        INTAKE_BUCKET: intake.bucketName,
+        AUDIO_BUCKET: audio.bucketName,
+        JOB_PREFIX: jobPrefix,
+        PARAM_TERMS_VERSION: termsVersion.parameterName,
+        PARAM_TERMS_URL: termsUrl.parameterName,
+        PARAM_TERMS_UPDATED_AT: termsUpdatedAt.parameterName,
+        PARAM_PAUSED: paused.parameterName,
+        PARAM_RELAY_MONTHLY_BUDGET: relayParam('monthly-budget-usd'),
+        PARAM_RELAY_MODEL: relayParam('model'),
+        DEFAULT_TERMS_VERSION: String(config.termsVersion),
+        DEFAULT_TERMS_URL: config.termsUrl,
+        DEFAULT_MONTHLY_BUDGET_USD: String(config.monthlyBudgetUsd),
+        MODELS: JSON.stringify(config.models.map(({ id, profile, price }) => ({ id, profile, price }))),
+        DEFAULT_MODEL: config.model,
+        NODE_OPTIONS: '--enable-source-maps',
+      },
+    });
+    table.grantReadWriteData(checkFn);
+    for (const p of [termsVersion, termsUrl, termsUpdatedAt, paused]) p.grantRead(checkFn);
+    // Transcribe reads the held audio and writes the transcript with the caller's rights.
+    intake.grantRead(checkFn, 'uploads/*');
+    intake.grantReadWrite(checkFn, 'held/*');
+    intake.grantReadWrite(checkFn, 'transcripts/*');
+    audio.grantPut(checkFn, 'placements/*');
+    checkFn.addToRolePolicy(new iam.PolicyStatement({ actions: ['transcribe:StartTranscriptionJob'], resources: ['*'] }));
+    new events.Rule(this, 'TranscribeDone', {
+      description: 'Hands this stack’s finished Transcribe jobs to the placement check (DES-013 K-11)',
+      eventPattern: {
+        source: ['aws.transcribe'],
+        detailType: ['Transcribe Job State Change'],
+        detail: { TranscriptionJobName: [{ prefix: jobPrefix }], TranscriptionJobStatus: ['COMPLETED', 'FAILED'] },
+      },
+      targets: [new targets.LambdaFunction(checkFn)],
+    });
+    for (const f of [fn, checkFn]) for (const statement of relayAccess) f.addToRolePolicy(statement);
 
     const api = new apigw.RestApi(this, 'Api', {
       restApiName: `yorisoi-studio-${config.name}`,
@@ -241,6 +309,7 @@ export class StudioStack extends Stack {
     new ssm.StringParameter(this, 'TableNameParameter', { parameterName: param('table-name'), stringValue: table.tableName });
     new ssm.StringParameter(this, 'IntakeBucketParameter', { parameterName: param('intake-bucket'), stringValue: intake.bucketName });
     new ssm.StringParameter(this, 'AudioBucketParameter', { parameterName: param('audio-bucket'), stringValue: audio.bucketName });
+    new ssm.StringParameter(this, 'CheckFunctionParameter', { parameterName: param('check-function'), stringValue: checkFn.functionName });
 
     new CfnOutput(this, 'StudioUrl', { value: `${api.url}` });
     new CfnOutput(this, 'AudioBaseUrl', { value: `https://${distribution.distributionDomainName}` });
