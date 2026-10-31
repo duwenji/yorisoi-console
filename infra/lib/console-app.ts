@@ -217,7 +217,8 @@ export class ConsoleApp extends Construct {
             "script-src 'self'",
             "style-src 'self'",
             // The icon of a submission under review comes from a presigned URL on the intake bucket.
-            `img-src 'self' data: https://${intakeBucket.bucketRegionalDomainName}`,
+            // The studio's cell map shows GSI tiles (DES-013 K-16).
+            `img-src 'self' data: https://${intakeBucket.bucketRegionalDomainName}${studio ? ' https://cyberjapandata.gsi.go.jp' : ''}`,
             // The review samples call the AI from the browser with the operator's key (ADR-001 D-4, DES-005).
             `connect-src 'self' https://${authDomain} https://cognito-idp.${stack.region}.${stack.urlSuffix} https://${intakeBucket.bucketRegionalDomainName}${studioIntake} https://api.openai.com https://api.deepseek.com`,
             `form-action 'self' https://${authDomain}`,

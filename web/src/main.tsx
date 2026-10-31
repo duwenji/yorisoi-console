@@ -13,6 +13,7 @@ import { PublicationsPage } from './pages/publications';
 import { ReviewPage, ReviewQueuePage } from './pages/review';
 import { PublisherPage, PublishersPage } from './pages/publishers';
 import { TransfersPage } from './pages/transfers';
+import { OperatorStudio, ProviderStudio } from './pages/studio';
 import { PublisherChannel, PublisherChannels } from './pages/publisher/channels';
 import { PublisherCollection, PublisherCollections } from './pages/publisher/collections';
 import { PublisherHome } from './pages/publisher/home';
@@ -73,6 +74,7 @@ const NAV: [string, string][] = [
   ['/publishers', '提供者'],
   ['/transfers', '鍵の移し替え'],
   ['/channels', 'チャンネル'],
+  ['/studio', 'スタジオ'],
   ['/audit', '操作の記録'],
 ];
 
@@ -80,6 +82,7 @@ const PUBLISHER_NAV: [string, string][] = [
   ['/', '概要'],
   ['/channels', 'チャンネル'],
   ['/collections', '素材集'],
+  ['/studio', 'スタジオ'],
   ['/keys', '鍵'],
   ['/settings', '設定'],
 ];
@@ -111,6 +114,7 @@ function Shell({ session }: { session: Session }) {
             <Route path="/transfers" element={<TransfersPage />} />
             <Route path="/channels" element={<ChannelPage />} />
             <Route path="/channels/:channelId" element={<ChannelPage />} />
+            <Route path="/studio" element={<OperatorStudio />} />
             <Route path="/audit" element={<AuditPage />} />
             <Route path="*" element={<p>このページはありません。</p>} />
           </Routes>
@@ -121,6 +125,7 @@ function Shell({ session }: { session: Session }) {
             <Route path="/channels/:channelId" element={<PublisherChannel />} />
             <Route path="/collections" element={<PublisherCollections />} />
             <Route path="/collections/:collectionId" element={<PublisherCollection />} />
+            <Route path="/studio" element={<ProviderStudio />} />
             <Route path="/keys" element={<PublisherKeys />} />
             <Route path="/settings" element={<PublisherSettings />} />
             <Route path="*" element={<p>このページはありません。</p>} />
