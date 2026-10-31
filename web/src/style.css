@@ -63,3 +63,19 @@ ol.steps li { margin: 4px 0; }
   .facts dd { margin-bottom: 6px; }
 }
 .card { border: 1px solid var(--line); border-radius: 6px; padding: 12px 16px; margin: 12px 0; }
+
+/* The studio's cell map (DES-013 K-16). */
+.cell-map { display: grid; gap: 6px; }
+.cell-map-tools { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.cell-map-tools input { min-width: 320px; }
+.cell-map-view { position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: 6px; background: #eef1f4; touch-action: none; user-select: none; max-width: 100%; }
+.cell-map-view img { position: absolute; width: 256px; height: 256px; pointer-events: none; }
+.cell-map-view svg { position: absolute; left: 0; top: 0; }
+.cell-map-view rect { fill: transparent; stroke: rgba(29, 90, 71, 0.45); stroke-width: 1; cursor: pointer; }
+.cell-map-view rect:hover { fill: rgba(29, 90, 71, 0.12); }
+.cell-map-view rect.on { fill: rgba(29, 90, 71, 0.35); stroke: #1d5a47; stroke-width: 2; }
+.cell-map-credit { position: absolute; right: 4px; bottom: 2px; font-size: 0.7rem; background: rgba(255, 255, 255, 0.8); padding: 0 4px; }
+.tag.live { background: #dcefe7; color: #1d5a47; }
+.tag.returned, .tag.appealed, .tag.checking, .tag.uploading, .tag.requested { background: #fff4d6; color: var(--warn); }
+.tag.rejected, .tag.removed, .tag.declined { background: #fbe1df; color: var(--danger); }
+form.action.wide { max-width: 760px; }

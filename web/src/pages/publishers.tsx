@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router';
 import { describe, ifMatch } from '../api';
 import { useSession } from '../main';
+import { PublisherStudioAdmin } from './studio';
 import { Empty, ReasonForm, Status, Time, useLoad } from './common';
 
 const STATUS: Record<string, string> = { pending_key: '鍵の紐づけ待ち', active: '有効', suspended: '停止中', deleted: '退会済み' };
@@ -163,6 +164,7 @@ export function PublisherPage() {
               </li>
             ))}
           </ul>
+          <PublisherStudioAdmin publisherId={publisherId} />
           <p><Link to={`/audit?target=PUB%23${publisherId}`}>この提供者の操作の記録</Link></p>
         </>
       )}
