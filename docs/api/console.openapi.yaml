@@ -41,6 +41,10 @@ tags:
     description: スタジオ（提供者。DES-013）
   - name: admin-studio
     description: スタジオの提供者の承認と申し出（運営。DES-013）
+  - name: admin-notes
+    description: 一言の運営の操作（通報された一言・締め出し）
+  - name: admin-local
+    description: 区画ごとに運営から取る素材（スタジオ・一言）の置けない区画
 
 paths:
   /api/me:
@@ -1252,7 +1256,7 @@ paths:
         '200': { description: 数, content: { application/json: { schema: { $ref: '#/components/schemas/StudioStats' } } } }
         default: { $ref: '#/components/responses/Error' }
 
-  /api/admin/studio/reported-studios:
+  /api/admin/studio/reported:
     get:
       tags: [admin-studio]
       operationId: listReportedStudios
@@ -1261,16 +1265,16 @@ paths:
         '200': { description: 通報されたスタジオ, content: { application/json: { schema: { type: object, required: [items], properties: { items: { type: array, items: { $ref: '#/components/schemas/ReportedStudio' } } } } } } }
         default: { $ref: '#/components/responses/Error' }
 
-  /api/admin/studio/reported-notes:
+  /api/admin/notes/reported:
     get:
-      tags: [admin-studio]
+      tags: [admin-notes]
       operationId: listReportedNotes
       summary: 通報された一言（最初の通報の順）。置いた端末は出さない
       responses:
         '200': { description: 通報された一言, content: { application/json: { schema: { type: object, required: [items], properties: { items: { type: array, items: { $ref: '#/components/schemas/ReportedNote' } } } } } } }
         default: { $ref: '#/components/responses/Error' }
 
-  /api/admin/studio/notes/{noteId}/{decision}:
+  /api/admin/notes/{noteId}/{decision}:
     parameters:
       - name: noteId
         in: path
@@ -1282,7 +1286,7 @@ paths:
         description: restore（隠したのを戻す）・remove（消す。本文も消す。reason が要る。ban で置いた端末を締め出せる）
         schema: { type: string, enum: [restore, remove] }
     post:
-      tags: [admin-studio]
+      tags: [admin-notes]
       operationId: decideReportedNote
       summary: 通報された一言に答える（一言の利用規約 3）
       requestBody:
@@ -1299,39 +1303,39 @@ paths:
           content: { application/json: { schema: { type: object, required: [noteId, state], properties: { noteId: { type: string }, state: { type: string }, ban: { type: object, properties: { until: { type: string, format: date-time } } } } } } }
         default: { $ref: '#/components/responses/Error' }
 
-  /api/admin/studio/bans:
+  /api/admin/notes/bans:
     get:
-      tags: [admin-studio]
+      tags: [admin-notes]
       operationId: listBans
       summary: 締め出し（もとの一言で示す。端末は出さない）
       responses:
         '200': { description: 締め出し, content: { application/json: { schema: { type: object, required: [items], properties: { items: { type: array, items: { $ref: '#/components/schemas/Ban' } } } } } } }
         default: { $ref: '#/components/responses/Error' }
 
-  /api/admin/studio/bans/{noteId}:
+  /api/admin/notes/bans/{noteId}:
     parameters:
       - name: noteId
         in: path
         required: true
         schema: { $ref: '#/components/schemas/Ulid' }
     delete:
-      tags: [admin-studio]
+      tags: [admin-notes]
       operationId: liftBan
       summary: 締め出しを解く
       responses:
         '204': { description: 解いた }
         default: { $ref: '#/components/responses/Error' }
 
-  /api/admin/studio/areas:
+  /api/admin/local/areas:
     get:
-      tags: [admin-studio]
+      tags: [admin-local]
       operationId: listClosedAreas
       summary: 一言・スタジオを置けない区画（REQ-STUDIO・REQ-NOTES F-15）
       responses:
         '200': { description: 置けない区画, content: { application/json: { schema: { type: object, required: [items], properties: { items: { type: array, items: { $ref: '#/components/schemas/ClosedArea' } } } } } } }
         default: { $ref: '#/components/responses/Error' }
     post:
-      tags: [admin-studio]
+      tags: [admin-local]
       operationId: closeArea
       summary: 区画を置けないようにする（アプリには 5 分以内に効く）
       requestBody:
@@ -1341,14 +1345,14 @@ paths:
         '201': { description: 置けなくした, content: { application/json: { schema: { $ref: '#/components/schemas/ClosedArea' } } } }
         default: { $ref: '#/components/responses/Error' }
 
-  /api/admin/studio/areas/{cell}:
+  /api/admin/local/areas/{cell}:
     parameters:
       - name: cell
         in: path
         required: true
         schema: { type: string, pattern: '^[0-9b-hjkmnp-z]{5,7}$' }
     delete:
-      tags: [admin-studio]
+      tags: [admin-local]
       operationId: openArea
       summary: 置けない区画を外す
       responses:

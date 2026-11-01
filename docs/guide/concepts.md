@@ -145,5 +145,5 @@ flowchart LR
 
 - その場の素材の置き場と配信は管理システムとは別のスタックで動き、アプリは管理システムのリストではなく、運営の配信から取ります
 - アプリで聞くのは、設定で「一言を聞く」「お知らせを聞く」をオンにした人だけです
-- 決まりは platform の[一言の利用規約](https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/notes-terms.md)と[スタジオの決まり](https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/studio-rules.md)にあります。手順は[スタジオのガイド](studio.md)と[運営ガイド 13 章](operator.md#13-その場の素材スタジオ一言)です
+- 決まりは platform の[一言の利用規約](https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/notes-terms.md)と[スタジオの決まり](https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/studio-rules.md)にあります。手順は[スタジオのガイド](studio.md)と[運営ガイド 13 章](operator.md#13-スタジオ)と[14 章](operator.md#14-一言)です
 

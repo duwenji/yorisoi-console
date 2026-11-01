@@ -85,3 +85,9 @@ export function ReasonForm({
     </form>
   );
 }
+
+/** Why a studio or a note was reported (platform API-LOCAL-MATERIALS `reason`), as the operator reads it. */
+const REPORT_REASON: Record<string, string> = {
+  danger: '安全を損なう', harassment: '人を傷つける・つきまとい', ad: '宣伝・勧誘', rights: '権利の侵害', inappropriate: '聞かせるのに合わない', other: 'そのほか',
+};
+export const reasons = (list: string[]) => list.map((r) => REPORT_REASON[r] ?? r).join('・');

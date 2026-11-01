@@ -1,6 +1,6 @@
 # スタジオの手順
 
-スタジオ（platform [REQ-STUDIO](https://github.com/duwenji/yorisoi-platform/blob/main/docs/requirements/REQ-STUDIO.md)・[API-LOCAL-MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-LOCAL-MATERIALS.md)、設計は [DES-013](../design/DES-013-studio.md)）を配備し、利用規約の版を上げ、止め、確かめる手順。スタジオは別のスタック（`YorisoiLocalMaterials-<env>`）で、別の CDK アプリ（`infra/bin/local-materials.ts`）から配備する。提供者・運営の画面は管理システムの「スタジオ」タブにある（使い方は[運営ガイド](../guide/operator.md#13-その場の素材スタジオ一言)と[スタジオのガイド](../guide/studio.md)）。
+スタジオ（platform [REQ-STUDIO](https://github.com/duwenji/yorisoi-platform/blob/main/docs/requirements/REQ-STUDIO.md)・[API-LOCAL-MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-LOCAL-MATERIALS.md)、設計は [DES-013](../design/DES-013-studio.md)）を配備し、利用規約の版を上げ、止め、確かめる手順。スタジオは別のスタック（`YorisoiLocalMaterials-<env>`）で、別の CDK アプリ（`infra/bin/local-materials.ts`）から配備する。提供者・運営の画面は管理システムの「スタジオ」タブにある（使い方は[運営ガイド](../guide/operator.md#13-スタジオ)と[スタジオのガイド](../guide/studio.md)）。
 
 ## 構成
 
@@ -73,7 +73,7 @@ MSYS_NO_PATHCONV=1 aws ssm put-parameter --name /yorisoi-local-materials/dev/pau
 MSYS_NO_PATHCONV=1 aws ssm put-parameter --name /yorisoi-local-materials/dev/paused --value false --overwrite
 ```
 
-1 つの一言・スタジオだけを止めるときは、管理システムの運営の画面で消す（[運営ガイド](../guide/operator.md#13-その場の素材スタジオ一言)）。
+1 つのスタジオだけを止めるときは「スタジオ」の画面で（[運営ガイド 13 章](../guide/operator.md#13-スタジオ)）、1 つの一言だけを止めるときは「一言」の画面で（[同 14 章](../guide/operator.md#14-一言)）消す。
 
 ## 警報が届いたとき
 
@@ -81,7 +81,7 @@ MSYS_NO_PATHCONV=1 aws ssm put-parameter --name /yorisoi-local-materials/dev/pau
 |---|---|
 | 一言の確認の失敗（`UpstreamError`） | 一言を置けない（`upstream_error`）。中継の警報も届いていれば Bedrock の側の問題。中継の手順の「確かめる」でモデルとクォータを見る |
 | 設定の値が正しくない（`InvalidSetting`） | 上の利用規約の版、または中継のモデル・予算の値を直す |
-| 通報で一言が隠れた（`NotesHidden`） | 運営の画面の「通報された一言」で、戻すか消す |
+| 通報で一言が隠れた（`NotesHidden`） | 運営の画面の「一言」の「通報された一言」で、戻すか消す |
 | 通報でスタジオが止まった（`StudiosSuspended`） | 運営の画面の「通報されたスタジオ」で、戻すか消す。重いものは 24 時間、軽いものは 7 日を目安に決める（スタジオの決まり 4.1） |
 
 ## 費用
