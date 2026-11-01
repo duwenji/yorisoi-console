@@ -3,7 +3,7 @@
 infra の 4 つの CDK アプリを [cdk-dia](https://github.com/pistazie/cdk-dia) で描いた図。CDK のコードから機械的に作るので、**いま配備される資源とそのつながり** がそのまま出る。
 
 - 処理の流れ（誰が何をして、どの順に動くか）は手で描いた [構成図](architecture.md) を見る。この文書は「その流れを支える AWS の資源が、CDK の上で実際にどう組まれているか」を確かめるためのもの
-- 4 つのスタックは別々に配備する。管理システム（YorisoiConsole）・AI の中継（YorisoiAiRelay）・スタジオ（YorisoiStudio）・スポットのタイル（YorisoiSpotTiles）の間に、CDK の上のつながりはない。スタジオは中継の表、管理システムはスタジオの表・バケットを、配備のときに Parameter Store から名前で読む
+- 4 つのスタックは別々に配備する。管理システム（YorisoiConsole）・AI の中継（YorisoiAiRelay）・スタジオ（YorisoiLocalMaterials）・スポットのタイル（YorisoiSpotTiles）の間に、CDK の上のつながりはない。スタジオは中継の表、管理システムはスタジオの表・バケットを、配備のときに Parameter Store から名前で読む
 
 ## 図の読み方
 
@@ -47,14 +47,14 @@ infra の 4 つの CDK アプリを [cdk-dia](https://github.com/pistazie/cdk-di
 - Table は回数・nonce・トークンを持ち、どれも期限で消える
 - 予算に近い・止まっている・設定がおかしい・上流のエラー、は Alarms からメールで運営に届く（警報そのものは主要な図では省いている）
 
-## スタジオ（YorisoiStudio）
+## スタジオ（YorisoiLocalMaterials）
 
 ![スタジオの AWS 資源](diagrams/studio.png)
 
 全部の図: [studio-all.png](diagrams/studio-all.png)
 
 - アプリは Api（API Gateway の REST API。本番は ApiWaf で送信元ごとに回数を絞る）を中継のトークンで呼び、Studio が一言を置く・区画の一覧・反応・通報・ブロックを Table に読み書きする。一言を置くときは Bedrock で確かめる
-- スタジオの音声は、提供者が管理システムの画面から Intake に送る。管理システムが PlacementCheck を呼ぶと、長さ・形式を見て Transcribe に文字起こしを頼み、終わりを TranscribeDone が拾って PlacementCheck に戻す。Bedrock で確かめて通ったら Audio に写し、アプリは AudioCdn から読む
+- スタジオの音声は、提供者が管理システムの画面から Intake に送る。管理システムが StudioCheck を呼ぶと、長さ・形式を見て Transcribe に文字起こしを頼み、終わりを TranscribeDone が拾って StudioCheck に戻す。Bedrock で確かめて通ったら Audio に写し、アプリは AudioCdn から読む
 - 運営は Parameter Store の TermsVersion・TermsUrl・TermsUpdatedAt（一言の利用規約）と Paused（スタジオを止める）を配備し直さずに変えられる。TableNameParameter など 4 つは管理システムが配備のときに読む
 - 一言の確認の失敗が続く・設定がおかしい・通報で一言が隠れた・通報でスタジオが止まった、は Alarms からメールで運営に届く
 

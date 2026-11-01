@@ -18,26 +18,26 @@ import * as ssm from 'aws-cdk-lib/aws-ssm';
 import * as wafv2 from 'aws-cdk-lib/aws-wafv2';
 import type { Construct } from 'constructs';
 import { fileURLToPath } from 'node:url';
-import type { StudioConfig } from './studio-config.js';
+import type { LocalMaterialsConfig } from './local-materials-config.js';
 
 const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
 
-export interface StudioStackProps extends StackProps {
-  config: StudioConfig;
+export interface LocalMaterialsStackProps extends StackProps {
+  config: LocalMaterialsConfig;
 }
 
 /**
- * The studio (platform API-LOCAL-MATERIALS, console DES-013): notes and placements, handed out per cell.
+ * The studio (platform API-LOCAL-MATERIALS, console DES-013): notes and studios, handed out per cell.
  * A stack of its own (K-1), deployed after the relay, whose tokens, model and budget it uses
  * (K-2, K-3), and before the console, which reads this stack's names from Parameter Store.
  */
-export class StudioStack extends Stack {
-  constructor(scope: Construct, id: string, props: StudioStackProps) {
+export class LocalMaterialsStack extends Stack {
+  constructor(scope: Construct, id: string, props: LocalMaterialsStackProps) {
     super(scope, id, props);
     const { config } = props;
     const prod = config.name === 'prod';
     const removal = config.retainData ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY;
-    const param = (name: string) => `/yorisoi-studio/${config.name}/${name}`;
+    const param = (name: string) => `/yorisoi-local-materials/${config.name}/${name}`;
     const relayParam = (name: string) => `/yorisoi-ai-relay/${config.name}/${name}`;
     const parameterArn = (name: string) => `arn:${this.partition}:ssm:${this.region}:${this.account}:parameter${name}`;
 
@@ -74,12 +74,12 @@ export class StudioStack extends Stack {
       removalPolicy: RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
     });
-    // A placement starts within 30 days and runs at most 30: its audio is gone soon after it ends.
+    // A studio starts within 30 days and runs at most 30: its audio is gone soon after it ends.
     const audio = new s3.Bucket(this, 'Audio', {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       encryption: s3.BucketEncryption.S3_MANAGED,
       enforceSSL: true,
-      lifecycleRules: [{ prefix: 'placements/', expiration: Duration.days(62) }],
+      lifecycleRules: [{ prefix: 'studios/', expiration: Duration.days(62) }],
       removalPolicy: removal,
       autoDeleteObjects: !config.retainData,
     });
@@ -114,22 +114,22 @@ export class StudioStack extends Stack {
     const paused = new ssm.StringParameter(this, 'Paused', {
       parameterName: param('paused'),
       stringValue: 'false',
-      description: 'true stops the studio: the apps get studio_paused (API-LOCAL-MATERIALS)',
+      description: 'true stops the studio: the apps get local_paused (API-LOCAL-MATERIALS)',
     });
 
     const relayTableName = ssm.StringParameter.valueForStringParameter(this, relayParam('table-name'));
 
-    const fn = new nodejs.NodejsFunction(this, 'Studio', {
+    const fn = new nodejs.NodejsFunction(this, 'LocalMaterials', {
       projectRoot: repoRoot,
       depsLockFilePath: `${repoRoot}package-lock.json`,
-      entry: `${repoRoot}api/src/studio/handler.ts`,
+      entry: `${repoRoot}api/src/local/handler.ts`,
       runtime: lambda.Runtime.NODEJS_22_X,
       architecture: lambda.Architecture.ARM_64,
       bundling: { format: nodejs.OutputFormat.ESM, target: 'node22', minify: true, sourceMap: true },
       memorySize: 512,
       // A note's check is a short call to the model; the API waits at most 29.
       timeout: Duration.seconds(28),
-      logGroup: new logs.LogGroup(this, 'StudioLogs', {
+      logGroup: new logs.LogGroup(this, 'LocalLogs', {
         retention: prod ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.TWO_WEEKS,
         removalPolicy: RemovalPolicy.DESTROY,
       }),
@@ -186,18 +186,18 @@ export class StudioStack extends Stack {
       }),
     );
 
-    // ---- the placement check (K-11) ----
+    // ---- the studio check (K-11) ----
     const jobPrefix = `studio-${config.name}-`;
-    const checkFn = new nodejs.NodejsFunction(this, 'PlacementCheck', {
+    const checkFn = new nodejs.NodejsFunction(this, 'StudioCheck', {
       projectRoot: repoRoot,
       depsLockFilePath: `${repoRoot}package-lock.json`,
-      entry: `${repoRoot}api/src/studio/placement-handler.ts`,
+      entry: `${repoRoot}api/src/local/studio-handler.ts`,
       runtime: lambda.Runtime.NODEJS_22_X,
       architecture: lambda.Architecture.ARM_64,
       bundling: { format: nodejs.OutputFormat.ESM, target: 'node22', minify: true, sourceMap: true },
       memorySize: 512,
       timeout: Duration.minutes(1),
-      logGroup: new logs.LogGroup(this, 'PlacementCheckLogs', {
+      logGroup: new logs.LogGroup(this, 'StudioCheckLogs', {
         retention: prod ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.TWO_WEEKS,
         removalPolicy: RemovalPolicy.DESTROY,
       }),
@@ -228,10 +228,10 @@ export class StudioStack extends Stack {
     intake.grantRead(checkFn, 'uploads/*');
     intake.grantReadWrite(checkFn, 'held/*');
     intake.grantReadWrite(checkFn, 'transcripts/*');
-    audio.grantPut(checkFn, 'placements/*');
+    audio.grantPut(checkFn, 'studios/*');
     checkFn.addToRolePolicy(new iam.PolicyStatement({ actions: ['transcribe:StartTranscriptionJob'], resources: ['*'] }));
     new events.Rule(this, 'TranscribeDone', {
-      description: 'Hands this stack’s finished Transcribe jobs to the placement check (DES-013 K-11)',
+      description: 'Hands this stack’s finished Transcribe jobs to the studio check (DES-013 K-11)',
       eventPattern: {
         source: ['aws.transcribe'],
         detailType: ['Transcribe Job State Change'],
@@ -242,14 +242,14 @@ export class StudioStack extends Stack {
     for (const f of [fn, checkFn]) for (const statement of relayAccess) f.addToRolePolicy(statement);
 
     const api = new apigw.RestApi(this, 'Api', {
-      restApiName: `yorisoi-studio-${config.name}`,
+      restApiName: `yorisoi-local-materials-${config.name}`,
       description: 'The studio (platform API-LOCAL-MATERIALS)',
       endpointTypes: [apigw.EndpointType.REGIONAL],
       deployOptions: { stageName: 'api', throttlingRateLimit: prod ? 100 : 10, throttlingBurstLimit: prod ? 200 : 20 },
       cloudWatchRole: false,
     });
     const integration = new apigw.LambdaIntegration(fn);
-    const studio = api.root.addResource('v1').addResource('studio');
+    const studio = api.root.addResource('v1').addResource('local');
     studio.addResource('cells').addMethod('GET', integration);
     const notes = studio.addResource('notes');
     notes.addMethod('POST', integration);
@@ -267,7 +267,7 @@ export class StudioStack extends Stack {
       const waf = new wafv2.CfnWebACL(this, 'ApiWaf', {
         scope: 'REGIONAL',
         defaultAction: { allow: {} },
-        visibilityConfig: { cloudWatchMetricsEnabled: true, metricName: `yorisoi-studio-${config.name}`, sampledRequestsEnabled: false },
+        visibilityConfig: { cloudWatchMetricsEnabled: true, metricName: `yorisoi-local-materials-${config.name}`, sampledRequestsEnabled: false },
         rules: [
           {
             name: 'RateLimitPerIp',
@@ -293,7 +293,7 @@ export class StudioStack extends Stack {
     if (config.alarmEmail) alarms.addSubscription(new subscriptions.EmailSubscription(config.alarmEmail));
     const alarm = (id: string, name: string, statistic: string, threshold: number, description: string) =>
       new cloudwatch.Alarm(this, id, {
-        metric: new cloudwatch.Metric({ namespace: 'YorisoiStudio', metricName: name, dimensionsMap: { Env: config.name }, statistic, period: Duration.minutes(5) }),
+        metric: new cloudwatch.Metric({ namespace: 'YorisoiLocalMaterials', metricName: name, dimensionsMap: { Env: config.name }, statistic, period: Duration.minutes(5) }),
         threshold,
         evaluationPeriods: 1,
         comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
@@ -303,7 +303,7 @@ export class StudioStack extends Stack {
     alarm('UpstreamErrors', 'UpstreamError', 'Sum', 10, 'The note check failed 10 times in 5 minutes (DES-013 K-10)');
     alarm('BadSetting', 'InvalidSetting', 'Maximum', 1, 'A studio or relay parameter is not valid; the studio uses the deployed value (DES-013 K-19)');
     alarm('NotesHidden', 'NotesHidden', 'Sum', 1, 'A note was hidden by reports and waits for the operator (REQ-NOTES F-13)');
-    alarm('PlacementsSuspended', 'PlacementsSuspended', 'Sum', 1, 'A placement was stopped by reports and waits for the operator (studio-rules.md 4.1)');
+    alarm('StudiosSuspended', 'StudiosSuspended', 'Sum', 1, 'A studio was stopped by reports and waits for the operator (studio-rules.md 4.1)');
 
     // K-2: the console stack reads these when it is deployed.
     new ssm.StringParameter(this, 'TableNameParameter', { parameterName: param('table-name'), stringValue: table.tableName });
@@ -311,7 +311,7 @@ export class StudioStack extends Stack {
     new ssm.StringParameter(this, 'AudioBucketParameter', { parameterName: param('audio-bucket'), stringValue: audio.bucketName });
     new ssm.StringParameter(this, 'CheckFunctionParameter', { parameterName: param('check-function'), stringValue: checkFn.functionName });
 
-    new CfnOutput(this, 'StudioUrl', { value: `${api.url}` });
+    new CfnOutput(this, 'LocalUrl', { value: `${api.url}` });
     new CfnOutput(this, 'AudioBaseUrl', { value: `https://${distribution.distributionDomainName}` });
     new CfnOutput(this, 'PausedParameter', { value: paused.parameterName });
     new CfnOutput(this, 'TermsVersionParameter', { value: termsVersion.parameterName });

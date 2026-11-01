@@ -3,7 +3,7 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { GetParametersCommand, SSMClient } from '@aws-sdk/client-ssm';
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 import { ulid } from '../console/util.js';
-import type { ModelChoice, StudioPorts, StudioSettings } from './studio.js';
+import type { ModelChoice, LocalPorts, LocalSettings } from './local.js';
 
 export const env = (name: string) => {
   const value = process.env[name];
@@ -19,7 +19,7 @@ const CHECK_MAX_TOKENS = 100;
 export function emitMetric(name: string, value: number) {
   console.log(
     JSON.stringify({
-      _aws: { Timestamp: Date.now(), CloudWatchMetrics: [{ Namespace: 'YorisoiStudio', Dimensions: [['Env']], Metrics: [{ Name: name, Unit: 'None' }] }] },
+      _aws: { Timestamp: Date.now(), CloudWatchMetrics: [{ Namespace: 'YorisoiLocalMaterials', Dimensions: [['Env']], Metrics: [{ Name: name, Unit: 'None' }] }] },
       Env: process.env.STUDIO_ENV ?? 'dev',
       [name]: value,
     }),
@@ -27,11 +27,11 @@ export function emitMetric(name: string, value: number) {
 }
 
 /** What the operator set, checked: a bad value falls back to the deployed default (K-3, K-19). */
-export function readStudioSettings(
+export function readLocalSettings(
   raw: { termsVersion?: string; termsUrl?: string; termsUpdatedAt?: string; paused?: string; monthlyBudgetUsd?: string; model?: string },
   defaults: { termsVersion: number; termsUrl: string; monthlyBudgetUsd: number; models: ModelChoice[]; model: string },
   metric: (name: string, value: number) => void,
-): StudioSettings {
+): LocalSettings {
   const version = Number(raw.termsVersion);
   const versionOk = Number.isInteger(version) && version >= 1;
   const budget = Number(raw.monthlyBudgetUsd);
@@ -48,10 +48,10 @@ export function readStudioSettings(
   };
 }
 
-let cached: StudioPorts | undefined;
+let cached: LocalPorts | undefined;
 
 /** The ports from the Lambda's environment, made once per container. */
-export function awsPorts(): StudioPorts {
+export function awsPorts(): LocalPorts {
   cached ??= build();
   return cached;
 }
@@ -60,7 +60,7 @@ const region = () => env('AWS_REGION');
 export const documentClient = () => DynamoDBDocumentClient.from(new DynamoDBClient({ region: region() }), { marshallOptions: { removeUndefinedValues: true } });
 
 /** Reads the studio's and the relay's parameters, at most every 5 minutes. */
-export function settingsLoader(): () => Promise<StudioSettings> {
+export function settingsLoader(): () => Promise<LocalSettings> {
   const ssm = new SSMClient({ region: region() });
   const params = {
     termsVersion: env('PARAM_TERMS_VERSION'),
@@ -77,13 +77,13 @@ export function settingsLoader(): () => Promise<StudioSettings> {
     models: JSON.parse(env('MODELS')) as ModelChoice[],
     model: env('DEFAULT_MODEL'),
   };
-  let settings: { value: StudioSettings; until: number } | undefined;
+  let settings: { value: LocalSettings; until: number } | undefined;
   return async () => {
     if (settings && settings.until > Date.now()) return settings.value;
     const out = await ssm.send(new GetParametersCommand({ Names: Object.values(params) }));
     const value = (name: string) => out.Parameters?.find((p) => p.Name === name)?.Value;
-    const read = readStudioSettings(
-      Object.fromEntries(Object.entries(params).map(([key, name]) => [key, value(name)])) as Parameters<typeof readStudioSettings>[0],
+    const read = readLocalSettings(
+      Object.fromEntries(Object.entries(params).map(([key, name]) => [key, value(name)])) as Parameters<typeof readLocalSettings>[0],
       defaults,
       emitMetric,
     );
@@ -93,7 +93,7 @@ export function settingsLoader(): () => Promise<StudioSettings> {
 }
 
 /** One short call to the operator's AI for a verdict (K-10, K-11). */
-export function bedrockCheck(): StudioPorts['check'] {
+export function bedrockCheck(): LocalPorts['check'] {
   const bedrock = new BedrockRuntimeClient({ region: region() });
   return async (model, system, user) => {
     const out = await bedrock.send(
@@ -109,7 +109,7 @@ export function bedrockCheck(): StudioPorts['check'] {
   };
 }
 
-function build(): StudioPorts {
+function build(): LocalPorts {
   return {
     db: documentClient(),
     table: env('TABLE_NAME'),

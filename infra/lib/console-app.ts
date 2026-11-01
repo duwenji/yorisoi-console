@@ -200,12 +200,12 @@ export class ConsoleApp extends Construct {
     const authDomain = `${domain.domainName}.auth.${stack.region}.amazoncognito.com`;
     const issuer = `https://cognito-idp.${stack.region}.${stack.urlSuffix}/${userPool.userPoolId}`;
 
-    // The studio stack's names (DES-013 K-2): it is deployed before the console.
-    const studioParam = (name: string) => ssm.StringParameter.valueForStringParameter(this, `/yorisoi-studio/${config.name}/${name}`);
-    const studio = config.studio
-      ? { table: studioParam('table-name'), intake: studioParam('intake-bucket'), check: studioParam('check-function') }
+    // The local materials stack's names (DES-013 K-2): it is deployed before the console.
+    const localParam = (name: string) => ssm.StringParameter.valueForStringParameter(this, `/yorisoi-local-materials/${config.name}/${name}`);
+    const local = config.localMaterials
+      ? { table: localParam('table-name'), intake: localParam('intake-bucket'), check: localParam('check-function') }
       : undefined;
-    const studioIntake = studio ? ` https://${studio.intake}.s3.${stack.region}.${stack.urlSuffix}` : '';
+    const localIntake = local ? ` https://${local.intake}.s3.${stack.region}.${stack.urlSuffix}` : '';
 
     // Security headers for the SPA; the CSP allows only this origin and Cognito (aws-auth).
     const headers = new cloudfront.ResponseHeadersPolicy(this, 'ConsoleHeaders', {
@@ -218,9 +218,9 @@ export class ConsoleApp extends Construct {
             "style-src 'self'",
             // The icon of a submission under review comes from a presigned URL on the intake bucket.
             // The studio's cell map shows GSI tiles (DES-013 K-16).
-            `img-src 'self' data: https://${intakeBucket.bucketRegionalDomainName}${studio ? ' https://cyberjapandata.gsi.go.jp' : ''}`,
+            `img-src 'self' data: https://${intakeBucket.bucketRegionalDomainName}${local ? ' https://cyberjapandata.gsi.go.jp' : ''}`,
             // The review samples call the AI from the browser with the operator's key (ADR-001 D-4, DES-005).
-            `connect-src 'self' https://${authDomain} https://cognito-idp.${stack.region}.${stack.urlSuffix} https://${intakeBucket.bucketRegionalDomainName}${studioIntake} https://api.openai.com https://api.deepseek.com`,
+            `connect-src 'self' https://${authDomain} https://cognito-idp.${stack.region}.${stack.urlSuffix} https://${intakeBucket.bucketRegionalDomainName}${localIntake} https://api.openai.com https://api.deepseek.com`,
             `form-action 'self' https://${authDomain}`,
             "frame-ancestors 'none'",
             "base-uri 'none'",
@@ -339,11 +339,11 @@ export class ConsoleApp extends Construct {
     // Leaving deletes the user (API-001 C-4).
     consoleFn.addToRolePolicy(new iam.PolicyStatement({ actions: ['cognito-idp:AdminDeleteUser'], resources: [userPool.userPoolArn] }));
     props.table.grantReadWriteData(consoleFn);
-    if (studio) {
-      consoleFn.addEnvironment('STUDIO_TABLE', studio.table);
-      consoleFn.addEnvironment('STUDIO_INTAKE_BUCKET', studio.intake);
-      consoleFn.addEnvironment('STUDIO_CHECK_FUNCTION', studio.check);
-      const tableArn = `arn:${stack.partition}:dynamodb:${stack.region}:${stack.account}:table/${studio.table}`;
+    if (local) {
+      consoleFn.addEnvironment('LOCAL_TABLE', local.table);
+      consoleFn.addEnvironment('STUDIO_INTAKE_BUCKET', local.intake);
+      consoleFn.addEnvironment('STUDIO_CHECK_FUNCTION', local.check);
+      const tableArn = `arn:${stack.partition}:dynamodb:${stack.region}:${stack.account}:table/${local.table}`;
       consoleFn.addToRolePolicy(
         new iam.PolicyStatement({
           actions: ['dynamodb:GetItem', 'dynamodb:PutItem', 'dynamodb:UpdateItem', 'dynamodb:DeleteItem', 'dynamodb:Query', 'dynamodb:ConditionCheckItem'],
@@ -351,9 +351,9 @@ export class ConsoleApp extends Construct {
         }),
       );
       // Presigning the audio's POST needs the right to put it (K-16).
-      consoleFn.addToRolePolicy(new iam.PolicyStatement({ actions: ['s3:PutObject'], resources: [`arn:${stack.partition}:s3:::${studio.intake}/uploads/*`] }));
+      consoleFn.addToRolePolicy(new iam.PolicyStatement({ actions: ['s3:PutObject'], resources: [`arn:${stack.partition}:s3:::${local.intake}/uploads/*`] }));
       consoleFn.addToRolePolicy(
-        new iam.PolicyStatement({ actions: ['lambda:InvokeFunction'], resources: [`arn:${stack.partition}:lambda:${stack.region}:${stack.account}:function:${studio.check}`] }),
+        new iam.PolicyStatement({ actions: ['lambda:InvokeFunction'], resources: [`arn:${stack.partition}:lambda:${stack.region}:${stack.account}:function:${local.check}`] }),
       );
     }
     props.publisher.grantInvoke(consoleFn);

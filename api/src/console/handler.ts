@@ -13,7 +13,7 @@ import { kmsSigner } from '../publish/aws.js';
 import type { SigningKeyRecord } from '../publish/ports.js';
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { createHash } from 'node:crypto';
-import { appsWith, DEFAULT_STAGE_VERSIONS, type AppEntry, type Deps, type StudioDeps } from './deps.js';
+import { appsWith, DEFAULT_STAGE_VERSIONS, type AppEntry, type Deps, type LocalDeps } from './deps.js';
 import { ApiError, problem } from './http.js';
 import { callerFrom, route } from './router.js';
 import { CursorCodec } from './util.js';
@@ -144,7 +144,7 @@ async function load(): Promise<Deps> {
       return `${env('PROVIDER_URL')}/${key}`;
     },
     apps: apps(),
-    ...(process.env.STUDIO_TABLE ? { studio: studio() } : {}),
+    ...(process.env.LOCAL_TABLE ? { local: local() } : {}),
     deleteUser: async (sub) => {
       // Sign-in is by email, so the user name is the sub.
       await cognito.send(new AdminDeleteUserCommand({ UserPoolId: env('USER_POOL_ID'), Username: sub }));
@@ -156,9 +156,9 @@ async function load(): Promise<Deps> {
 }
 
 /** The studio stack's table, intake and check (DES-013 K-2), when the console is deployed with it. */
-function studio(): StudioDeps {
+function local(): LocalDeps {
   return {
-    table: env('STUDIO_TABLE'),
+    table: env('LOCAL_TABLE'),
     presignAudio: async (key, maxBytes) => {
       const post = await createPresignedPost(s3, {
         Bucket: env('STUDIO_INTAKE_BUCKET'),

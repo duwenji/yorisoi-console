@@ -31,11 +31,11 @@ export interface EnvConfig {
    */
   appStageVersions: Record<string, Record<number, number>>;
   /**
-   * Whether the studio stack (`YorisoiStudio-<env>`, DES-013) is deployed in this account: the console
+   * Whether the studio stack (`YorisoiLocalMaterials-<env>`, DES-013) is deployed in this account: the console
    * then reads its table, intake bucket and check function from Parameter Store (K-2), and must be
    * deployed after it.
    */
-  studio: boolean;
+  localMaterials: boolean;
   /** What this environment pays for (see docs/operations/cost.md). Production keeps every protection. */
   cost: {
     /** AWS WAF on the user pool (ADR-001 A-18): about 7 USD a month. */
@@ -66,7 +66,7 @@ export const configs: Record<EnvConfig['name'], Omit<EnvConfig, 'rootPublicKey'>
     // SanpoGuide versionCode 1 shows stage 0 and 1 (text and images); audio and video wait.
     // CycleGuide reads out a cue's text from versionCode 7 (1.4.0, F-32; images are passed over).
     appStageVersions: { sanpoguide: { 0: 1, 1: 1, 2: 9999, 3: 9999 }, cycleguide: { 0: 1, 1: 7, 2: 9999, 3: 9999 } },
-    studio: true,
+    localMaterials: true,
     // Development keeps cost to the minimum.
     cost: {
       waf: false,
@@ -88,7 +88,7 @@ export const configs: Record<EnvConfig['name'], Omit<EnvConfig, 'rootPublicKey'>
     // CycleGuide: stage 1 (a cue's text read out) once 1.4.0 (7) is on Google Play.
     appStageVersions: { sanpoguide: { 0: 1, 1: 1, 2: 9999, 3: 9999 }, cycleguide: { 0: 1, 1: 9999, 2: 9999, 3: 9999 } },
     // Until the studio's production stack is deployed (production preparation).
-    studio: false,
+    localMaterials: false,
     cost: { waf: true, pointInTimeRecovery: true, cursorKey: 'secret' },
   },
 };

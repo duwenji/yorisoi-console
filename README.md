@@ -22,7 +22,7 @@ api/               Lambda（TypeScript）。公開の処理（api/src/publish）
 tools/root-key     ルート鍵の CLI（オフラインで使う）
 tools/provision    配備した環境に署名鍵・鍵セットを登録して公開する（初期設定）
 conformance/       platform API-CHANNEL-LIST の準拠テスト（任意のリストの URL に対して流せる）
-infra/             AWS CDK（管理システム bin/app.ts・中継 bin/relay.ts・スタジオ bin/studio.ts・タイル bin/tiles.ts）
+infra/             AWS CDK（管理システム bin/app.ts・中継 bin/relay.ts・スタジオ bin/local-materials.ts・タイル bin/tiles.ts）
 tiles/             スポットのタイルを作るバッチ
 web/               運営・チャンネル提供者・素材提供者・素材提供者の画面（React + Vite）
 validator/         機械審査の Lambda（Kotlin、Gradle、yorisoi-platform の core-format とプロンプト・パック）

@@ -6,7 +6,7 @@
 |---|---|
 | 文書ID | DES-013 |
 | ドキュメント種別 | 機能設計書 |
-| 対象システム/機能 | 新しいスタック `YorisoiStudio-<env>`（`infra/bin/studio.ts`・`infra/lib/studio-stack.ts`、`api/src/studio/`）、中継のスタック（表の名前の公開）、管理 API（`api/src/console/`）、画面（`web`）、データモデル |
+| 対象システム/機能 | 新しいスタック `YorisoiLocalMaterials-<env>`（`infra/bin/local-materials.ts`・`infra/lib/local-materials-stack.ts`、`api/src/local/`）、中継のスタック（表の名前の公開）、管理 API（`api/src/console/`）、画面（`web`）、データモデル |
 | 関連Skill | feature-implementation-unified |
 | 作成日 | 2026-10-31 |
 | 作成者 | Claude（開発者との検討） |
@@ -53,11 +53,11 @@ platform のその場の素材（区画ごとに運営から取る素材。今�
 
 | No. | 判断 | 理由 |
 |---|---|---|
-| K-1 | **別のスタック** `YorisoiStudio-<env>`（別の CDK アプリ `infra/bin/studio.ts`）に、REST API（本番は AWS WAF を付ける）、アプリ向けの Lambda（`api/src/studio/`）、確認の Lambda、DynamoDB の表、音声のバケットと CloudFront を置く（ADR-001 A-23） | 中継・タイルと同じ形。管理システムや中継と止め合わない |
+| K-1 | **別のスタック** `YorisoiLocalMaterials-<env>`（別の CDK アプリ `infra/bin/local-materials.ts`）に、REST API（本番は AWS WAF を付ける）、アプリ向けの Lambda（`api/src/local/`）、確認の Lambda、DynamoDB の表、音声のバケットと CloudFront を置く（ADR-001 A-23） | 中継・タイルと同じ形。管理システムや中継と止め合わない |
 | K-2 | **配備の順番**: 中継 → スタジオ → 管理システム。スタジオは中継の表と設定の名前を、管理システムはスタジオの表とバケットの名前を、Parameter Store から配備のときに読む | スタック間の出力（Export）は消すときに縛られるので使わない |
 | K-3 | **中継との結び付き**: スタジオの Lambda は、中継の表の `TOKEN#…` を読んでトークンを確かめ（API-LOCAL-MATERIALS ST-2）、中継の Parameter Store のモデルと月の予算を読み、運営の AI の費用を中継の表の `SPEND`（月の合計）に足す。予算に達していれば一言を置かせない（`relay_paused`）。中継の 1 日の回数は使わない（ST-7） | 予算を 1 つにまとめる（REQ-NOTES N-5）。中継の作りを変えずに済む |
 | K-4 | **置いた人の値**: 中継のトークンの項目にある `install`（中継の鍵でのインストール ID の HMAC）をそのまま使う。スタジオの表と記録にはこの値だけを残す | 中継と同じ値なので、締め出しと上限が中継と同じ端末にかかる。開発用の中継は配備ごとに鍵が変わるので、開発用ではブロック・締め出しが配備で消える（受け入れる） |
-| K-5 | **音声**: 素材提供者が管理システムから、署名付き URL で音声のバケットの `intake/` に送る。確認を通ったら `placements/{id}/audio.m4a` に写し、CloudFront で配る。`intake/` は 1 日、`placements/` はスタジオの期間の終わりから 2 日で消す（ライフサイクルと、終わったスタジオを毎日消す処理） | アプリは認証なしで音声を取る（API-LOCAL-MATERIALS）。未確認の音声を配らない |
+| K-5 | **音声**: 素材提供者が管理システムから、署名付き URL で音声のバケットの `intake/` に送る。確認を通ったら `studios/{id}/audio.m4a` に写し、CloudFront で配る。`intake/` は 1 日、`studios/` はスタジオの期間の終わりから 2 日で消す（ライフサイクルと、終わったスタジオを毎日消す処理） | アプリは認証なしで音声を取る（API-LOCAL-MATERIALS）。未確認の音声を配らない |
 | K-6 | **残すもの**: API-LOCAL-MATERIALS「サーバーが残すもの」のとおり。ログには、操作の種類・件数・時間・エラーの `code` だけを書き、一言・スタジオの本文・区画・`install`・ブロックの組を書かない | REQ-STUDIO・REQ-NOTES N-2、V-10 |
 
 ### アプリ向けの API
@@ -75,7 +75,7 @@ platform のその場の素材（区画ごとに運営から取る素材。今�
 | K-10 | **一言の確認**: 置くときに、まず決まった形（URL・電話番号・メールアドレス）を正規表現で止め、通ったものを運営の AI に渡す。AI には利用規約 2 の項目を示し、`{"ok": true}` か `{"ok": false, "items": ["…"]}` だけを JSON で返させる。AI の呼び出しが失敗したら置かず、`502 upstream_error` を返す（API-LOCAL-MATERIALS のエラー表に互換の変更として足す）。アプリは「今は置けません」と出す | 安い確認を先にして AI の呼び出しを減らす。確かめられないものは置かない |
 | K-11 | **スタジオの確認**: 管理システムでスタジオを「載せる」と、確認の Lambda が順に ① 長さ・大きさ・形式（音声は AAC の m4a、30 秒以内、512 KB 以内）② Amazon Transcribe（日本語、バッチ）で音声を文字に起こす ③ 文字と起こした文を運営の AI でスタジオの決まり 2.2 に照らす。Transcribe の終わりは EventBridge で受ける。当たらなければ載せ、当たれば項目を付けて素材提供者に返す（`returned`） | REQ-STUDIO D-18。30 秒の文字起こしは 1 分ほどで終わる |
 | K-12 | **確認の費用**: 運営の AI の分は中継の `SPEND` に足す（K-3）。Transcribe の分はスタジオごとに記録し（秒数）、月の合計を CloudWatch に出す | REQ-STUDIO N-5 |
-| K-13 | **AI への指示**: スタジオと一言の確認の指示は `api/src/studio/check.ts` に置き、利用規約・スタジオの決まりの版と一緒に版を持つ。指示を変えたら、確認の見本（止めるもの・通すもの）でテストする | REQ-NOTES AC-2・R-2 |
+| K-13 | **AI への指示**: スタジオと一言の確認の指示は `api/src/local/check.ts` に置き、利用規約・スタジオの決まりの版と一緒に版を持つ。指示を変えたら、確認の見本（止めるもの・通すもの）でテストする | REQ-NOTES AC-2・R-2 |
 
 ### 管理システム（提供者・運営）
 
@@ -86,17 +86,17 @@ platform のその場の素材（区画ごとに運営から取る素材。今�
 | K-16 | **スタジオを作る**: 承認された素材提供者だけが、文字・音声・区画（地図で選ぶ。geohash6 を 9 つまで）・期間（今から 30 日以内に始まり、1〜30 日）・時間帯を入れて「載せる」。状態は、音声があれば `uploading`（署名付きの POST で送る）→ `submit` で `checking`、なければすぐ `checking`。そこから `live` か `returned`。`returned` は直して載せ直すか、申し出る（`appealed`）。申し出を受けた運営が載せる（確認の Lambda が `live` にする）か、載せない（`rejected`）。載っているスタジオは素材提供者が止められる（`stopped`）。素材提供者の承認を止める・取り消すと `suspended`・`removed` になる。中身を変えるときは新しいスタジオとして載せ直す | REQ-STUDIO F-18〜F-20 |
 | K-17 | **運営の対応**: 運営の画面に、申し出・通報されたスタジオ・通報された一言の 3 つの列を置く。スタジオは「載せる・戻す・消す・承認を期間を決めて止める・承認を取り消す」、一言は「戻す・消す・置いた端末を締め出す（期間）」を選ぶ。置けない区画（geohash5〜7）の一覧を編集できる | スタジオの決まり 4.3、REQ-STUDIO・REQ-NOTES F-14・F-15 |
 | K-18 | **数の画面**: 素材提供者はスタジオごとに、日ごとの聞いた数・開いた数を、API-LOCAL-MATERIALS の概数で見る | REQ-STUDIO D-23・F-21 |
-| K-19 | **利用規約の版**: 一言の利用規約の版と URL は、スタジオの Parameter Store に置き、`GET /v1/studio/terms` で返す。版を上げるのは運営が Parameter Store で行う | 配備し直さずに版を上げられる |
+| K-19 | **利用規約の版**: 一言の利用規約の版と URL は、スタジオの Parameter Store に置き、`GET /v1/local/terms` で返す。版を上げるのは運営が Parameter Store で行う | 配備し直さずに版を上げられる |
 
 ## データモデル
 
-スタジオの表（`YorisoiStudio-<env>` の DynamoDB。キー `PK`・`SK`、GSI1、TTL `ttl`）。管理システムの表とは別。
+スタジオの表（`YorisoiLocalMaterials-<env>` の DynamoDB。キー `PK`・`SK`、GSI1、TTL `ttl`）。管理システムの表とは別。
 
 | 種類 | PK | SK | GSI1PK / GSI1SK | 主な項目 | 消える時期 |
 |---|---|---|---|---|---|
 | 一言 | `NOTE#{id}` | `NOTE` | `AUTHOR#{install}` / `{expiresAt}` | `text`・`cell`（geohash7）・`spotName`・`expiresAt`・`author`・`state`（`active`・`hidden`・`removed`）・`likes`・`reports` | 期限から 7 日（ブロックのため） |
 | 区画の一言 | `CELL#{geohash6}` | `N#{id}` | — | 一覧に返す項目の写し・`author`・`state` | 期限 |
-| スタジオ | `PLACEMENT#{id}` | `PLACEMENT` | `PROVIDER#{publisherId}` / `{createdAt}` | スタジオの項目・`state`（`uploading`・`checking`・`returned`・`appealed`・`live`・`stopped`・`suspended`・`removed`・`rejected`）・`audio`（置き場所・秒数・大きさ・ハッシュ）・`jobName`（Transcribe）・`check`（当たった項目・文字起こし）・`appeal`・`decision`・`reports`・`rev` | 期間の終わりから 90 日 |
+| スタジオ | `STUDIO#{id}` | `STUDIO` | `PROVIDER#{publisherId}` / `{createdAt}` | スタジオの項目・`state`（`uploading`・`checking`・`returned`・`appealed`・`live`・`stopped`・`suspended`・`removed`・`rejected`）・`audio`（置き場所・秒数・大きさ・ハッシュ）・`jobName`（Transcribe）・`check`（当たった項目・文字起こし）・`appeal`・`decision`・`reports`・`rev` | 期間の終わりから 90 日 |
 | 区画のスタジオ | `CELL#{geohash6}` | `P#{id}` | — | 一覧に返す項目の写し（`live` の間だけ置く） | 期間の終わり |
 | 日ごとの数 | `STATS#{id}` | `DAY#{YYYY-MM-DD}` | — | `heard`・`opened` | 一言は期限、スタジオは期間の終わりから 90 日 |
 | いいね・通報の重複の守り | `SEEN#{id}` | `LIKE#{install}`・`REPORT#{install}` | — | `reason`（通報） | 一言・スタジオの期限、通報は 30 日 |
@@ -106,25 +106,25 @@ platform のその場の素材（区画ごとに運営から取る素材。今�
 | 締め出しの一覧 | `BANS` | `{noteId}` | — | `author`・`reason`・`createdAt`・`until`。運営の画面には一言の ID だけを出し、`author` は解くときに使う | `until`（期間なしは消さない） |
 | 取り直しの制限 | `FETCH#{install}` | `LAST` | — | 区画の組のハッシュ・時刻 | 10 分 |
 | 置けない区画 | `AREA` | `{geohash5〜7}` | — | `reason`・`createdAt` | 消さない |
-| 運営の列 | `QUEUE#{APPEAL｜REPORTED_PLACEMENT｜REPORTED_NOTE}` | `{id}` | — | `type`・`firstAt`・`lastAt`・`reasons`（通報の理由の集合） | 対応したら消す |
+| 運営の列 | `QUEUE#{APPEAL｜REPORTED_STUDIO｜REPORTED_NOTE}` | `{id}` | — | `type`・`firstAt`・`lastAt`・`reasons`（通報の理由の集合） | 対応したら消す |
 
 - 一言を消す・隠すときは、`NOTE#` と `CELL#` の両方を条件付きで書き換える（`TransactWrite`）
 - スタジオが `live` になるとき `CELL#…`/`P#…` を区画の数だけ書き、`live` を出るときに消す
 - 素材提供者の承認（K-14）は管理システムの表に置き、スタジオの項目には作ったときの `publisherId` と出す名前を写す
-- 受け取り用のバケットは `uploads/`（1 日）・`held/`（確認を始めた音声、30 日）・`transcripts/`（30 日）、配信用は `placements/{id}/audio.m4a`（62 日）
+- 受け取り用のバケットは `uploads/`（1 日）・`held/`（確認を始めた音声、30 日）・`transcripts/`（30 日）、配信用は `studios/{id}/audio.m4a`（62 日）
 
 ## アプリ向けの API
 
-API-LOCAL-MATERIALS のエンドポイントを、1 つの Lambda（`api/src/studio/handler.ts`）で受ける。中の作りは中継（`api/src/relay/`）と同じく、ポート（`StudioPorts`: 表・時刻・乱数・設定・AI の確認・メトリクス）を受け取る関数にし、テストではポートを差し替える。
+API-LOCAL-MATERIALS のエンドポイントを、1 つの Lambda（`api/src/local/handler.ts`）で受ける。中の作りは中継（`api/src/relay/`）と同じく、ポート（`LocalPorts`: 表・時刻・乱数・設定・AI の確認・メトリクス）を受け取る関数にし、テストではポートを差し替える。
 
 | 処理 | 表の読み書き |
 |---|---|
-| `GET /v1/studio/cells` | トークン → `FETCH#`（制限）→ `BLOCKS#install`（Query）→ `CELL#` を区画ごとに Query → 外す・選ぶ → 返す |
-| `POST /v1/studio/notes` | トークン → 利用規約の版 → `BAN#` → `AREA`（キャッシュ 5 分）→ `NOTES#install` の数（条件付き加算）→ 確認（K-10）→ `NOTE#` と `CELL#` を書く。確認に当たったら加算を戻さない（試し打ちを数える） |
-| `GET /v1/studio/notes/mine` | GSI1 `AUTHOR#install` → `STATS#` で概数 |
-| `POST /v1/studio/reactions` | `STATS#` に加算、いいねは `SEEN#` に条件付きで書けたものだけ `likes` に加算 |
-| `POST /v1/studio/reports` | `SEEN#` に条件付きで書けたら `reports` に加算。しきい値（一言 3、スタジオ 3 か `danger`・`rights`）で `hidden`・`suspended` にし、運営の列に足す |
-| `POST /v1/studio/blocks` | `NOTE#` から `author` を引き（期限から 7 日まで）、`BLOCKS#install` に書く |
+| `GET /v1/local/cells` | トークン → `FETCH#`（制限）→ `BLOCKS#install`（Query）→ `CELL#` を区画ごとに Query → 外す・選ぶ → 返す |
+| `POST /v1/local/notes` | トークン → 利用規約の版 → `BAN#` → `AREA`（キャッシュ 5 分）→ `NOTES#install` の数（条件付き加算）→ 確認（K-10）→ `NOTE#` と `CELL#` を書く。確認に当たったら加算を戻さない（試し打ちを数える） |
+| `GET /v1/local/notes/mine` | GSI1 `AUTHOR#install` → `STATS#` で概数 |
+| `POST /v1/local/reactions` | `STATS#` に加算、いいねは `SEEN#` に条件付きで書けたものだけ `likes` に加算 |
+| `POST /v1/local/reports` | `SEEN#` に条件付きで書けたら `reports` に加算。しきい値（一言 3、スタジオ 3 か `danger`・`rights`）で `hidden`・`suspended` にし、運営の列に足す |
+| `POST /v1/local/blocks` | `NOTE#` から `author` を引き（期限から 7 日まで）、`BLOCKS#install` に書く |
 
 ## 画面
 

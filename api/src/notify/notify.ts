@@ -35,7 +35,7 @@ export function render(notice: Notice, consoleUrl: string): { subject: string; b
   const channel = notice.channelId ? `チャンネル ${notice.channelId} ` : notice.collectionId ? `素材集 ${notice.collectionId} ` : '';
   const used = notice.collectionId ? `素材集 ${notice.collectionId} ` : '';
   const what = notice.version !== undefined ? `${channel}の版 ${notice.version} ` : channel;
-  const link = notice.channelId ? `${consoleUrl}/channels/${notice.channelId}` : notice.collectionId ? `${consoleUrl}/collections/${notice.collectionId}` : notice.event.startsWith('studio.') || notice.placementId ? `${consoleUrl}/studio` : `${consoleUrl}/`;
+  const link = notice.channelId ? `${consoleUrl}/channels/${notice.channelId}` : notice.collectionId ? `${consoleUrl}/collections/${notice.collectionId}` : notice.event.startsWith('studio.') || notice.studioId ? `${consoleUrl}/studio` : `${consoleUrl}/`;
   const message = notice.message ? `\n\n運営からのメッセージ:\n${notice.message}` : '';
   const findings = notice.findings?.length ? `\n\n指摘（審査基準の項目）:\n${notice.findings.map((f) => `・${f.item}: ${f.detail}`).join('\n')}` : '';
   const lines = ((): [string, string] => {
@@ -83,13 +83,13 @@ export function render(notice: Notice, consoleUrl: string): { subject: string; b
         return ['スタジオを止めました', `スタジオの決まりに反することがあったため、期間を決めてスタジオを止めました。載っていたスタジオも届けていません。${message}`];
       case 'studio.revoked':
         return ['スタジオの承認を取り消しました', `スタジオの決まりに反することがあったため、スタジオを出す承認を取り消しました。載っていたスタジオも消しました。${message}`];
-      case 'placement.published':
+      case 'studio.published':
         return ['申し出を受けてスタジオを載せました', `確認で返したスタジオについて申し出を受け、運営が確かめて載せました。${message}`];
-      case 'placement.rejected':
+      case 'studio.rejected':
         return ['申し出を受けてスタジオを載せないと決めました', `確認で返したスタジオについて申し出を受け、運営が確かめて、載せないと決めました。${message}`];
-      case 'placement.removed':
+      case 'studio.removed':
         return ['通報を受けてスタジオを消しました', `スタジオについて通報を受け、運営が確かめて、スタジオの決まりに反するため消しました。${message}`];
-      case 'placement.restored':
+      case 'studio.restored':
         return ['通報で止めたスタジオを戻しました', `通報を受けて止めていたスタジオを、運営が確かめて戻しました。期間の中であれば、また届きます。${message}`];
       case 'transfer.rejected':
         return ['鍵の移し替えを認めませんでした', `鍵の移し替えの申し出を認めませんでした。新しい鍵の紐づけは外しました。${message}`];

@@ -1,373 +1,219 @@
-import type { APIGatewayProxyEvent } from 'aws-lambda';
-import { createHash } from 'node:crypto';
 import { GetCommand, PutCommand, QueryCommand, type DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { readStudioSettings } from '../src/studio/aws.js';
-import { hasContact, readVerdict } from '../src/studio/check.js';
-import { route } from '../src/studio/handler.js';
-import { approx, forgetAreas, type CheckReply, type ModelChoice, type StudioPorts, type StudioSettings } from '../src/studio/studio.js';
+import { readStudioVerdict } from '../src/local/check.js';
+import { finishTranscription, goLive, mp4Seconds, startCheck, uploadKey, type StudioPorts } from '../src/local/studio.js';
+import type { CheckReply, ModelChoice, LocalSettings } from '../src/local/local.js';
 import { freshTable, startDynamoLocal } from './dynamo-local.js';
 
+// DES-013 K-11: the studio check, from upload to going up or back to the provider.
+
 const DEEPSEEK: ModelChoice = { id: 'deepseek-v3-2', profile: 'deepseek.v3.2', price: { inputPerMTok: 0.74, outputPerMTok: 2.22 } };
+const ID = '01JBY00000000000000000000A';
 
 let local: Awaited<ReturnType<typeof startDynamoLocal>>;
 let ports: StudioPorts;
 let db: DynamoDBDocumentClient;
 let relayTable: string;
-let now: Date;
+let intake: Map<string, Uint8Array>;
+let served: [string, string][];
+let jobs: { jobName: string; mediaKey: string; outputKey: string }[];
 let reply: CheckReply | Error;
-let checks: string[];
-let metrics: Record<string, number>;
-let settings: StudioSettings;
-let counter: number;
+let checked: string[];
+let settings: LocalSettings;
 
 beforeAll(async () => {
   local = await startDynamoLocal();
 }, 120_000);
 afterAll(() => local?.stop());
 
-const sha256 = (text: string) => createHash('sha256').update(text, 'utf8').digest('base64url');
+/** An M4A of [seconds]: an `ftyp` box, then a movie header (version 0) with a timescale of 1000. */
+function m4a(seconds: number, version: 0 | 1 = 0): Uint8Array {
+  const bytes = new Uint8Array(16 + 8 + 120);
+  const view = new DataView(bytes.buffer);
+  const put = (at: number, tag: string) => [...tag].forEach((c, i) => (bytes[at + i] = c.charCodeAt(0)));
+  view.setUint32(0, 16);
+  put(4, 'ftyp');
+  put(8, 'M4A ');
+  view.setUint32(16, 128);
+  put(20, 'moov');
+  const m = 24;
+  view.setUint32(m, 120);
+  put(m + 4, 'mvhd');
+  bytes[m + 8] = version;
+  if (version === 0) {
+    view.setUint32(m + 20, 1000);
+    view.setUint32(m + 24, seconds * 1000);
+  } else {
+    view.setUint32(m + 28, 1000);
+    view.setBigUint64(m + 32, BigInt(seconds * 1000));
+  }
+  return bytes;
+}
 
 beforeEach(async () => {
-  const studio = await freshTable(local.endpoint);
+  const localTable = await freshTable(local.endpoint);
   const relay = await freshTable(local.endpoint);
-  db = studio.db;
+  db = localTable.db;
   relayTable = relay.table;
-  now = new Date('2026-10-31T03:00:00.000Z'); // 12:00 in Japan
-  reply = { text: '{"ok": true}', inputTokens: 600, outputTokens: 8 };
-  checks = [];
-  metrics = {};
-  settings = { termsVersion: 1, termsUrl: 'https://example.org/terms/1', termsUpdatedAt: '2026-11-01T00:00:00Z', paused: false, monthlyBudgetUsd: 5, model: DEEPSEEK };
-  counter = 0;
-  forgetAreas();
+  intake = new Map();
+  served = [];
+  jobs = [];
+  checked = [];
+  reply = { text: '{"ok": true}', inputTokens: 900, outputTokens: 8 };
+  settings = { termsVersion: 1, termsUrl: 'u', termsUpdatedAt: '', paused: false, monthlyBudgetUsd: 5, model: DEEPSEEK };
   ports = {
     db,
-    table: studio.table,
+    table: localTable.table,
     relayTable: relay.table,
-    now: () => now,
-    // ULIDs that sort by creation, as real ones do.
-    id: () => `01JBX${String(++counter).padStart(21, '0')}`,
+    now: () => new Date('2026-10-31T03:00:00.000Z'),
     settings: async () => settings,
     check: async (_model, _system, user) => {
-      checks.push(user);
+      checked.push(user);
       if (reply instanceof Error) throw reply;
       return reply;
     },
-    audioBase: 'https://audio.example.org',
-    metric: (name, value) => {
-      metrics[name] = (metrics[name] ?? 0) + value;
+    intake: {
+      head: async (key) => (intake.has(key) ? { bytes: intake.get(key)!.length } : undefined),
+      read: async (key) => intake.get(key)!,
+      copy: async (from, to) => void intake.set(to, intake.get(from)!),
+      text: async (key) => (intake.has(key) ? new TextDecoder().decode(intake.get(key)) : undefined),
     },
+    serveAudio: async (from, to) => void served.push([from, to]),
+    transcribe: async (jobName, mediaKey, outputKey) => void jobs.push({ jobName, mediaKey, outputKey }),
+    jobPrefix: 'studio-dev-',
+    metric: () => {},
   };
-  for (const name of ['a', 'b', 'c', 'd']) await token(name);
 });
 
-/** A relay session for install hash `install-{name}`, as the relay writes it. */
-async function token(name: string, expiresAt = '2026-11-01T03:00:00.000Z') {
-  await db.send(new PutCommand({ TableName: relayTable, Item: { PK: `TOKEN#${sha256(`tok-${name}`)}`, SK: 'TOKEN', install: `install-${name}`, expiresAt } }));
+async function studio(extra: Record<string, unknown> = {}) {
+  await db.send(
+    new PutCommand({
+      TableName: ports.table,
+      Item: {
+        PK: `STUDIO#${ID}`, SK: 'STUDIO', id: ID, publisherId: 'P', providerName: '谷中銀座商店会', category: 'event', text: '今日 15 時から豆まきをします',
+        cells: ['xn77h2', 'xn77h3'], startsAt: '2026-10-31T00:00:00.000Z', endsAt: '2026-11-02T00:00:00.000Z', state: 'checking', rev: 2, ...extra,
+      },
+    }),
+  );
 }
+const load = async () => (await db.send(new GetCommand({ TableName: ports.table, Key: { PK: `STUDIO#${ID}`, SK: 'STUDIO' } }))).Item!;
+const cell = async (c: string) => (await db.send(new GetCommand({ TableName: ports.table, Key: { PK: `CELL#${c}`, SK: `P#${ID}` } }))).Item;
+const transcript = (text: string) => new TextEncoder().encode(JSON.stringify({ results: { transcripts: [{ transcript: text }] } }));
 
-function event(method: string, resource: string, opts: { body?: unknown; who?: string; query?: Record<string, string>; id?: string } = {}): APIGatewayProxyEvent {
-  return {
-    httpMethod: method,
-    resource,
-    path: resource,
-    headers: opts.who ? { Authorization: `Bearer tok-${opts.who}` } : {},
-    queryStringParameters: opts.query ?? null,
-    pathParameters: opts.id ? { id: opts.id } : null,
-    body: opts.body === undefined ? null : JSON.stringify(opts.body),
-  } as unknown as APIGatewayProxyEvent;
-}
-
-async function call(method: string, resource: string, opts: Parameters<typeof event>[2] = {}) {
-  const res = await route(event(method, resource, opts), ports);
-  return { status: res.statusCode, type: res.headers?.['content-type'], body: res.body ? JSON.parse(res.body) : undefined };
-}
-
-const NOTE = { text: 'この坂の上から富士山が見えた', cell: 'xn76ury', spotName: '富士見坂', ttl: '24h', termsVersion: 1 };
-const place = (who: string, body: Record<string, unknown> = {}) => call('POST', '/v1/studio/notes', { who, body: { ...NOTE, ...body } });
-const list = (who: string, cells = 'xn76ur', kinds?: string) => call('GET', '/v1/studio/cells', { who, query: { cells, ...(kinds ? { kinds } : {}) } });
-const pass = (minutes: number) => {
-  now = new Date(now.getTime() + minutes * 60_000);
-};
-
-describe('POST /v1/studio/notes', () => {
-  it('checks the note with the operator’s AI and places it for its time', async () => {
-    const res = await place('a');
-    expect(res.status).toBe(201);
-    expect(res.body).toEqual({ id: expect.any(String), expiresAt: '2026-11-01T03:00:00.000Z', remainingToday: 9 });
-    expect(JSON.parse(checks[0]!)).toEqual({ note: NOTE.text, spot: NOTE.spotName });
-    // The AI's cost goes on the relay's month (K-3).
+describe('the studio check', () => {
+  it('puts a text-only studio up at once, into each of its cells', async () => {
+    await studio();
+    await startCheck(ports, ID);
+    expect(JSON.parse(checked[0]!)).toEqual({ provider: '谷中銀座商店会', category: 'event', text: '今日 15 時から豆まきをします' });
+    expect((await load()).state).toBe('live');
+    expect(await cell('xn77h3')).toMatchObject({ id: ID, providerName: '谷中銀座商店会', category: 'event', cells: ['xn77h2', 'xn77h3'], ttl: Math.floor(Date.parse('2026-11-02T00:00:00.000Z') / 1000) });
     const spend = await db.send(new GetCommand({ TableName: relayTable, Key: { PK: 'SPEND', SK: 'MONTH#2026-10' } }));
-    expect(spend.Item?.microUsd).toBe(Math.ceil(600 * 0.74 + 8 * 2.22));
+    expect(spend.Item?.microUsd).toBe(Math.ceil(900 * 0.74 + 8 * 2.22));
   });
 
-  it('stops contact details without asking the AI (terms 2-4)', async () => {
-    for (const text of ['詳しくは https://example.com を見て', '090-1234-5678 まで', 'mail: a@example.jp', '＠yorisoi_cafe をフォロー']) {
-      const res = await place('a', { text });
-      expect(res.status).toBe(422);
-      expect(res.body.code).toBe('note_rejected');
-    }
-    expect(checks).toHaveLength(0);
+  it('writes the audio out, then checks it with the text, and serves the audio when it passes', async () => {
+    await studio({ audio: { bytes: 144 } });
+    intake.set(uploadKey(ID), m4a(24));
+    await startCheck(ports, ID);
+    expect(jobs).toEqual([{ jobName: expect.stringMatching(new RegExp(`^studio-dev-${ID}-[0-9]+$`)), mediaKey: `held/${ID}.m4a`, outputKey: `transcripts/${ID}.json` }]);
+    expect((await load()).audio).toMatchObject({ key: `held/${ID}.m4a`, durationSec: 24, contentType: 'audio/mp4' });
+    expect(await cell('xn77h2')).toBeUndefined();
+
+    intake.set(`transcripts/${ID}.json`, transcript('本日十五時より夕やけだんだんで豆まきを行います'));
+    await finishTranscription(ports, jobs[0]!.jobName, 'COMPLETED');
+    expect(JSON.parse(checked[0]!).audio).toBe('本日十五時より夕やけだんだんで豆まきを行います');
+    expect(served).toEqual([[`held/${ID}.m4a`, `studios/${ID}/audio.m4a`]]);
+    const live = await load();
+    expect(live.state).toBe('live');
+    expect((await cell('xn77h2'))?.audio).toMatchObject({ key: `studios/${ID}/audio.m4a`, durationSec: 24, bytes: 144 });
+    expect(live.check).toMatchObject({ items: [], transcript: '本日十五時より夕やけだんだんで豆まきを行います' });
   });
 
-  it('does not place what the AI flags, and says no more than that (V-01 of the terms 3)', async () => {
-    reply = { text: '{"ok": false, "items": [3]}', inputTokens: 600, outputTokens: 12 };
-    const res = await place('a', { text: '今この公園に赤い服の〇〇さんがいる' });
-    expect(res.status).toBe(422);
-    expect(res.body).toEqual({ type: 'about:blank', title: expect.any(String), status: 422, code: 'note_rejected' });
+  it('returns a studio whose audio says a phone number, without asking the AI (2.2.2)', async () => {
+    await studio({ audio: { bytes: 144 } });
+    intake.set(uploadKey(ID), m4a(10));
+    await startCheck(ports, ID);
+    intake.set(`transcripts/${ID}.json`, transcript('ご予約は 03 1234 5678 まで'));
+    await finishTranscription(ports, jobs[0]!.jobName, 'COMPLETED');
+    expect(checked).toEqual([]);
+    expect(await load()).toMatchObject({ state: 'returned', check: { items: ['2.2.2'], transcript: 'ご予約は 03 1234 5678 まで' } });
+    expect(await cell('xn77h2')).toBeUndefined();
   });
 
-  it('places nothing when the AI fails, and gives the count back', async () => {
+  it('returns what the AI flags, with the rules it hit', async () => {
+    reply = { text: '{"ok": false, "items": ["2.2.4", "9.9"]}', inputTokens: 900, outputTokens: 12 };
+    await studio({ text: '〇〇党の演説会を駅前で行います' });
+    await startCheck(ports, ID);
+    expect(await load()).toMatchObject({ state: 'returned', check: { items: ['2.2.4'] } });
+  });
+
+  it('returns audio that is missing, too long or not M4A, before any job', async () => {
+    await studio({ audio: { bytes: 144 } });
+    await startCheck(ports, ID);
+    expect((await load()).check.items).toEqual(['audio_missing']);
+
+    await studio({ audio: { bytes: 144 } });
+    intake.set(uploadKey(ID), m4a(31));
+    await startCheck(ports, ID);
+    expect((await load()).check.items).toEqual(['audio_length']);
+
+    await studio({ audio: { bytes: 144 } });
+    intake.set(uploadKey(ID), new TextEncoder().encode('RIFF....WAVEfmt '));
+    await startCheck(ports, ID);
+    expect((await load()).check.items).toEqual(['audio_format']);
+    expect(jobs).toEqual([]);
+  });
+
+  it('returns it to try again when the check can’t run: the AI fails, the budget is spent, Transcribe fails', async () => {
     reply = new Error('ThrottlingException');
-    expect((await place('a')).body.code).toBe('upstream_error');
+    await studio();
+    await startCheck(ports, ID);
+    expect((await load()).check.items).toEqual(['check_unavailable']);
+
     reply = { text: '{"ok": true}', inputTokens: 1, outputTokens: 1 };
-    expect((await place('a')).body.remainingToday).toBe(9);
-  });
-
-  it('allows ten a day and says when it resets (V-04)', async () => {
-    for (let i = 0; i < 10; i++) expect((await place('a')).status).toBe(201);
-    const res = await place('a');
-    expect(res.status).toBe(429);
-    expect(res.body).toMatchObject({ code: 'daily_note_limit', resetsAt: '2026-10-31T15:00:00.000Z' });
-  });
-
-  it('asks for the current terms (V-05)', async () => {
-    settings.termsVersion = 2;
-    expect((await place('a')).body.code).toBe('terms_not_accepted');
-    expect((await place('a', { termsVersion: undefined })).body.code).toBe('terms_not_accepted');
-    expect((await place('a', { termsVersion: 2 })).status).toBe(201);
-  });
-
-  it('refuses a banned device, a closed area, a long text and a paused budget', async () => {
-    await db.send(new PutCommand({ TableName: ports.table, Item: { PK: 'BAN#install-b', SK: 'BAN', until: '2026-12-01T00:00:00.000Z' } }));
-    expect((await place('b')).body).toMatchObject({ code: 'author_banned', until: '2026-12-01T00:00:00.000Z' });
-
-    await db.send(new PutCommand({ TableName: ports.table, Item: { PK: 'AREA', SK: 'xn76u' } }));
-    forgetAreas();
-    expect((await place('a')).body.code).toBe('area_closed');
-    forgetAreas();
-    expect((await place('a', { cell: 'xn77h2b' })).status).toBe(201);
-
-    expect((await place('a', { cell: 'xn77h2b', text: 'あ'.repeat(61) })).body.code).toBe('text_too_long');
-    expect((await place('a', { cell: 'xn77h2', text: 'x' })).body.code).toBe('invalid_request');
-
     await db.send(new PutCommand({ TableName: relayTable, Item: { PK: 'SPEND', SK: 'MONTH#2026-10', microUsd: 5_000_000 } }));
-    expect((await place('a', { cell: 'xn77h2b' })).body.code).toBe('relay_paused');
+    await studio();
+    await startCheck(ports, ID);
+    expect((await load()).check.items).toEqual(['check_unavailable']);
+
+    await studio({ audio: { bytes: 144 } });
+    intake.set(uploadKey(ID), m4a(5));
+    await startCheck(ports, ID);
+    await finishTranscription(ports, jobs[0]!.jobName, 'FAILED');
+    expect((await load()).check.items).toEqual(['transcribe_failed']);
   });
 
-  it('needs a live relay token', async () => {
-    expect((await call('POST', '/v1/studio/notes', { body: NOTE })).body.code).toBe('token_invalid');
-    await token('old', '2026-10-31T02:00:00.000Z');
-    expect((await place('old')).body.code).toBe('token_invalid');
+  it('ignores jobs that aren’t this stack’s or this check’s', async () => {
+    await studio({ audio: { bytes: 144 } });
+    intake.set(uploadKey(ID), m4a(5));
+    await startCheck(ports, ID);
+    await finishTranscription(ports, `studio-prod-${ID}-1`, 'FAILED');
+    await finishTranscription(ports, `studio-dev-${ID}-1`, 'FAILED');
+    expect((await load()).state).toBe('checking');
   });
 
-  it('answers studio_paused when the operator pauses it', async () => {
-    settings.paused = true;
-    expect((await place('a')).body.code).toBe('studio_paused');
-    expect((await list('a')).status).toBe(503);
-  });
-});
-
-describe('GET /v1/studio/cells', () => {
-  it('lists notes without anything that tells who placed them; only mine is marked (V-01)', async () => {
-    const { body: mine } = await place('a');
-    const res = await list('b');
-    expect(res.status).toBe(200);
-    expect(res.body.notes).toEqual([{ id: mine.id, text: NOTE.text, cell: 'xn76ury', spotName: '富士見坂', expiresAt: mine.expiresAt, mine: false }]);
-    expect(JSON.stringify(res.body)).not.toContain('install-a');
-    expect(res.body.refetchAfterSec).toBe(300);
-    expect((await list('a')).body.notes[0].mine).toBe(true);
-  });
-
-  it('refuses the same cells again within four minutes, but not new cells (K-8)', async () => {
-    expect((await list('a')).status).toBe(200);
-    expect((await list('a')).body.code).toBe('too_many_requests');
-    expect((await list('a', 'xn76ur,xn76us')).status).toBe(200);
-    pass(5);
-    expect((await list('a', 'xn76ur,xn76us')).status).toBe(200);
-  });
-
-  it('leaves out expired notes and keeps 20 per geohash7', async () => {
-    await place('a', { ttl: '1h' });
-    pass(61);
-    expect((await list('b')).body.notes).toEqual([]);
-    for (const who of ['a', 'b', 'c']) {
-      for (let i = 0; i < 7; i++) await place(who, { text: `${who}${i}` });
-    }
-    pass(5);
-    expect((await list('d')).body.notes).toHaveLength(20);
-  });
-
-  it('lists placements in their period with the audio URL, and only the kinds asked for (V-06)', async () => {
-    const base = { providerName: '谷中銀座商店会', text: '今日 15 時から豆まき', startsAt: '2026-10-31T00:00:00.000Z', endsAt: '2026-11-02T00:00:00.000Z' };
-    const audio = { key: 'placements/P1/audio.m4a', durationSec: 24, bytes: 196000, contentType: 'audio/mp4', sha256: 'abc' };
-    await db.send(new PutCommand({ TableName: ports.table, Item: { PK: 'CELL#xn76ur', SK: 'P#P1', id: 'P1', ...base, audio, cells: ['xn76ur'], hours: { from: '10:00', to: '18:00' } } }));
-    await db.send(new PutCommand({ TableName: ports.table, Item: { PK: 'CELL#xn76ur', SK: 'P#P2', id: 'P2', ...base, cells: ['xn76ur'], startsAt: '2026-11-01T00:00:00.000Z' } }));
-    await place('a');
-    pass(5);
-    const res = await list('b');
-    expect(res.body.placements).toEqual([{ id: 'P1', ...base, audio: { ...audio, key: undefined, url: 'https://audio.example.org/placements/P1/audio.m4a' }, cells: ['xn76ur'], hours: { from: '10:00', to: '18:00' } }].map((p) => JSON.parse(JSON.stringify(p))));
-    pass(5);
-    const onlyPlacements = await list('b', 'xn76ur', 'placement');
-    expect(onlyPlacements.body.notes).toEqual([]);
-    expect(onlyPlacements.body.placements).toHaveLength(1);
-  });
-
-  it('keeps the list within 50 items and 3 MB (V-09)', async () => {
-    for (let i = 0; i < 20; i++) {
-      await db.send(
-        new PutCommand({
-          TableName: ports.table,
-          Item: {
-            PK: 'CELL#xn76ur',
-            SK: `P#P${i}`,
-            id: `P${i}`,
-            providerName: 'x',
-            text: 'x',
-            audio: { key: `p/${i}.m4a`, durationSec: 30, bytes: 400_000, contentType: 'audio/mp4', sha256: 's' },
-            cells: ['xn76ur'],
-            startsAt: '2026-10-30T00:00:00.000Z',
-            endsAt: '2026-11-30T00:00:00.000Z',
-          },
-        }),
-      );
-    }
-    await token('e');
-    await token('f');
-    for (const who of ['a', 'b', 'c', 'd', 'e', 'f']) for (let i = 0; i < 10; i++) await place(who, { cell: `xn76ur${'0123456789'[i]}`, text: `${who}${i}` });
-    const res = await list('a');
-    expect(res.body.placements.length).toBe(7); // 7 × 400 KB fits in 3 MB, 8 doesn't
-    expect(res.body.notes.length + res.body.placements.length).toBe(50);
+  it('puts an appealed studio up when the operator accepts, and nothing else', async () => {
+    await studio({ state: 'appealed', audio: { key: `held/${ID}.m4a`, durationSec: 12, bytes: 144, contentType: 'audio/mp4', sha256: 'x' } });
+    await goLive(ports, ID, 'appealed');
+    expect((await load()).state).toBe('live');
+    expect(served).toHaveLength(1);
+    await goLive(ports, ID, 'appealed');
+    expect(served).toHaveLength(1);
+    const cells = await db.send(new QueryCommand({ TableName: ports.table, KeyConditionExpression: 'PK = :pk', ExpressionAttributeValues: { ':pk': 'CELL#xn77h3' } }));
+    expect(cells.Items).toHaveLength(1);
   });
 });
 
-describe('reactions, likes and counts', () => {
-  it('adds heard and opened to day totals without keeping who sent them (V-07, V-08)', async () => {
-    const { body: n } = await place('a');
-    for (const who of ['b', 'c']) await call('POST', '/v1/studio/reactions', { who, body: { heard: [{ type: 'note', id: n.id }], liked: [n.id] } });
-    let mine = await call('GET', '/v1/studio/notes/mine', { who: 'a' });
-    expect(mine.body.notes[0]).toMatchObject({ heard: null, likes: null, state: 'active' });
-
-    const res = await call('POST', '/v1/studio/reactions', { who: 'd', body: { heard: [{ type: 'note', id: n.id }], opened: [{ type: 'note', id: n.id }], liked: [n.id, n.id] } });
-    expect(res.status).toBe(202);
-    // A like counts once per device.
-    await call('POST', '/v1/studio/reactions', { who: 'd', body: { liked: [n.id] } });
-    mine = await call('GET', '/v1/studio/notes/mine', { who: 'a' });
-    expect(mine.body.notes[0]).toMatchObject({ heard: { atLeast: 3 }, likes: { atLeast: 3 } });
-
-    const stats = await db.send(new QueryCommand({ TableName: ports.table, KeyConditionExpression: 'PK = :pk', ExpressionAttributeValues: { ':pk': `STATS#${n.id}` } }));
-    expect(stats.Items).toEqual([expect.objectContaining({ SK: 'DAY#2026-10-31', heard: 3, opened: 1 })]);
-    expect(JSON.stringify(stats.Items)).not.toContain('install-');
+describe('reading audio and verdicts', () => {
+  it('reads an M4A’s length from its movie header, in both versions', () => {
+    expect(mp4Seconds(m4a(24))).toBe(24);
+    expect(mp4Seconds(m4a(30, 1))).toBe(30);
+    expect(mp4Seconds(new TextEncoder().encode('ID3 not an mp4 file at all, really'))).toBeUndefined();
   });
 
-  it('ignores ids that are unknown and refuses too many at once', async () => {
-    expect((await call('POST', '/v1/studio/reactions', { who: 'a', body: { heard: [{ type: 'note', id: '01JBX000000000000000000099' }] } })).status).toBe(202);
-    const many = Array.from({ length: 201 }, () => ({ type: 'note', id: '01JBX000000000000000000099' }));
-    expect((await call('POST', '/v1/studio/reactions', { who: 'a', body: { heard: many } })).body.code).toBe('invalid_request');
-  });
-
-  it('turns counts into the API-LOCAL-MATERIALS buckets', () => {
-    expect([0, 2, 3, 9, 10, 47, 100, 999, 5000].map((n) => approx(n)?.atLeast ?? null)).toEqual([null, null, 3, 3, 10, 30, 100, 300, 1000]);
-  });
-});
-
-describe('reports, blocks and my notes', () => {
-  it('hides a note reported by three devices from everyone but its author (V-03)', async () => {
-    const { body: n } = await place('a');
-    for (const who of ['b', 'b', 'c']) await call('POST', '/v1/studio/reports', { who, body: { type: 'note', id: n.id, reason: 'harassment' } });
-    pass(5);
-    expect((await list('d')).body.notes).toHaveLength(1);
-    await call('POST', '/v1/studio/reports', { who: 'd', body: { type: 'note', id: n.id, reason: 'harassment' } });
-    pass(5);
-    expect((await list('d')).body.notes).toEqual([]);
-    expect((await call('GET', '/v1/studio/notes/mine', { who: 'a' })).body.notes[0].state).toBe('hidden');
-    const queue = await db.send(new QueryCommand({ TableName: ports.table, KeyConditionExpression: 'PK = :pk', ExpressionAttributeValues: { ':pk': 'QUEUE#REPORTED_NOTE' } }));
-    expect(queue.Items).toHaveLength(1);
-  });
-
-  it('stops a placement at the first report about safety, and queues every placement report', async () => {
-    const p = { PK: 'PLACEMENT#01JBX000000000000000000P01', SK: 'PLACEMENT', id: '01JBX000000000000000000P01', state: 'live', cells: ['xn76ur', 'xn76us'] };
-    await db.send(new PutCommand({ TableName: ports.table, Item: p }));
-    for (const cell of p.cells) await db.send(new PutCommand({ TableName: ports.table, Item: { PK: `CELL#${cell}`, SK: `P#${p.id}`, id: p.id } }));
-    await call('POST', '/v1/studio/reports', { who: 'a', body: { type: 'placement', id: p.id, reason: 'other' } });
-    expect((await db.send(new GetCommand({ TableName: ports.table, Key: { PK: p.PK, SK: 'PLACEMENT' } }))).Item?.state).toBe('live');
-    await call('POST', '/v1/studio/reports', { who: 'b', body: { type: 'placement', id: p.id, reason: 'danger' } });
-    expect((await db.send(new GetCommand({ TableName: ports.table, Key: { PK: p.PK, SK: 'PLACEMENT' } }))).Item?.state).toBe('suspended');
-    expect((await db.send(new GetCommand({ TableName: ports.table, Key: { PK: 'CELL#xn76us', SK: `P#${p.id}` } }))).Item).toBeUndefined();
-    const queue = await db.send(new QueryCommand({ TableName: ports.table, KeyConditionExpression: 'PK = :pk', ExpressionAttributeValues: { ':pk': 'QUEUE#REPORTED_PLACEMENT' } }));
-    expect(queue.Items).toEqual([expect.objectContaining({ SK: p.id, type: 'placement', reasons: new Set(['other', 'danger']) })]);
-  });
-
-  it('blocks the author of a note for this device only, and unblocks (V-02)', async () => {
-    const { body: first } = await place('a');
-    await place('a', { text: '紅葉がきれい' });
-    const res = await call('POST', '/v1/studio/blocks', { who: 'b', body: { noteId: first.id } });
-    expect(res.status).toBe(201);
-    const createdAt = now.toISOString();
-    expect(res.body).toEqual({ id: expect.stringMatching(/^blk_/), createdAt });
-    pass(5);
-    expect((await list('b')).body.notes).toEqual([]);
-    expect((await list('c')).body.notes).toHaveLength(2);
-    const { body: listed } = await call('GET', '/v1/studio/blocks', { who: 'b' });
-    expect(listed.blocks).toEqual([{ id: res.body.id, createdAt, expiresAt: expect.any(String) }]);
-    expect(JSON.stringify(listed)).not.toContain('install-a');
-    expect((await call('DELETE', '/v1/studio/blocks/{id}', { who: 'b', id: res.body.id })).status).toBe(204);
-    pass(5);
-    expect((await list('b')).body.notes).toHaveLength(2);
-    expect((await call('DELETE', '/v1/studio/blocks/{id}', { who: 'b', id: res.body.id })).body.code).toBe('not_found');
-    expect((await call('POST', '/v1/studio/blocks', { who: 'a', body: { noteId: first.id } })).body.code).toBe('invalid_request');
-  });
-
-  it('can still block a few days after the note expired', async () => {
-    const { body: n } = await place('a', { ttl: '1h' });
-    for (const who of ['b', 'c']) await token(who, '2026-12-01T00:00:00.000Z');
-    pass(3 * 24 * 60);
-    expect((await call('POST', '/v1/studio/blocks', { who: 'b', body: { noteId: n.id } })).status).toBe(201);
-    pass(5 * 24 * 60);
-    expect((await call('POST', '/v1/studio/blocks', { who: 'c', body: { noteId: n.id } })).body.code).toBe('not_found');
-  });
-
-  it('lets the author delete a note, which leaves the list at once and keeps no text', async () => {
-    const { body: n } = await place('a');
-    expect((await call('DELETE', '/v1/studio/notes/{id}', { who: 'b', id: n.id })).body.code).toBe('not_found');
-    expect((await call('DELETE', '/v1/studio/notes/{id}', { who: 'a', id: n.id })).status).toBe(204);
-    expect((await list('b')).body.notes).toEqual([]);
-    expect((await call('GET', '/v1/studio/notes/mine', { who: 'a' })).body.notes).toEqual([]);
-    const item = (await db.send(new GetCommand({ TableName: ports.table, Key: { PK: `NOTE#${n.id}`, SK: 'NOTE' } }))).Item;
-    expect(item?.text).toBeUndefined();
-    expect(item?.author).toBe('install-a');
-  });
-});
-
-describe('terms and settings', () => {
-  it('answers the terms without a token', async () => {
-    const res = await call('GET', '/v1/studio/terms');
-    expect(res.body).toEqual({ version: 1, url: 'https://example.org/terms/1', updatedAt: '2026-11-01T00:00:00Z' });
-  });
-
-  it('falls back to the deployed values when a parameter is bad', () => {
-    const seen: Record<string, number> = {};
-    const s = readStudioSettings(
-      { termsVersion: 'x', termsUrl: '', paused: 'false', monthlyBudgetUsd: '-1', model: 'none' },
-      { termsVersion: 1, termsUrl: 'https://default', monthlyBudgetUsd: 5, models: [DEEPSEEK], model: 'deepseek-v3-2' },
-      (name, value) => (seen[name] = value),
-    );
-    expect(s).toMatchObject({ termsVersion: 1, termsUrl: 'https://default', paused: false, monthlyBudgetUsd: 5, model: DEEPSEEK });
-    expect(seen.InvalidSetting).toBe(1);
-  });
-});
-
-describe('the note check', () => {
-  it('finds contact details but not ordinary numbers', () => {
-    for (const text of ['www.example.com', 'example.co.jp まで', '03 1234 5678', '０９０１２３４５６７８', 'a@b.jp', '@cafe_yorisoi']) expect(hasContact(text), text).toBe(true);
-    for (const text of ['2026年10月31日の夕焼け', '3丁目の角を右', '気温は18度', '富士見坂']) expect(hasContact(text), text).toBe(false);
-  });
-
-  it('places only on a clear ok', () => {
-    expect(readVerdict('{"ok": true}').ok).toBe(true);
-    expect(readVerdict('```json\n{"ok": true}\n```').ok).toBe(true);
-    expect(readVerdict('{"ok": false, "items": [5]}')).toEqual({ ok: false, items: [5] });
-    expect(readVerdict('はい、問題ありません').ok).toBe(false);
-    expect(readVerdict('{"ok": "true"}').ok).toBe(false);
+  it('keeps only the rule numbers from the AI', () => {
+    expect(readStudioVerdict('{"ok": true}').ok).toBe(true);
+    expect(readStudioVerdict('{"ok": false, "items": ["2.2.8", "2.2.13", "2.5", "x"]}')).toEqual({ ok: false, items: ['2.2.8', '2.5'] });
+    expect(readStudioVerdict('大丈夫です').ok).toBe(false);
   });
 });

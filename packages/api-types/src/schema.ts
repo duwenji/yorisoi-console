@@ -1049,7 +1049,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/studio/placements": {
+    "/api/studio/studios": {
         parameters: {
             query?: never;
             header?: never;
@@ -1057,22 +1057,22 @@ export interface paths {
             cookie?: never;
         };
         /** 自分のスタジオの一覧（新しい順、50 件まで） */
-        get: operations["listMyPlacements"];
+        get: operations["listMyStudios"];
         put?: never;
         /** スタジオを作る（音声があれば、アップロードの先を返す。なければすぐ確認を始める。K-16） */
-        post: operations["createPlacement"];
+        post: operations["createStudio"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/studio/placements/{placementId}/{action}": {
+    "/api/studio/studios/{studioId}/{action}": {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                placementId: components["parameters"]["PlacementId"];
+                studioId: components["parameters"]["StudioId"];
                 /** @description submit（音声を送り終えて確認を始める。uploading → checking）・stop（載っているスタジオを止める。F-20）・appeal（確認の誤りを運営に申し出る。スタジオの決まり 3。message が要る） */
                 action: "submit" | "stop" | "appeal";
             };
@@ -1081,7 +1081,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** 自分のスタジオを確認に出す・止める・申し出る */
-        post: operations["actOnPlacement"];
+        post: operations["actOnStudio"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1153,7 +1153,7 @@ export interface paths {
             cookie?: never;
         };
         /** 素材提供者の申し出（申し出た順） */
-        get: operations["listPlacementAppeals"];
+        get: operations["listStudioAppeals"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1162,12 +1162,12 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/admin/studio/placements/{placementId}/{decision}": {
+    "/api/admin/studio/studios/{studioId}/{decision}": {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                placementId: components["parameters"]["PlacementId"];
+                studioId: components["parameters"]["StudioId"];
                 /** @description 申し出には publish（載せる）・reject（載せない。message が要る）、通報には restore（戻す）・remove（消す。reason が要る） */
                 decision: "publish" | "reject" | "restore" | "remove";
             };
@@ -1183,17 +1183,17 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/studio/placements/{placementId}/stats": {
+    "/api/studio/studios/{studioId}/stats": {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                placementId: components["parameters"]["PlacementId"];
+                studioId: components["parameters"]["StudioId"];
             };
             cookie?: never;
         };
         /** スタジオの日ごとの聞いた数・開いた数（概数。DES-013 K-18） */
-        get: operations["getPlacementStats"];
+        get: operations["getStudioStats"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1202,7 +1202,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/admin/studio/reported-placements": {
+    "/api/admin/studio/reported-studios": {
         parameters: {
             query?: never;
             header?: never;
@@ -1210,7 +1210,7 @@ export interface paths {
             cookie?: never;
         };
         /** 通報されたスタジオ（最初の通報の順） */
-        get: operations["listReportedPlacements"];
+        get: operations["listReportedStudios"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1418,8 +1418,14 @@ export interface components {
          * @description uploading（音声待ち）・checking（確認中）・returned（返した）・appealed（申し出中）・live（載っている）・stopped（素材提供者が止めた）・suspended（通報や承認を止めたことで止まった）・removed（運営が消した）・rejected（申し出を受けて載せないと決めた）
          * @enum {string}
          */
-        PlacementState: "uploading" | "checking" | "returned" | "appealed" | "live" | "stopped" | "suspended" | "removed" | "rejected";
-        PlacementInput: {
+        StudioState: "uploading" | "checking" | "returned" | "appealed" | "live" | "stopped" | "suspended" | "removed" | "rejected";
+        /**
+         * @description スタジオの分類（platform API-MATERIALS「スタジオの分類」、ADR-MATERIALS D-55）
+         * @enum {string}
+         */
+        StudioCategory: "shrine-temple" | "event" | "food" | "shopping" | "sightseeing" | "nature" | "culture" | "traffic" | "community";
+        StudioInput: {
+            category: components["schemas"]["StudioCategory"];
             text: string;
             cells: string[];
             /**
@@ -1432,31 +1438,32 @@ export interface components {
              * @description startsAt から 1 日〜30 日
              */
             endsAt: string;
-            hours?: components["schemas"]["PlacementHours"];
+            hours?: components["schemas"]["StudioHours"];
             audio?: {
                 bytes: number;
             };
         };
-        PlacementHours: {
+        StudioHours: {
             from: string;
             to: string;
         };
-        Placement: {
-            placementId: components["schemas"]["Ulid"];
+        Studio: {
+            studioId: components["schemas"]["Ulid"];
             publisherId: components["schemas"]["Ulid"];
             providerName: string;
+            category: components["schemas"]["StudioCategory"];
             text: string;
             cells: string[];
             /** Format: date-time */
             startsAt: string;
             /** Format: date-time */
             endsAt: string;
-            hours?: components["schemas"]["PlacementHours"];
+            hours?: components["schemas"]["StudioHours"];
             audio?: {
                 durationSec?: number;
                 bytes?: number;
             };
-            state: components["schemas"]["PlacementState"];
+            state: components["schemas"]["StudioState"];
             /** @description 自動の確認の結果。items は当たったスタジオの決まりの項目（2.2.x）か、audio_missing・audio_format・audio_length・transcribe_failed・check_unavailable・unclear */
             check?: {
                 items: string[];
@@ -1481,11 +1488,11 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
-        PlacementList: {
-            items: components["schemas"]["Placement"][];
+        StudioList: {
+            items: components["schemas"]["Studio"][];
         };
-        PlacementCreated: {
-            placement: components["schemas"]["Placement"];
+        StudioCreated: {
+            studio: components["schemas"]["Studio"];
             /** @description 音声があるとき。S3 への POST（15 分）。送り終えたら submit を呼ぶ */
             upload?: {
                 url: string;
@@ -1499,8 +1506,8 @@ export interface components {
         Approx: {
             atLeast: number;
         } | null;
-        PlacementStats: {
-            placementId: components["schemas"]["Ulid"];
+        StudioStats: {
+            studioId: components["schemas"]["Ulid"];
             total: {
                 heard: components["schemas"]["Approx"];
                 opened: components["schemas"]["Approx"];
@@ -1512,8 +1519,8 @@ export interface components {
                 opened: components["schemas"]["Approx"];
             }[];
         };
-        ReportedPlacement: {
-            placement: components["schemas"]["Placement"];
+        ReportedStudio: {
+            studio: components["schemas"]["Studio"];
             /** @description 通報した端末の数 */
             reports: number;
             /** Format: date-time */
@@ -2114,22 +2121,22 @@ export interface components {
             };
         };
         /** @description スタジオ */
-        Placement: {
+        Studio: {
             headers: {
                 ETag: components["headers"]["ETag"];
                 [name: string]: unknown;
             };
             content: {
-                "application/json": components["schemas"]["Placement"];
+                "application/json": components["schemas"]["Studio"];
             };
         };
         /** @description スタジオの一覧 */
-        PlacementList: {
+        StudioList: {
             headers: {
                 [name: string]: unknown;
             };
             content: {
-                "application/json": components["schemas"]["PlacementList"];
+                "application/json": components["schemas"]["StudioList"];
             };
         };
         /** @description エラー（RFC 9457） */
@@ -2277,7 +2284,7 @@ export interface components {
         CollectionId: components["schemas"]["CollectionId"];
         PublisherId: components["schemas"]["Ulid"];
         TransferId: components["schemas"]["Ulid"];
-        PlacementId: components["schemas"]["Ulid"];
+        StudioId: components["schemas"]["Ulid"];
     };
     requestBodies: never;
     headers: {
@@ -3775,7 +3782,7 @@ export interface operations {
             default: components["responses"]["Error"];
         };
     };
-    listMyPlacements: {
+    listMyStudios: {
         parameters: {
             query?: never;
             header?: never;
@@ -3784,11 +3791,11 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            200: components["responses"]["PlacementList"];
+            200: components["responses"]["StudioList"];
             default: components["responses"]["Error"];
         };
     };
-    createPlacement: {
+    createStudio: {
         parameters: {
             query?: never;
             header?: never;
@@ -3797,7 +3804,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["PlacementInput"];
+                "application/json": components["schemas"]["StudioInput"];
             };
         };
         responses: {
@@ -3808,13 +3815,13 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PlacementCreated"];
+                    "application/json": components["schemas"]["StudioCreated"];
                 };
             };
             default: components["responses"]["Error"];
         };
     };
-    actOnPlacement: {
+    actOnStudio: {
         parameters: {
             query?: never;
             header: {
@@ -3822,7 +3829,7 @@ export interface operations {
                 "If-Match": components["parameters"]["IfMatch"];
             };
             path: {
-                placementId: components["parameters"]["PlacementId"];
+                studioId: components["parameters"]["StudioId"];
                 /** @description submit（音声を送り終えて確認を始める。uploading → checking）・stop（載っているスタジオを止める。F-20）・appeal（確認の誤りを運営に申し出る。スタジオの決まり 3。message が要る） */
                 action: "submit" | "stop" | "appeal";
             };
@@ -3836,7 +3843,7 @@ export interface operations {
             };
         };
         responses: {
-            200: components["responses"]["Placement"];
+            200: components["responses"]["Studio"];
             default: components["responses"]["Error"];
         };
     };
@@ -3902,7 +3909,7 @@ export interface operations {
             default: components["responses"]["Error"];
         };
     };
-    listPlacementAppeals: {
+    listStudioAppeals: {
         parameters: {
             query?: never;
             header?: never;
@@ -3911,7 +3918,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            200: components["responses"]["PlacementList"];
+            200: components["responses"]["StudioList"];
             default: components["responses"]["Error"];
         };
     };
@@ -3923,7 +3930,7 @@ export interface operations {
                 "If-Match": components["parameters"]["IfMatch"];
             };
             path: {
-                placementId: components["parameters"]["PlacementId"];
+                studioId: components["parameters"]["StudioId"];
                 /** @description 申し出には publish（載せる）・reject（載せない。message が要る）、通報には restore（戻す）・remove（消す。reason が要る） */
                 decision: "publish" | "reject" | "restore" | "remove";
             };
@@ -3938,16 +3945,16 @@ export interface operations {
             };
         };
         responses: {
-            200: components["responses"]["Placement"];
+            200: components["responses"]["Studio"];
             default: components["responses"]["Error"];
         };
     };
-    getPlacementStats: {
+    getStudioStats: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                placementId: components["parameters"]["PlacementId"];
+                studioId: components["parameters"]["StudioId"];
             };
             cookie?: never;
         };
@@ -3959,13 +3966,13 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PlacementStats"];
+                    "application/json": components["schemas"]["StudioStats"];
                 };
             };
             default: components["responses"]["Error"];
         };
     };
-    listReportedPlacements: {
+    listReportedStudios: {
         parameters: {
             query?: never;
             header?: never;
@@ -3981,7 +3988,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        items: components["schemas"]["ReportedPlacement"][];
+                        items: components["schemas"]["ReportedStudio"][];
                     };
                 };
             };

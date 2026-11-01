@@ -266,7 +266,7 @@ flowchart LR
 
 ## 図 9 · その場の素材: 管理の面から、別のスタックのスタジオ・一言を扱う
 
-スタジオ（platform [REQ-STUDIO](https://github.com/duwenji/yorisoi-platform/blob/main/docs/requirements/REQ-STUDIO.md)）は別のスタック `YorisoiStudio-<env>` にあり、アプリはその API を直接呼ぶ（[DES-013](design/DES-013-studio.md)）。管理システムは、配備のときに Parameter Store からスタジオの表・バケット・確認の Lambda の名前を読み、素材提供者のスタジオと運営の対応を受け持つ。
+スタジオ（platform [REQ-STUDIO](https://github.com/duwenji/yorisoi-platform/blob/main/docs/requirements/REQ-STUDIO.md)）は別のスタック `YorisoiLocalMaterials-<env>` にあり、アプリはその API を直接呼ぶ（[DES-013](design/DES-013-studio.md)）。管理システムは、配備のときに Parameter Store からスタジオの表・バケット・確認の Lambda の名前を読み、素材提供者のスタジオと運営の対応を受け持つ。
 
 ```mermaid
 flowchart LR
@@ -277,7 +277,7 @@ flowchart LR
   PUB -->|署名付き POST で音声| INT[("受け取り用 S3<br/>uploads/")]
   CAPI -->|載せる| CHK["スタジオの確認の Lambda<br/>長さ・形式 → Transcribe → 運営の AI"]
   CHK --> INT
-  CHK -->|通ったら写す| AUD[("配信用 S3<br/>placements/")]
+  CHK -->|通ったら写す| AUD[("配信用 S3<br/>studios/")]
   CHK -->|live・returned| SDDB
   AUD --> CDN["CloudFront"]
   APP["アプリ<br/>（散策者・走る人の端末）"] -->|中継のトークン| SAPI["スタジオの API<br/>一言を置く・区画の一覧・反応・通報・ブロック"]

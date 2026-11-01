@@ -211,7 +211,7 @@ aws cognito-idp admin-add-user-to-group --user-pool-id $P --username <メール>
 | 2 日公開がない（警報 `NoRecentPublication`） | Scheduler が動いているか、Lambda が失敗していないか | 運営の画面で手動の公開。リストの期限（14 日）までに直す |
 | 画面がエラー（サーバーで問題が起きました） | 画面に出た `instance` で、管理 API の Lambda のログを検索する | 原因を直して配備 |
 | 準拠テストが落ちる | どの V-xx か | V-01・V-02 → 鍵セット／ルート鍵、V-03 → 署名鍵、V-04 → 公開が止まっている、V-07 → パッケージの置き場所 |
-| スタジオの警報（`UpstreamError`・`InvalidSetting`・`NotesHidden`・`PlacementsSuspended`） | スタジオの Lambda のログ、Parameter Store の値 | [スタジオの手順](../operations/studio.md)「警報が届いたとき」。通報の 2 つは運営が画面で対応する |
+| スタジオの警報（`UpstreamError`・`InvalidSetting`・`NotesHidden`・`StudiosSuspended`） | スタジオの Lambda のログ、Parameter Store の値 | [スタジオの手順](../operations/studio.md)「警報が届いたとき」。通報の 2 つは運営が画面で対応する |
 | 管理システムの乗っ取りの疑い | CloudTrail（KMS の Sign、Cognito の管理操作）、操作の記録 | 運営が新しい署名鍵に切り替え、古い鍵を失効（[運営ガイド 11](operator.md#11-緊急時の対応)）。運営のパスワードと MFA をやり直す |
 
 ## 11. 困ったとき

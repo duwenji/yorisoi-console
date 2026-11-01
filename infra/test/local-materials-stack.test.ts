@@ -1,17 +1,17 @@
 import { App } from 'aws-cdk-lib';
 import { Match, Template } from 'aws-cdk-lib/assertions';
 import { describe, expect, it } from 'vitest';
-import { studioConfigs } from '../lib/studio-config.js';
-import { StudioStack } from '../lib/studio-stack.js';
+import { localMaterialsConfigs } from '../lib/local-materials-config.js';
+import { LocalMaterialsStack } from '../lib/local-materials-stack.js';
 
 function template(name: 'dev' | 'prod') {
   // Skip bundling the Lambda code; tests look at the resources, not the bundle.
   const app = new App({ context: { 'aws:cdk:bundling-stacks': [] } });
-  const stack = new StudioStack(app, `Studio-${name}`, { config: studioConfigs[name], env: { region: 'ap-northeast-1', account: '123456789012' } });
+  const stack = new LocalMaterialsStack(app, `Studio-${name}`, { config: localMaterialsConfigs[name], env: { region: 'ap-northeast-1', account: '123456789012' } });
   return Template.fromStack(stack);
 }
 
-describe('StudioStack', () => {
+describe('LocalMaterialsStack', () => {
   const prod = template('prod');
   const dev = template('dev');
 
@@ -38,18 +38,18 @@ describe('StudioStack', () => {
 
   it('keeps the terms’ version and the pause in Parameter Store, and hands its names to the console (K-2, K-19)', () => {
     for (const name of ['terms-version', 'terms-url', 'terms-updated-at', 'paused', 'table-name', 'intake-bucket', 'audio-bucket']) {
-      prod.hasResourceProperties('AWS::SSM::Parameter', { Name: `/yorisoi-studio/prod/${name}` });
+      prod.hasResourceProperties('AWS::SSM::Parameter', { Name: `/yorisoi-local-materials/prod/${name}` });
     }
   });
 
-  it('checks placements with Transcribe and hears back only about its own jobs (K-11)', () => {
+  it('checks studios with Transcribe and hears back only about its own jobs (K-11)', () => {
     prod.hasResourceProperties('AWS::Events::Rule', {
       EventPattern: { source: ['aws.transcribe'], 'detail-type': ['Transcribe Job State Change'], detail: { TranscriptionJobName: [{ prefix: 'studio-prod-' }] } },
     });
     const policies = JSON.stringify(prod.findResources('AWS::IAM::Policy'));
     expect(policies).toContain('transcribe:StartTranscriptionJob');
     expect(policies.match(/"dynamodb:LeadingKeys":\["TOKEN#\*","SPEND"\]/g)).toHaveLength(2);
-    prod.hasResourceProperties('AWS::SSM::Parameter', { Name: '/yorisoi-studio/prod/check-function' });
+    prod.hasResourceProperties('AWS::SSM::Parameter', { Name: '/yorisoi-local-materials/prod/check-function' });
     prod.hasResourceProperties('AWS::S3::Bucket', {
       LifecycleConfiguration: { Rules: Match.arrayWith([Match.objectLike({ Prefix: 'held/', ExpirationInDays: 30 })]) },
     });

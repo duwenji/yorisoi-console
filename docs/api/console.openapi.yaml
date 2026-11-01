@@ -1133,31 +1133,31 @@ paths:
         '200': { $ref: '#/components/responses/StudioAccount' }
         default: { $ref: '#/components/responses/Error' }
 
-  /api/studio/placements:
+  /api/studio/studios:
     get:
       tags: [studio]
-      operationId: listMyPlacements
+      operationId: listMyStudios
       summary: 自分のスタジオの一覧（新しい順、50 件まで）
       responses:
-        '200': { $ref: '#/components/responses/PlacementList' }
+        '200': { $ref: '#/components/responses/StudioList' }
         default: { $ref: '#/components/responses/Error' }
     post:
       tags: [studio]
-      operationId: createPlacement
+      operationId: createStudio
       summary: スタジオを作る（音声があれば、アップロードの先を返す。なければすぐ確認を始める。K-16）
       requestBody:
         required: true
-        content: { application/json: { schema: { $ref: '#/components/schemas/PlacementInput' } } }
+        content: { application/json: { schema: { $ref: '#/components/schemas/StudioInput' } } }
       responses:
         '201':
           description: 作った
           headers: { ETag: { $ref: '#/components/headers/ETag' } }
-          content: { application/json: { schema: { $ref: '#/components/schemas/PlacementCreated' } } }
+          content: { application/json: { schema: { $ref: '#/components/schemas/StudioCreated' } } }
         default: { $ref: '#/components/responses/Error' }
 
-  /api/studio/placements/{placementId}/{action}:
+  /api/studio/studios/{studioId}/{action}:
     parameters:
-      - { $ref: '#/components/parameters/PlacementId' }
+      - { $ref: '#/components/parameters/StudioId' }
       - name: action
         in: path
         required: true
@@ -1165,13 +1165,13 @@ paths:
         schema: { type: string, enum: [submit, stop, appeal] }
     post:
       tags: [studio]
-      operationId: actOnPlacement
+      operationId: actOnStudio
       summary: 自分のスタジオを確認に出す・止める・申し出る
       parameters: [{ $ref: '#/components/parameters/IfMatch' }]
       requestBody:
         content: { application/json: { schema: { type: object, properties: { message: { type: string, minLength: 1, maxLength: 1000 } } } } }
       responses:
-        '200': { $ref: '#/components/responses/Placement' }
+        '200': { $ref: '#/components/responses/Studio' }
         default: { $ref: '#/components/responses/Error' }
 
   /api/admin/studio/applications:
@@ -1217,15 +1217,15 @@ paths:
   /api/admin/studio/appeals:
     get:
       tags: [admin-studio]
-      operationId: listPlacementAppeals
+      operationId: listStudioAppeals
       summary: 素材提供者の申し出（申し出た順）
       responses:
-        '200': { $ref: '#/components/responses/PlacementList' }
+        '200': { $ref: '#/components/responses/StudioList' }
         default: { $ref: '#/components/responses/Error' }
 
-  /api/admin/studio/placements/{placementId}/{decision}:
+  /api/admin/studio/studios/{studioId}/{decision}:
     parameters:
-      - { $ref: '#/components/parameters/PlacementId' }
+      - { $ref: '#/components/parameters/StudioId' }
       - name: decision
         in: path
         required: true
@@ -1239,26 +1239,26 @@ paths:
       requestBody:
         content: { application/json: { schema: { type: object, properties: { message: { type: string, maxLength: 1000 }, reason: { type: string, maxLength: 1000 } } } } }
       responses:
-        '200': { $ref: '#/components/responses/Placement' }
+        '200': { $ref: '#/components/responses/Studio' }
         default: { $ref: '#/components/responses/Error' }
 
-  /api/studio/placements/{placementId}/stats:
-    parameters: [{ $ref: '#/components/parameters/PlacementId' }]
+  /api/studio/studios/{studioId}/stats:
+    parameters: [{ $ref: '#/components/parameters/StudioId' }]
     get:
       tags: [studio]
-      operationId: getPlacementStats
+      operationId: getStudioStats
       summary: スタジオの日ごとの聞いた数・開いた数（概数。DES-013 K-18）
       responses:
-        '200': { description: 数, content: { application/json: { schema: { $ref: '#/components/schemas/PlacementStats' } } } }
+        '200': { description: 数, content: { application/json: { schema: { $ref: '#/components/schemas/StudioStats' } } } }
         default: { $ref: '#/components/responses/Error' }
 
-  /api/admin/studio/reported-placements:
+  /api/admin/studio/reported-studios:
     get:
       tags: [admin-studio]
-      operationId: listReportedPlacements
+      operationId: listReportedStudios
       summary: 通報されたスタジオ（最初の通報の順）
       responses:
-        '200': { description: 通報されたスタジオ, content: { application/json: { schema: { type: object, required: [items], properties: { items: { type: array, items: { $ref: '#/components/schemas/ReportedPlacement' } } } } } } }
+        '200': { description: 通報されたスタジオ, content: { application/json: { schema: { type: object, required: [items], properties: { items: { type: array, items: { $ref: '#/components/schemas/ReportedStudio' } } } } } } }
         default: { $ref: '#/components/responses/Error' }
 
   /api/admin/studio/reported-notes:
@@ -1408,8 +1408,8 @@ components:
       in: path
       required: true
       schema: { $ref: '#/components/schemas/Ulid' }
-    PlacementId:
-      name: placementId
+    StudioId:
+      name: studioId
       in: path
       required: true
       schema: { $ref: '#/components/schemas/Ulid' }
@@ -1419,13 +1419,13 @@ components:
       description: スタジオの承認
       headers: { ETag: { $ref: '#/components/headers/ETag' } }
       content: { application/json: { schema: { $ref: '#/components/schemas/StudioAccount' } } }
-    Placement:
+    Studio:
       description: スタジオ
       headers: { ETag: { $ref: '#/components/headers/ETag' } }
-      content: { application/json: { schema: { $ref: '#/components/schemas/Placement' } } }
-    PlacementList:
+      content: { application/json: { schema: { $ref: '#/components/schemas/Studio' } } }
+    StudioList:
       description: スタジオの一覧
-      content: { application/json: { schema: { $ref: '#/components/schemas/PlacementList' } } }
+      content: { application/json: { schema: { $ref: '#/components/schemas/StudioList' } } }
     Error:
       description: エラー（RFC 9457）
       content:
@@ -1649,43 +1649,50 @@ components:
         until: { type: string, format: date-time, description: suspend に要る（1〜3 か月先） }
         message: { type: string, maxLength: 1000 }
 
-    PlacementState:
+    StudioState:
       type: string
       description: uploading（音声待ち）・checking（確認中）・returned（返した）・appealed（申し出中）・live（載っている）・stopped（素材提供者が止めた）・suspended（通報や承認を止めたことで止まった）・removed（運営が消した）・rejected（申し出を受けて載せないと決めた）
       enum: [uploading, checking, returned, appealed, live, stopped, suspended, removed, rejected]
 
-    PlacementInput:
+    StudioCategory:
+      type: string
+      description: スタジオの分類（platform API-MATERIALS「スタジオの分類」、ADR-MATERIALS D-55）
+      enum: [shrine-temple, event, food, shopping, sightseeing, nature, culture, traffic, community]
+
+    StudioInput:
       type: object
-      required: [text, cells, startsAt, endsAt]
+      required: [category, text, cells, startsAt, endsAt]
       properties:
+        category: { $ref: '#/components/schemas/StudioCategory' }
         text: { type: string, minLength: 1, maxLength: 200 }
         cells: { type: array, minItems: 1, maxItems: 9, uniqueItems: true, items: { type: string, pattern: '^[0-9b-hjkmnp-z]{6}$' } }
         startsAt: { type: string, format: date-time, description: 今から 30 日以内 }
         endsAt: { type: string, format: date-time, description: startsAt から 1 日〜30 日 }
-        hours: { $ref: '#/components/schemas/PlacementHours' }
+        hours: { $ref: '#/components/schemas/StudioHours' }
         audio: { type: object, required: [bytes], properties: { bytes: { type: integer, minimum: 1, maximum: 524288 } } }
 
-    PlacementHours:
+    StudioHours:
       type: object
       required: [from, to]
       properties:
         from: { type: string, pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$' }
         to: { type: string, pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$' }
 
-    Placement:
+    Studio:
       type: object
-      required: [placementId, publisherId, providerName, text, cells, startsAt, endsAt, state, rev, createdAt, updatedAt]
+      required: [studioId, publisherId, providerName, category, text, cells, startsAt, endsAt, state, rev, createdAt, updatedAt]
       properties:
-        placementId: { $ref: '#/components/schemas/Ulid' }
+        studioId: { $ref: '#/components/schemas/Ulid' }
         publisherId: { $ref: '#/components/schemas/Ulid' }
         providerName: { type: string }
+        category: { $ref: '#/components/schemas/StudioCategory' }
         text: { type: string }
         cells: { type: array, items: { type: string } }
         startsAt: { type: string, format: date-time }
         endsAt: { type: string, format: date-time }
-        hours: { $ref: '#/components/schemas/PlacementHours' }
+        hours: { $ref: '#/components/schemas/StudioHours' }
         audio: { type: object, properties: { durationSec: { type: number }, bytes: { type: integer } } }
-        state: { $ref: '#/components/schemas/PlacementState' }
+        state: { $ref: '#/components/schemas/StudioState' }
         check:
           type: object
           description: 自動の確認の結果。items は当たったスタジオの決まりの項目（2.2.x）か、audio_missing・audio_format・audio_length・transcribe_failed・check_unavailable・unclear
@@ -1700,17 +1707,17 @@ components:
         createdAt: { type: string, format: date-time }
         updatedAt: { type: string, format: date-time }
 
-    PlacementList:
+    StudioList:
       type: object
       required: [items]
       properties:
-        items: { type: array, items: { $ref: '#/components/schemas/Placement' } }
+        items: { type: array, items: { $ref: '#/components/schemas/Studio' } }
 
-    PlacementCreated:
+    StudioCreated:
       type: object
-      required: [placement]
+      required: [studio]
       properties:
-        placement: { $ref: '#/components/schemas/Placement' }
+        studio: { $ref: '#/components/schemas/Studio' }
         upload:
           type: object
           description: 音声があるとき。S3 への POST（15 分）。送り終えたら submit を呼ぶ
@@ -1727,21 +1734,21 @@ components:
       properties:
         atLeast: { type: integer }
 
-    PlacementStats:
+    StudioStats:
       type: object
-      required: [placementId, total, days]
+      required: [studioId, total, days]
       properties:
-        placementId: { $ref: '#/components/schemas/Ulid' }
+        studioId: { $ref: '#/components/schemas/Ulid' }
         total: { type: object, required: [heard, opened], properties: { heard: { $ref: '#/components/schemas/Approx' }, opened: { $ref: '#/components/schemas/Approx' } } }
         days:
           type: array
           items: { type: object, required: [date, heard, opened], properties: { date: { type: string, description: 日本時間の日付 }, heard: { $ref: '#/components/schemas/Approx' }, opened: { $ref: '#/components/schemas/Approx' } } }
 
-    ReportedPlacement:
+    ReportedStudio:
       type: object
-      required: [placement, reports, firstAt, lastAt, reasons]
+      required: [studio, reports, firstAt, lastAt, reasons]
       properties:
-        placement: { $ref: '#/components/schemas/Placement' }
+        studio: { $ref: '#/components/schemas/Studio' }
         reports: { type: integer, description: 通報した端末の数 }
         firstAt: { type: string, format: date-time }
         lastAt: { type: string, format: date-time }

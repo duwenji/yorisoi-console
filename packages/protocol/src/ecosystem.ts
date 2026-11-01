@@ -38,3 +38,18 @@ export function appsFor(activities: readonly string[], requires: readonly string
 
 /** Version numbers no app has: what a channel or collection gets for an app that can't use it (API-002 P-21). */
 export const NO_APP_VERSION = 9999;
+
+/** What a studio is about; its producer picks one (platform API-MATERIALS「スタジオの分類」, core-format StudioCategory). */
+export const STUDIO_CATEGORIES = {
+  'shrine-temple': '寺社・その行事',
+  event: '催し',
+  food: '飲食',
+  shopping: '買い物',
+  sightseeing: '観光の案内',
+  nature: '自然・季節',
+  culture: '展示・文化',
+  traffic: '交通・通行',
+  community: '地域のお知らせ',
+} as const;
+export type StudioCategory = keyof typeof STUDIO_CATEGORIES;
+export const isStudioCategory = (v: unknown): v is StudioCategory => typeof v === 'string' && Object.hasOwn(STUDIO_CATEGORIES, v);
