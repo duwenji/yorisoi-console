@@ -1,6 +1,6 @@
 # チャンネル管理システムの構成図
 
-yorisoi-console を 9 枚の図で説明する。図 1 で「誰が何を使い、どこに何があるか」をつかみ、図 2〜3 でリポジトリと信頼の仕組み、図 4〜8 で申請から公開まで・公開の処理・データの置き場所・メールと警報・環境を追い、図 9 でスタジオと一言の管理を見る。
+yorisoi-console を 9 枚の図で説明する。図 1 で「誰が何を使い、どこに何があるか」をつかみ、図 2〜3 でリポジトリと信頼の仕組み、図 4〜8 で申請から公開まで・公開の処理・データの置き場所・メールと警報・環境を追い、図 9 でその場の素材（スタジオ・一言）の管理を見る。
 
 - 何をするシステムか: SanpoGuide のアプリに第三者のチャンネルと素材集を届けるため、チャンネル提供者・素材提供者の申請を審査し、承認したものだけを署名したリスト（承認済みチャンネル・リスト）で公開する
 - アプリとの境界は [platform API-CHANNEL-LIST](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-LIST.md) だけ。アプリはこのシステムの API を呼ばず、公開された静的ファイルを取りに来る
@@ -264,7 +264,7 @@ flowchart LR
 
 配備の手順は [docs/operations/deploy.md](operations/deploy.md)、鍵の手順は [docs/operations/keys.md](operations/keys.md)、費用は [docs/operations/cost.md](operations/cost.md)。
 
-## 図 9 · スタジオ: 管理の面から、別のスタックのスタジオと一言を扱う
+## 図 9 · その場の素材: 管理の面から、別のスタックのスタジオ・一言を扱う
 
 スタジオ（platform [REQ-STUDIO](https://github.com/duwenji/yorisoi-platform/blob/main/docs/requirements/REQ-STUDIO.md)）は別のスタック `YorisoiStudio-<env>` にあり、アプリはその API を直接呼ぶ（[DES-013](design/DES-013-studio.md)）。管理システムは、配備のときに Parameter Store からスタジオの表・バケット・確認の Lambda の名前を読み、素材提供者のスタジオと運営の対応を受け持つ。
 

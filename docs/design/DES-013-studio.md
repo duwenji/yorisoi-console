@@ -1,4 +1,4 @@
-# DES-013 スタジオ（スタジオと一言の置き場と配信、素材提供者の承認）
+# DES-013 その場の素材（スタジオ・一言）の置き場と配信、スタジオを出す素材提供者の承認
 
 ## 文書情報
 
@@ -16,7 +16,7 @@
 
 ## 目的・背景
 
-platform のスタジオ（スタジオと一言を場所に置き、近くに来た人に読み上げる）を、管理システムでどう作るかを決める。
+platform のその場の素材（区画ごとに運営から取る素材。今はスタジオと一言の 2 種類で、種類どうしに関係はない）の置き場と配信を、管理システムでどう作るかを決める。
 
 - [platform REQ-STUDIO](https://github.com/duwenji/yorisoi-platform/blob/main/docs/requirements/REQ-STUDIO.md): 機能と受入条件。X-2 で、置き場と配信のサーバー、素材提供者の承認、スタジオの作成・申し出の確認・数の画面を管理システムに置く
 - [platform ADR-MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-MATERIALS.md): 人の発言の層、運営が提供者を承認する（S-2）、識別とブロック（S-4・S-5）、契約（S-7）、T-4（管理システムでの素材提供者の承認）

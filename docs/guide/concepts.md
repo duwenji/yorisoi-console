@@ -121,9 +121,9 @@ flowchart LR
 - 外部の素材は、申請のときにハッシュまで、公開中は毎日、取得できるかを確かめます
 - 素材のあるチャンネル・素材集は、素材に対応したアプリの版が出るまで、アプリの一覧に出ません（必要なアプリの版が仮の大きな値になっています）
 
-## 7. スタジオと一言
+## 7. その場の素材（スタジオ・一言）
 
-**スタジオ**（素材提供者が出す店や地域のお知らせ）と **一言**（散策者・走る人がその場所に置く投稿）は、どちらも素材の種類です。近くを通る人のアプリで、チャンネルが決めたきっかけ（語りの合間など）に読み上げます。2 つに直接の関係はありません（platform [ADR-MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-MATERIALS.md)・[REQ-STUDIO](https://github.com/duwenji/yorisoi-platform/blob/main/docs/requirements/REQ-STUDIO.md)・[REQ-NOTES](https://github.com/duwenji/yorisoi-platform/blob/main/docs/requirements/REQ-NOTES.md)）。素材集とは、守り方が違います。
+**その場の素材** は、運営が置き場を持ち、アプリが区画ごとに取る素材です。今は **スタジオ**（素材提供者が出す店や地域のお知らせ）と **一言**（散策者・走る人がその場所に置く投稿）の 2 種類があり、種類どうしに関係はありません。どちらも、近くを通る人のアプリで、チャンネルが決めたきっかけ（語りの合間など）に読み上げます（platform [ADR-MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-MATERIALS.md) D-44・[REQ-STUDIO](https://github.com/duwenji/yorisoi-platform/blob/main/docs/requirements/REQ-STUDIO.md)・[REQ-NOTES](https://github.com/duwenji/yorisoi-platform/blob/main/docs/requirements/REQ-NOTES.md)）。素材集とは、守り方が違います。
 
 | | チャンネル・素材集 | スタジオ | 一言 |
 |---|---|---|---|
@@ -139,11 +139,11 @@ flowchart LR
     PB["素材提供者<br/>（承認を受けた人）"] -- "スタジオを作る" --> CS["管理システム<br/>スタジオのタブ"]
     CS -- "自動の確認<br/>（Transcribe・運営の AI）" --> ST["運営の配信<br/>（別のスタック）"]
     U["アプリを使う人"] -- "一言を置く・通報" --> ST
-    ST -- "区画のスタジオと一言" --> A["アプリ<br/>チャンネルのきっかけで読み上げ"]
+    ST -- "区画の素材" --> A["アプリ<br/>チャンネルのきっかけで読み上げ"]
     OP["運営"] -- "承認・申し出・通報への対応" --> CS
 ```
 
-- スタジオと一言の置き場と配信は管理システムとは別のスタックで動き、アプリは管理システムのリストではなく、運営の配信から取ります
+- その場の素材の置き場と配信は管理システムとは別のスタックで動き、アプリは管理システムのリストではなく、運営の配信から取ります
 - アプリで聞くのは、設定で「一言を聞く」「お知らせを聞く」をオンにした人だけです
-- 決まりは platform の[一言の利用規約](https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/notes-terms.md)と[スタジオの決まり](https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/studio-rules.md)にあります。手順は[スタジオのガイド](studio.md)と[運営ガイド 13 章](operator.md#13-スタジオと一言)です
+- 決まりは platform の[一言の利用規約](https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/notes-terms.md)と[スタジオの決まり](https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/studio-rules.md)にあります。手順は[スタジオのガイド](studio.md)と[運営ガイド 13 章](operator.md#13-その場の素材スタジオ一言)です
 

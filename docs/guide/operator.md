@@ -18,7 +18,7 @@
 10. [操作の記録](#10-操作の記録)
 11. [緊急時の対応](#11-緊急時の対応)
 12. [困ったとき](#12-困ったとき)
-13. [スタジオと一言](#13-スタジオと一言)
+13. [その場の素材（スタジオ・一言）](#13-その場の素材スタジオ一言)
 
 ## 1. はじめてのログイン
 
@@ -232,7 +232,7 @@
 | 手動の公開をしても履歴が増えない | 公開の処理が失敗している。開発・保守の担当者へ（CloudWatch の警報 `PublishFailures` が鳴っている） |
 | ログインの画面から進まない | 認証アプリのコードの時刻ずれ、または MFA の端末をなくした。開発・保守の担当者へ |
 
-## 13. スタジオと一言
+## 13. その場の素材（スタジオ・一言）
 
 スタジオ（素材提供者が出すお知らせ）と一言（散策者・走る人がその場所に置く投稿）は、どちらも素材の種類で、近くを通る人のアプリで読み上げます。2 つに直接の関係はありません（platform [REQ-STUDIO](https://github.com/duwenji/yorisoi-platform/blob/main/docs/requirements/REQ-STUDIO.md)・[REQ-NOTES](https://github.com/duwenji/yorisoi-platform/blob/main/docs/requirements/REQ-NOTES.md)）。運営は事前に中身を審査しません。**スタジオは出す人を承認し、一言は置く人の同意と自動の確認で守り、通報されたものに対応します**。判断の基準は platform の[一言の利用規約](https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/notes-terms.md)と[スタジオの決まり](https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/studio-rules.md)です。素材提供者の手順は[スタジオのガイド](studio.md)、配備・止め方は[スタジオの手順](../operations/studio.md)にあります。
 
