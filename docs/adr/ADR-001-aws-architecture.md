@@ -14,11 +14,11 @@
 | ステータス | 承認済 |
 | 版 | 1.0 |
 
-本書で「platform ADR-CHANNEL-CURATION」「platform API-CHANNEL-LIST」「platform API-CHANNEL-PACKAGE」と書くものは、[yorisoi-platform](https://github.com/duwenji/yorisoi-platform) の文書を指す。
+本書で「platform ADR-CHANNELS」「platform API-CHANNEL-LIST」「platform API-CHANNEL-PACKAGE」と書くものは、[yorisoi-platform](https://github.com/duwenji/yorisoi-platform) の文書を指す。
 
 ## 目的・背景
 
-SanpoGuide のアプリは、第三者が配信するチャンネルのうち、運営が審査して署名したものだけを取り込む（[platform ADR-CHANNEL-CURATION](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-CHANNEL-CURATION.md)）。審査と公開はアプリとは別の**チャンネル管理システム**で行い、アプリとの境界は承認済みチャンネル・リストの契約（[platform API-CHANNEL-LIST](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-LIST.md)）だけにする。platform API-CHANNEL-LIST に準拠していれば、管理システムの実装方法と置き場所は問わない（platform ADR-CHANNEL-CURATION C-9）。
+SanpoGuide のアプリは、第三者が配信するチャンネルのうち、運営が審査して署名したものだけを取り込む（[platform ADR-CHANNELS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-CHANNELS.md)）。審査と公開はアプリとは別の**チャンネル管理システム**で行い、アプリとの境界は承認済みチャンネル・リストの契約（[platform API-CHANNEL-LIST](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-LIST.md)）だけにする。platform API-CHANNEL-LIST に準拠していれば、管理システムの実装方法と置き場所は問わない（platform ADR-CHANNELS C-9）。
 
 本書は、その管理システムの実装方法と置き場所を決める。条件は次のとおり。
 
@@ -34,7 +34,7 @@ SanpoGuide のアプリは、第三者が配信するチャンネルのうち、
 - リポジトリの構成
 - AWS の構成（認証、API、データ、公開、署名、機械審査、定期処理、監視）
 - 鍵の置き場所と使い方（ルート鍵・署名鍵・チャンネル提供者の鍵）
-- チャンネル提供者の鍵の移し替えの流れ（platform ADR-CHANNEL-CURATION C-11）
+- チャンネル提供者の鍵の移し替えの流れ（platform ADR-CHANNELS C-11）
 
 非スコープ（別の文書で決める）:
 - リストとパッケージの形式（platform API-CHANNEL-LIST・platform API-CHANNEL-PACKAGE）
@@ -46,7 +46,7 @@ SanpoGuide のアプリは、第三者が配信するチャンネルのうち、
 
 | 対応元ID | 内容 | 対応状況 |
 |---|---|---|
-| platform ADR-CHANNEL-CURATION | C-9（管理システム）、C-10（運営）、C-11（チャンネル提供者の鍵の移し替え）、C-12（実装） | 本書で実装方法を決める |
+| platform ADR-CHANNELS | C-9（管理システム）、C-10（運営）、C-11（チャンネル提供者の鍵の移し替え）、C-12（実装） | 本書で実装方法を決める |
 | platform API-CHANNEL-LIST | L-1〜L-5、P-1〜P-9。とくに L-3（KMS）、P-1（2 段の鍵）、P-7（静的ファイルで公開）、P-8（要約への署名）、準拠テスト | 本書で実装する |
 | platform API-CHANNEL-PACKAGE | 確認の手順 1〜10（機械で確かめる項目）、F-6（チャンネル提供者の署名） | 機械審査で `core-format` を使う |
 
@@ -58,7 +58,7 @@ SanpoGuide のアプリは、第三者が配信するチャンネルのうち、
 |---|---|---|
 | D-1 | 署名の大きさの制限 | KMS の Ed25519 は一度に 4,096 バイトまでしか署名できない。リストは本体の SHA-256 を含む要約に署名する（platform API-CHANNEL-LIST P-8）。アプリは Tink だけで確かめられる |
 | D-2 | ログイン | Amazon Cognito |
-| D-3 | チャンネル提供者の鍵をなくしたとき | 運営の判断で別の鍵に移す救済策を作る（platform ADR-CHANNEL-CURATION C-11、platform API-CHANNEL-LIST P-9） |
+| D-3 | チャンネル提供者の鍵をなくしたとき | 運営の判断で別の鍵に移す救済策を作る（platform ADR-CHANNELS C-11、platform API-CHANNEL-LIST P-9） |
 | D-4 | 審査で AI に話させる見本 | 運営の API キーで、ブラウザから AI を呼ぶ。キーはサーバーに送らない |
 | D-5 | AWS アカウントとリージョン | 本番用の AWS アカウントを分ける。リージョンは ap-northeast-1 |
 | D-6 | 準拠テストの置き場所 | 任意のリストの公開 URL に対して流せるテストを、本リポジトリに置く |
@@ -90,7 +90,7 @@ SanpoGuide のアプリは、第三者が配信するチャンネルのうち、
 | A-17 | 配備 | AWS CDK（TypeScript）で両方のアカウントに配備する。GitHub Actions から OIDC で AWS に入る（長期のアクセスキーを持たない）。本番への配備は手動で承認する |
 | A-21 | 運営の AI の中継（platform ADR-AI-RELAY・API-AI-RELAY） | 管理システムと同じアカウントに、別のスタック `YorisoiAiRelay-<env>`（別の CDK アプリ `infra/bin/relay.ts`）で置く。API Gateway は AWS WAF を付けられる REST API にする（HTTP API には付けられない）。Lambda（`api/src/relay/`）が Bedrock のモデルを、日本の中で処理する形（東京リージョンのモデルか jp 推論プロファイル）で、ロールで呼ぶ（Converse API）。呼べるモデルは設定の一覧（DeepSeek V3.2 と Claude Haiku 4.5）に限り、どれを使うかと 1 日の上限・月の予算は Parameter Store に置く（配備し直さずに切り替える）。月の費用は中継がトークン数から足し上げ、予算に達したらその場で止める（AWS Budgets は反映が遅いため使わない）。手順は [運営の AI の手順](../operations/ai-relay.md) |
 | A-22 | 運営のスポットのタイル（platform ADR-SPOT-TILES・API-SPOT-TILES） | 管理システムと同じアカウントに、別のスタック `YorisoiSpotTiles-<env>`（別の CDK アプリ `infra/bin/tiles.ts`）で置く。S3 のバケットを CloudFront（OAC、アクセスログなし）で配り、範囲外のタイルが 404 になるようバケットの一覧も許す。毎週、EventBridge Scheduler が ECS Fargate のタスク（`tiles/`。osmium-tool・pyosmium）を動かし、Geofabrik の日本の抽出からタイルを作って、中身が変わったものだけ上げる。前回より 1 割を超えて減ったら上げずに止め、運営に知らせる。VPC は公開サブネットだけで NAT は置かない。手順は [スポットのタイルの手順](../operations/spot-tiles.md) |
-| A-23 | スタジオ（platform ADR-STUDIO・API-STUDIO、DES-013） | 管理システムと同じアカウントに、別のスタック `YorisoiStudio-<env>`（別の CDK アプリ `infra/bin/studio.ts`）で置く。API Gateway は AWS WAF を付けられる REST API にする。トークン・運営の AI のモデルと月の予算は中継のものを使い、中継の表と Parameter Store を読む（費用は中継の月の合計に足す）。一言・掲載は DynamoDB の表に、掲載の音声は S3 に置いて CloudFront で配る。掲載の音声は Amazon Transcribe で文字に起こして確かめる。配備は中継 → スタジオ → 管理システムの順 |
+| A-23 | スタジオ（platform ADR-MATERIALS・API-LOCAL-MATERIALS、DES-013） | 管理システムと同じアカウントに、別のスタック `YorisoiStudio-<env>`（別の CDK アプリ `infra/bin/studio.ts`）で置く。API Gateway は AWS WAF を付けられる REST API にする。トークン・運営の AI のモデルと月の予算は中継のものを使い、中継の表と Parameter Store を読む（費用は中継の月の合計に足す）。一言・スタジオは DynamoDB の表に、スタジオの音声は S3 に置いて CloudFront で配る。スタジオの音声は Amazon Transcribe で文字に起こして確かめる。配備は中継 → スタジオ → 管理システムの順 |
 
 ```mermaid
 flowchart LR
@@ -179,7 +179,7 @@ flowchart LR
 
 | ID | 追従タスク | 担当 | 時期 |
 |---|---|---|---|
-| T-1 | ルート鍵と署名鍵の手順書（作成・保管・入れ替え・失効。platform ADR-CHANNEL-CURATION T-1） | 開発者 | 済み（[鍵の手順書](../operations/keys.md)） |
+| T-1 | ルート鍵と署名鍵の手順書（作成・保管・入れ替え・失効。platform ADR-CHANNELS T-1） | 開発者 | 済み（[鍵の手順書](../operations/keys.md)） |
 | T-2 | 独自ドメインを決める（SES の送信元にも使う） | 開発者 | 本番の配備の前 |
 | T-3 | SES のサンドボックスの解除を申請する（本番のアカウント） | 開発者 | 本番の配備の前 |
 
@@ -208,7 +208,7 @@ flowchart LR
 
 ## 関連ドキュメント・参照リンク
 
-- [platform ADR-CHANNEL-CURATION](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-CHANNEL-CURATION.md): 第三者のチャンネルは運営の審査と署名を経たものだけ取り込む
+- [platform ADR-CHANNELS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-CHANNELS.md): 第三者のチャンネルは運営の審査と署名を経たものだけ取り込む
 - [platform API-CHANNEL-LIST](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-LIST.md): 承認済みチャンネル・リスト
 - [platform API-CHANNEL-PACKAGE](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-PACKAGE.md): チャンネル・パッケージの形式
 - [platform チャンネル審査方針](https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/channel-review.md): 審査基準

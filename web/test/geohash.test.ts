@@ -3,7 +3,7 @@ import { bounds, cellsIn, encode, fromPixel, toPixel } from '../src/geohash';
 
 describe('geohash', () => {
   it('encodes as the usual geohash does', () => {
-    // Tokyo Station; the apps use the same cells (platform API-STUDIO).
+    // Tokyo Station; the apps use the same cells (platform API-LOCAL-MATERIALS).
     expect(encode(35.6812, 139.7671, 6)).toBe('xn76ur');
     expect(encode(35.6812, 139.7671, 7)).toBe('xn76urx');
     expect(encode(57.64911, 10.40744, 6)).toBe('u4pruy');

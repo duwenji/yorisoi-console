@@ -104,12 +104,20 @@ async function account(caller: Caller, name: string) {
   return (await call(caller, 'GET', '/api/publisher')).body.publisherId as string;
 }
 
+/** An active account with a key and the producer role (REQ-STUDIO D-14). */
+async function producer(caller: Caller, name: string) {
+  const publisherId = await account(caller, name);
+  const { body } = await call(caller, 'GET', '/api/publisher');
+  await call(caller, 'POST', '/api/publisher/roles/producer', { ifMatch: body.rev });
+  return publisherId;
+}
+
 const APPLICATION = { displayName: '谷中銀座商店会', description: '台東区の商店会。公式サイトの連絡先から運営にメールします', plans: '週末の催しを商店街の周りで、月に 2〜3 件', agreedVersion: 1 };
 const PLACEMENT = { text: '今日 15 時から、夕やけだんだんで豆まきをします', cells: ['xn77h2', 'xn77h3'], startsAt: '2026-10-31T00:00:00.000Z', endsAt: '2026-11-02T00:00:00.000Z', hours: { from: '10:00', to: '18:00' } };
 
 /** Alice applied and the operator approved her. */
 async function approved() {
-  const publisherId = await account(alice, '谷中銀座商店会');
+  const publisherId = await producer(alice, '谷中銀座商店会');
   await call(alice, 'POST', '/api/studio/application', { body: APPLICATION });
   const { body } = await call(operator, 'GET', `/api/admin/publishers/${publisherId}/studio`);
   await call(operator, 'POST', `/api/admin/publishers/${publisherId}/studio/approve`, { ifMatch: body.rev, body: { checks: CHECKS } });
@@ -119,8 +127,13 @@ async function approved() {
 const cellCopy = async (cell: string, id: string) => (await deps.db.send(new GetCommand({ TableName: studioTable, Key: { PK: `CELL#${cell}`, SK: `P#${id}` } }))).Item;
 
 describe('the provider’s approval', () => {
-  it('is applied for, queued, and approved only with the four checks (掲載の決まり 1.3・1.4)', async () => {
-    const publisherId = await account(alice, '谷中銀座商店会');
+  it('is applied for only by a producer (REQ-STUDIO D-14)', async () => {
+    await account(alice, '谷中銀座商店会');
+    expect((await call(alice, 'POST', '/api/studio/application', { body: APPLICATION })).body.code).toBe('role_required');
+  });
+
+  it('is applied for, queued, and approved only with the four checks (スタジオの決まり 1.3・1.4)', async () => {
+    const publisherId = await producer(alice, '谷中銀座商店会');
     expect((await call(alice, 'GET', '/api/studio')).body).toEqual({ publisherId, status: 'none', rev: 0 });
     expect((await call(alice, 'POST', '/api/studio/application', { body: { ...APPLICATION, agreedVersion: 0 } })).body.code).toBe('invalid_request');
     const applied = await call(alice, 'POST', '/api/studio/application', { body: APPLICATION });
@@ -140,7 +153,7 @@ describe('the provider’s approval', () => {
   });
 
   it('can be declined with a reason and applied for again', async () => {
-    const publisherId = await account(alice, 'x');
+    const publisherId = await producer(alice, 'x');
     await call(alice, 'POST', '/api/studio/application', { body: APPLICATION });
     expect((await call(operator, 'POST', `/api/admin/publishers/${publisherId}/studio/decline`, { ifMatch: 1, body: {} })).body.code).toBe('invalid_request');
     const declined = await call(operator, 'POST', `/api/admin/publishers/${publisherId}/studio/decline`, { ifMatch: 1, body: { reason: '1.3.1 本人確認ができませんでした' } });
@@ -357,7 +370,7 @@ describe('after things are up (K-17, K-18)', () => {
     expect((await call(operator, 'DELETE', '/api/admin/studio/areas/xn77h')).status).toBe(404);
   });
 
-  it('gives the provider day counts as API-STUDIO buckets', async () => {
+  it('gives the provider day counts as API-LOCAL-MATERIALS buckets', async () => {
     await approved();
     const id = (await call(alice, 'POST', '/api/studio/placements', { body: PLACEMENT })).body.placement.placementId as string;
     await put({ PK: `STATS#${id}`, SK: 'DAY#2026-10-31', heard: 2, opened: 1 });

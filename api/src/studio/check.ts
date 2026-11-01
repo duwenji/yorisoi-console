@@ -1,7 +1,7 @@
 /**
- * The check before a note is placed (platform REQ-STUDIO D-6, DES-013 K-10): contact details by
+ * The check before a note is placed (platform REQ-NOTES D-6, DES-013 K-10): contact details by
  * pattern first, which costs nothing, then the operator's AI against the note terms (platform
- * policies/studio-note-terms.md 2). The prompt goes with the terms' version (K-13).
+ * policies/notes-terms.md 2). The prompt goes with the terms' version (K-13).
  */
 
 /** The version of the note terms this prompt follows. */
@@ -60,13 +60,13 @@ export function readVerdict(reply: string): { ok: boolean; items: number[] } {
   }
 }
 
-// ---- placements (platform policies/studio-placement.md, REQ-STUDIO D-18, DES-013 K-11) ----
+// ---- placements (platform policies/studio-rules.md, REQ-STUDIO D-18, DES-013 K-11) ----
 
 /** The version of the placement rules this prompt follows. */
 export const PLACEMENT_RULES_VERSION = 1;
 
-export const PLACEMENT_CHECK_SYSTEM = `あなたは、散歩や自転車のアプリで、その場所にいる人に読み上げる「お知らせ（掲載）」を確かめる係です。
-掲載は、店・神社やお寺・商店街・観光協会・博物館・郷土史家・イベントの主催者などが、自分の名前で出すお知らせです。
+export const PLACEMENT_CHECK_SYSTEM = `あなたは、散歩や自転車のアプリで、その場所にいる人に読み上げる「お知らせ（スタジオ）」を確かめる係です。
+スタジオは、店・神社やお寺・商店街・観光協会・博物館・郷土史家・イベントの主催者などが、自分の名前で出すお知らせです。
 文字と、音声を文字に起こしたもの（あれば）を見て、次の項目のどれかに当たるかを判断します。
 
 2.2.1 安全を損なう誘い（私有地・線路・立入禁止の場所に入らせる、走行中に画面を見させる）
@@ -80,7 +80,7 @@ export const PLACEMENT_CHECK_SYSTEM = `あなたは、散歩や自転車のア�
 2.2.9 健康・医療の効き目（医薬品・健康食品・施術の効き目をうたう）
 2.2.10 成人向け・暴力的なもの
 2.2.11 違法なもの・権利を侵すもの
-2.2.12 なりすまし（掲載者の名前と、お知らせの中で名乗っている団体・人が明らかに違う）
+2.2.12 なりすまし（素材提供者の名前と、お知らせの中で名乗っている団体・人が明らかに違う）
 
 店や催しのお知らせ・宣伝そのものは当たりません。迷うときは当たらないとします。
 

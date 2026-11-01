@@ -1041,7 +1041,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** 掲載を出す承認を申し込む（REQ-STUDIO F-24、掲載の決まり 1.2） */
+        /** スタジオを出す承認を申し込む（REQ-STUDIO D-14・F-24、スタジオの決まり 1.1・1.2）。素材提供者の役割が要る（ないと role_required） */
         post: operations["applyForStudio"];
         delete?: never;
         options?: never;
@@ -1056,10 +1056,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** 自分の掲載の一覧（新しい順、50 件まで） */
+        /** 自分のスタジオの一覧（新しい順、50 件まで） */
         get: operations["listMyPlacements"];
         put?: never;
-        /** 掲載を作る（音声があれば、アップロードの先を返す。なければすぐ確認を始める。K-16） */
+        /** スタジオを作る（音声があれば、アップロードの先を返す。なければすぐ確認を始める。K-16） */
         post: operations["createPlacement"];
         delete?: never;
         options?: never;
@@ -1073,14 +1073,14 @@ export interface paths {
             header?: never;
             path: {
                 placementId: components["parameters"]["PlacementId"];
-                /** @description submit（音声を送り終えて確認を始める。uploading → checking）・stop（載っている掲載を止める。F-20）・appeal（確認の誤りを運営に申し出る。掲載の決まり 3。message が要る） */
+                /** @description submit（音声を送り終えて確認を始める。uploading → checking）・stop（載っているスタジオを止める。F-20）・appeal（確認の誤りを運営に申し出る。スタジオの決まり 3。message が要る） */
                 action: "submit" | "stop" | "appeal";
             };
             cookie?: never;
         };
         get?: never;
         put?: never;
-        /** 自分の掲載を確認に出す・止める・申し出る */
+        /** 自分のスタジオを確認に出す・止める・申し出る */
         post: operations["actOnPlacement"];
         delete?: never;
         options?: never;
@@ -1137,7 +1137,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** 提供者の承認を決める（掲載の決まり 1.4・4.3）。止める・取り消すと載っている掲載も届けない */
+        /** 提供者の承認を決める（スタジオの決まり 1.4・4.3）。止める・取り消すと載っているスタジオも届けない */
         post: operations["decideStudio"];
         delete?: never;
         options?: never;
@@ -1152,7 +1152,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** 掲載者の申し出（申し出た順） */
+        /** 素材提供者の申し出（申し出た順） */
         get: operations["listPlacementAppeals"];
         put?: never;
         post?: never;
@@ -1175,7 +1175,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** 申し出に答える（掲載の決まり 3）か、通報された掲載を戻す・消す（同 4.3） */
+        /** 申し出に答える（スタジオの決まり 3）か、通報されたスタジオを戻す・消す（同 4.3） */
         post: operations["decideAppeal"];
         delete?: never;
         options?: never;
@@ -1192,7 +1192,7 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** 掲載の日ごとの聞いた数・開いた数（概数。DES-013 K-18） */
+        /** スタジオの日ごとの聞いた数・開いた数（概数。DES-013 K-18） */
         get: operations["getPlacementStats"];
         put?: never;
         post?: never;
@@ -1209,7 +1209,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** 通報された掲載（最初の通報の順） */
+        /** 通報されたスタジオ（最初の通報の順） */
         get: operations["listReportedPlacements"];
         put?: never;
         post?: never;
@@ -1300,7 +1300,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** 一言・掲載を置けない区画（REQ-STUDIO F-15） */
+        /** 一言・スタジオを置けない区画（REQ-STUDIO・REQ-NOTES F-15） */
         get: operations["listClosedAreas"];
         put?: never;
         /** 区画を置けないようにする（アプリには 5 分以内に効く） */
@@ -1365,11 +1365,11 @@ export interface components {
         StudioAccount: {
             publisherId: components["schemas"]["Ulid"];
             status: components["schemas"]["StudioStatus"];
-            /** @description 掲載の読み上げに使う名前 */
+            /** @description スタジオの読み上げに使う名前 */
             displayName?: string;
             description?: string;
             plans?: string;
-            /** @description 同意した掲載の決まりの版 */
+            /** @description 同意したスタジオの決まりの版 */
             agreedVersion?: number;
             /** Format: date-time */
             requestedAt?: string;
@@ -1396,7 +1396,7 @@ export interface components {
             plans: string;
             agreedVersion: number;
         };
-        /** @description 掲載の決まり 1.3 の 4 項目。承認にはすべて true が要る */
+        /** @description スタジオの決まり 1.3 の 4 項目。承認にはすべて true が要る */
         StudioChecks: {
             identity: boolean;
             name: boolean;
@@ -1415,7 +1415,7 @@ export interface components {
             message?: string;
         };
         /**
-         * @description uploading（音声待ち）・checking（確認中）・returned（返した）・appealed（申し出中）・live（載っている）・stopped（掲載者が止めた）・suspended（通報や承認を止めたことで止まった）・removed（運営が消した）・rejected（申し出を受けて載せないと決めた）
+         * @description uploading（音声待ち）・checking（確認中）・returned（返した）・appealed（申し出中）・live（載っている）・stopped（素材提供者が止めた）・suspended（通報や承認を止めたことで止まった）・removed（運営が消した）・rejected（申し出を受けて載せないと決めた）
          * @enum {string}
          */
         PlacementState: "uploading" | "checking" | "returned" | "appealed" | "live" | "stopped" | "suspended" | "removed" | "rejected";
@@ -1457,7 +1457,7 @@ export interface components {
                 bytes?: number;
             };
             state: components["schemas"]["PlacementState"];
-            /** @description 自動の確認の結果。items は当たった掲載の決まりの項目（2.2.x）か、audio_missing・audio_format・audio_length・transcribe_failed・check_unavailable・unclear */
+            /** @description 自動の確認の結果。items は当たったスタジオの決まりの項目（2.2.x）か、audio_missing・audio_format・audio_length・transcribe_failed・check_unavailable・unclear */
             check?: {
                 items: string[];
                 /** @description 音声を文字に起こしたもの */
@@ -1495,7 +1495,7 @@ export interface components {
                 maxBytes: number;
             };
         };
-        /** @description 概数。3 未満は null、3 以上は 3・10・30・100・300・1,000 の区切りの下限（API-STUDIO「概数」） */
+        /** @description 概数。3 未満は null、3 以上は 3・10・30・100・300・1,000 の区切りの下限（API-LOCAL-MATERIALS「概数」） */
         Approx: {
             atLeast: number;
         } | null;
@@ -1921,7 +1921,7 @@ export interface components {
                 publishers: "*" | components["schemas"]["AccountId"][];
                 /** @description DES-011 N-7。使ってよいアプリの ID（ないときはすべてのアプリ） */
                 apps?: string[];
-                /** @description platform API-MATERIAL-PRODUCER I-13。AI の根拠に使ってよいとき真（偽は書かない） */
+                /** @description platform API-MATERIALS I-13。AI の根拠に使ってよいとき真（偽は書かない） */
                 grounding?: boolean;
             };
             package: components["schemas"]["ListedPackage"];
@@ -2113,7 +2113,7 @@ export interface components {
                 "application/json": components["schemas"]["StudioAccount"];
             };
         };
-        /** @description 掲載 */
+        /** @description スタジオ */
         Placement: {
             headers: {
                 ETag: components["headers"]["ETag"];
@@ -2123,7 +2123,7 @@ export interface components {
                 "application/json": components["schemas"]["Placement"];
             };
         };
-        /** @description 掲載の一覧 */
+        /** @description スタジオの一覧 */
         PlacementList: {
             headers: {
                 [name: string]: unknown;
@@ -3823,7 +3823,7 @@ export interface operations {
             };
             path: {
                 placementId: components["parameters"]["PlacementId"];
-                /** @description submit（音声を送り終えて確認を始める。uploading → checking）・stop（載っている掲載を止める。F-20）・appeal（確認の誤りを運営に申し出る。掲載の決まり 3。message が要る） */
+                /** @description submit（音声を送り終えて確認を始める。uploading → checking）・stop（載っているスタジオを止める。F-20）・appeal（確認の誤りを運営に申し出る。スタジオの決まり 3。message が要る） */
                 action: "submit" | "stop" | "appeal";
             };
             cookie?: never;
@@ -3974,7 +3974,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description 通報された掲載 */
+            /** @description 通報されたスタジオ */
             200: {
                 headers: {
                     [name: string]: unknown;

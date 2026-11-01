@@ -266,7 +266,7 @@ describe('reactions, likes and counts', () => {
     expect((await call('POST', '/v1/studio/reactions', { who: 'a', body: { heard: many } })).body.code).toBe('invalid_request');
   });
 
-  it('turns counts into the API-STUDIO buckets', () => {
+  it('turns counts into the API-LOCAL-MATERIALS buckets', () => {
     expect([0, 2, 3, 9, 10, 47, 100, 999, 5000].map((n) => approx(n)?.atLeast ?? null)).toEqual([null, null, 3, 3, 10, 30, 100, 300, 1000]);
   });
 });

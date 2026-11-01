@@ -27,7 +27,7 @@ export interface StudioStackProps extends StackProps {
 }
 
 /**
- * The studio (platform API-STUDIO, console DES-013): notes and placements, handed out per cell.
+ * The studio (platform API-LOCAL-MATERIALS, console DES-013): notes and placements, handed out per cell.
  * A stack of its own (K-1), deployed after the relay, whose tokens, model and budget it uses
  * (K-2, K-3), and before the console, which reads this stack's names from Parameter Store.
  */
@@ -114,7 +114,7 @@ export class StudioStack extends Stack {
     const paused = new ssm.StringParameter(this, 'Paused', {
       parameterName: param('paused'),
       stringValue: 'false',
-      description: 'true stops the studio: the apps get studio_paused (API-STUDIO)',
+      description: 'true stops the studio: the apps get studio_paused (API-LOCAL-MATERIALS)',
     });
 
     const relayTableName = ssm.StringParameter.valueForStringParameter(this, relayParam('table-name'));
@@ -243,7 +243,7 @@ export class StudioStack extends Stack {
 
     const api = new apigw.RestApi(this, 'Api', {
       restApiName: `yorisoi-studio-${config.name}`,
-      description: 'The studio (platform API-STUDIO)',
+      description: 'The studio (platform API-LOCAL-MATERIALS)',
       endpointTypes: [apigw.EndpointType.REGIONAL],
       deployOptions: { stageName: 'api', throttlingRateLimit: prod ? 100 : 10, throttlingBurstLimit: prod ? 200 : 20 },
       cloudWatchRole: false,
@@ -302,8 +302,8 @@ export class StudioStack extends Stack {
       }).addAlarmAction(new cwActions.SnsAction(alarms));
     alarm('UpstreamErrors', 'UpstreamError', 'Sum', 10, 'The note check failed 10 times in 5 minutes (DES-013 K-10)');
     alarm('BadSetting', 'InvalidSetting', 'Maximum', 1, 'A studio or relay parameter is not valid; the studio uses the deployed value (DES-013 K-19)');
-    alarm('NotesHidden', 'NotesHidden', 'Sum', 1, 'A note was hidden by reports and waits for the operator (REQ-STUDIO F-13)');
-    alarm('PlacementsSuspended', 'PlacementsSuspended', 'Sum', 1, 'A placement was stopped by reports and waits for the operator (studio-placement.md 4.1)');
+    alarm('NotesHidden', 'NotesHidden', 'Sum', 1, 'A note was hidden by reports and waits for the operator (REQ-NOTES F-13)');
+    alarm('PlacementsSuspended', 'PlacementsSuspended', 'Sum', 1, 'A placement was stopped by reports and waits for the operator (studio-rules.md 4.1)');
 
     // K-2: the console stack reads these when it is deployed.
     new ssm.StringParameter(this, 'TableNameParameter', { parameterName: param('table-name'), stringValue: table.tableName });

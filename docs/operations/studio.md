@@ -1,6 +1,6 @@
 # スタジオの手順
 
-スタジオ（platform [REQ-STUDIO](https://github.com/duwenji/yorisoi-platform/blob/main/docs/requirements/REQ-STUDIO.md)・[API-STUDIO](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-STUDIO.md)、設計は [DES-013](../design/DES-013-studio.md)）を配備し、利用規約の版を上げ、止め、確かめる手順。スタジオは別のスタック（`YorisoiStudio-<env>`）で、別の CDK アプリ（`infra/bin/studio.ts`）から配備する。提供者・運営の画面は管理システムの「スタジオ」タブにある（使い方は[運営ガイド](../guide/operator.md#13-スタジオ)と[掲載者ガイド](../guide/studio.md)）。
+スタジオ（platform [REQ-STUDIO](https://github.com/duwenji/yorisoi-platform/blob/main/docs/requirements/REQ-STUDIO.md)・[API-LOCAL-MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-LOCAL-MATERIALS.md)、設計は [DES-013](../design/DES-013-studio.md)）を配備し、利用規約の版を上げ、止め、確かめる手順。スタジオは別のスタック（`YorisoiStudio-<env>`）で、別の CDK アプリ（`infra/bin/studio.ts`）から配備する。提供者・運営の画面は管理システムの「スタジオ」タブにある（使い方は[運営ガイド](../guide/operator.md#13-スタジオ)と[スタジオのガイド](../guide/studio.md)）。
 
 ## 構成
 
@@ -8,13 +8,13 @@
 |---|---|
 | API Gateway（REST API、ステージ `api`） | `/v1/studio/terms`・`/v1/studio/cells`・`/v1/studio/notes`・`/v1/studio/notes/mine`・`/v1/studio/reactions`・`/v1/studio/reports`・`/v1/studio/blocks`。本番は AWS WAF で送信元ごとに回数を絞る |
 | スタジオの Lambda（`api/src/studio/handler.ts`） | 中継のトークンの確認、一言を置く（決まった形 → 運営の AI で確認）、区画の一覧、反応・通報・ブロック。本文・区画・置いた人の値はログに書かない |
-| 掲載の確認の Lambda（`api/src/studio/placement-handler.ts`） | 管理システムが「載せる」と呼ぶ。長さ・形式 → Amazon Transcribe（日本語、バッチ）→ 運営の AI。Transcribe の終わりは EventBridge のルール（`TranscribeDone`）で受ける |
-| DynamoDB | 一言・掲載・区画ごとの写し・日ごとの数・ブロック・締め出し・置けない区画・運営の列。項目は DES-013「データモデル」 |
+| スタジオの確認の Lambda（`api/src/studio/placement-handler.ts`） | 管理システムが「載せる」と呼ぶ。長さ・形式 → Amazon Transcribe（日本語、バッチ）→ 運営の AI。Transcribe の終わりは EventBridge のルール（`TranscribeDone`）で受ける |
+| DynamoDB | 一言・スタジオ・区画ごとの写し・日ごとの数・ブロック・締め出し・置けない区画・運営の列。項目は DES-013「データモデル」 |
 | S3（受け取り用） | `uploads/`（提供者が送った音声、1 日）・`held/`（確認を始めた音声、30 日）・`transcripts/`（30 日） |
 | S3（配信用）＋ CloudFront | `placements/{id}/audio.m4a`（確かめた音声、62 日）。アプリは認証なしで取る |
 | Parameter Store | `/yorisoi-studio/<env>/terms-version`・`terms-url`・`terms-updated-at`（一言の利用規約）・`paused`（止める）。管理システム向けに `table-name`・`intake-bucket`・`audio-bucket`・`check-function` |
 | 中継とのつながり | 中継の表（`/yorisoi-ai-relay/<env>/table-name`）のトークンを読み、中継のモデルと月の予算に従い、運営の AI の費用を中継の月の合計に足す。予算に達すると一言を置けない（`relay_paused`） |
-| CloudWatch の警報 → SNS（メール） | 一言の確認の失敗が 5 分で 10 回、設定の値が正しくない、通報で一言が隠れた、通報で掲載が止まった |
+| CloudWatch の警報 → SNS（メール） | 一言の確認の失敗が 5 分で 10 回、設定の値が正しくない、通報で一言が隠れた、通報でスタジオが止まった |
 
 設定は `infra/lib/studio-config.ts` にある。開発用は WAF がなく、スタックを消すとデータも消える。
 
@@ -51,7 +51,7 @@ npx cdk deploy -c env=dev -c rootPublicKey=YMe_dQimd3AaMZs5izjDlXjnAKdq7Vi9nfagF
 
 ## 一言の利用規約の版を上げる
 
-利用規約（platform [studio-note-terms.md](https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/studio-note-terms.md)）を変えたら、版を上げる。アプリは、同意した版より新しい版があると、次に一言を置くときに同意を求める。古い版のままでは置けない（`terms_not_accepted`）。
+利用規約（platform [notes-terms.md](https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/notes-terms.md)）を変えたら、版を上げる。アプリは、同意した版より新しい版があると、次に一言を置くときに同意を求める。古い版のままでは置けない（`terms_not_accepted`）。
 
 ```sh
 # Git Bash ではパスの書き換えを止める
@@ -60,12 +60,12 @@ MSYS_NO_PATHCONV=1 aws ssm put-parameter --name /yorisoi-studio/dev/terms-update
 ```
 
 - 版は 1 以上の整数。正しくないときは `studio-config.ts` の値で動き、「設定の値が正しくない」の警報が届く
-- 一言の確認の AI への指示（`api/src/studio/check.ts`）の版も、利用規約の項目を変えたときは合わせて上げる（DES-013 K-13）。掲載の決まりを変えたときは、`PLACEMENT_RULES_VERSION` と画面の版を上げて配備する
+- 一言の確認の AI への指示（`api/src/studio/check.ts`）の版も、利用規約の項目を変えたときは合わせて上げる（DES-013 K-13）。スタジオの決まりを変えたときは、`PLACEMENT_RULES_VERSION` と画面の版を上げて配備する
 - CloudFormation は、`studio-config.ts` の値を変えて配備したときだけパラメータを書き換える。手で変えた値は、配備し直しても残る
 
 ## すぐに止める
 
-スタジオ全体を止めるときは `paused` を `true` にする。アプリには `studio_paused` が返り、一言も掲載も届かず、置けなくなる。アプリの散歩・走行はそのまま続く。
+スタジオ全体を止めるときは `paused` を `true` にする。アプリには `studio_paused` が返り、一言もスタジオも届かず、置けなくなる。アプリの散歩・走行はそのまま続く。
 
 ```sh
 MSYS_NO_PATHCONV=1 aws ssm put-parameter --name /yorisoi-studio/dev/paused --value true --overwrite
@@ -73,7 +73,7 @@ MSYS_NO_PATHCONV=1 aws ssm put-parameter --name /yorisoi-studio/dev/paused --val
 MSYS_NO_PATHCONV=1 aws ssm put-parameter --name /yorisoi-studio/dev/paused --value false --overwrite
 ```
 
-1 つの一言・掲載だけを止めるときは、管理システムの運営の画面で消す（[運営ガイド](../guide/operator.md#13-スタジオ)）。
+1 つの一言・スタジオだけを止めるときは、管理システムの運営の画面で消す（[運営ガイド](../guide/operator.md#13-スタジオ)）。
 
 ## 警報が届いたとき
 
@@ -82,14 +82,14 @@ MSYS_NO_PATHCONV=1 aws ssm put-parameter --name /yorisoi-studio/dev/paused --val
 | 一言の確認の失敗（`UpstreamError`） | 一言を置けない（`upstream_error`）。中継の警報も届いていれば Bedrock の側の問題。中継の手順の「確かめる」でモデルとクォータを見る |
 | 設定の値が正しくない（`InvalidSetting`） | 上の利用規約の版、または中継のモデル・予算の値を直す |
 | 通報で一言が隠れた（`NotesHidden`） | 運営の画面の「通報された一言」で、戻すか消す |
-| 通報で掲載が止まった（`PlacementsSuspended`） | 運営の画面の「通報された掲載」で、戻すか消す。重いものは 24 時間、軽いものは 7 日を目安に決める（掲載の決まり 4.1） |
+| 通報でスタジオが止まった（`PlacementsSuspended`） | 運営の画面の「通報されたスタジオ」で、戻すか消す。重いものは 24 時間、軽いものは 7 日を目安に決める（スタジオの決まり 4.1） |
 
 ## 費用
 
 | 項目 | 目安 |
 |---|---|
-| 運営の AI（一言と掲載の確認） | 1 回あたり DeepSeek V3.2 で約 0.0005 USD。中継の月の予算に含まれ、中継と一緒に止まる |
-| Amazon Transcribe | 掲載の音声の長さ（1 本 30 秒まで）に応じてかかる。単価は[料金のページ](https://aws.amazon.com/jp/transcribe/pricing/)を東京リージョンにして確かめる。月に文字に起こした秒数は CloudWatch のメトリクス `YorisoiStudio` / `TranscribeSeconds` で見る |
+| 運営の AI（スタジオと一言の確認） | 1 回あたり DeepSeek V3.2 で約 0.0005 USD。中継の月の予算に含まれ、中継と一緒に止まる |
+| Amazon Transcribe | スタジオの音声の長さ（1 本 30 秒まで）に応じてかかる。単価は[料金のページ](https://aws.amazon.com/jp/transcribe/pricing/)を東京リージョンにして確かめる。月に文字に起こした秒数は CloudWatch のメトリクス `YorisoiStudio` / `TranscribeSeconds` で見る |
 | 警報 4 つ | 約 0.4 USD/月 |
 | 本番の WAF | 約 7 USD/月 |
 | API Gateway・Lambda・DynamoDB・S3・CloudFront | 使った分だけ。開発用はほぼ 0 |

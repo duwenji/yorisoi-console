@@ -4,7 +4,7 @@
 
 テキスト・画像・音声・映像の素材を「素材集」にまとめて審査に出し、SanpoGuide のチャンネルから使ってもらうための手順です。観光協会の音声ガイド、写真家の写真集、語り手の朗読などを想定しています。チャンネルを作らなくても、素材だけを届けられます。
 
-> チャンネルとは別に、スタジオに店や地域のお知らせ（掲載）を出すこともできます。同じアカウントで、運営に掲載を出す承認を申し込みます（[掲載者ガイド](studio.md)）。
+> チャンネルとは別に、スタジオに店や地域のお知らせ（スタジオ）を出すこともできます。同じアカウントで、運営にスタジオを出す承認を申し込みます（[スタジオのガイド](studio.md)）。
 
 > 素材提供者の画面: https://d32w19p7au8cu2.cloudfront.net（開発用）の「素材集」。アカウントはチャンネル提供者と共通で、鍵も同じものを使います。素材集の素材がアプリで出るのは、素材に対応したアプリの版が出てからです（それまで、素材集を使うチャンネルはアプリの一覧に出ません）。
 
@@ -39,7 +39,7 @@ flowchart LR
 
 ## 3. 素材集を作る
 
-形式は [platform API-MATERIAL-PRODUCER — 素材集の形式](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-MATERIAL-PRODUCER.md)が正本です。ここでは要点だけを書きます。
+形式は [platform API-MATERIALS — 素材集の形式](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-MATERIALS.md)が正本です。ここでは要点だけを書きます。
 
 ### 3.1 ファイルの構成
 
@@ -82,8 +82,8 @@ resources/
 | `version` | 更新のたびに、最後に承認された版より大きくする |
 | `producer` | 画面の「鍵」に出るあなたのアカウントID |
 | `grants.publishers` | 使ってよいチャンネル提供者。`"*"`（誰でも）か、チャンネル提供者のアカウントIDの配列 |
-| `grants.apps` | 使ってよいアプリ（任意）。アプリの ID（今は `sanpoguide`）を 1〜20 個。書かなければ、エコシステムのすべてのアプリで使えます（[platform API-MATERIAL-PRODUCER — 1.5](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-MATERIAL-PRODUCER.md)） |
-| `grants.grounding` | AI の根拠に使ってよいか（任意。書かなければ使わない）。`true` にすると、アプリの AI が、題材の同じスポットを解説するときに、本文・代替テキスト・書き起こしを資料として読み、言い換えて話します。解説には「〇〇の資料をもとに作成」と出ます。資料は散策者が使う AI サービスに送られます。`true` のときは、本文・代替テキストに `{{` や URL を書けません（[platform API-MATERIAL-PRODUCER — AI の根拠](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-MATERIAL-PRODUCER.md)） |
+| `grants.apps` | 使ってよいアプリ（任意）。アプリの ID（今は `sanpoguide`）を 1〜20 個。書かなければ、エコシステムのすべてのアプリで使えます（[platform API-MATERIALS — 1.5](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-MATERIALS.md)） |
+| `grants.grounding` | AI の根拠に使ってよいか（任意。書かなければ使わない）。`true` にすると、アプリの AI が、題材の同じスポットを解説するときに、本文・代替テキスト・書き起こしを資料として読み、言い換えて話します。解説には「〇〇の資料をもとに作成」と出ます。資料は散策者が使う AI サービスに送られます。`true` のときは、本文・代替テキストに `{{` や URL を書けません（[platform API-MATERIALS — AI の根拠](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-MATERIALS.md)） |
 | `resources[].tags` | 何の話かを表すタグ（`history`・`faith`・`architecture`・`nature`・`landscape`・`season`・`festival`・`food`・`craft`・`art`・`folklore`）。チャンネルが「歴史の音声があれば流す」のように基準で選ぶときに使う |
 | `resources[].about` | 何についての素材か。スポット（OpenStreetMap の ID と名前）か地点（半径つき）。どちらも、おおよその緯度・経度を書く |
 | `credit` | 画像・音声・映像では必須。作者とライセンス（SPDX の識別子、`PD`、`permission`） |

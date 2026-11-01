@@ -11,7 +11,7 @@ const json = (statusCode: number, body: unknown): APIGatewayProxyResult => ({
 });
 const empty = (statusCode: number): APIGatewayProxyResult => ({ statusCode, headers: HEADERS, body: '' });
 
-/** RFC 9457 with the API-STUDIO `code`, and `until` or `resetsAt` when there is one. */
+/** RFC 9457 with the API-LOCAL-MATERIALS `code`, and `until` or `resetsAt` when there is one. */
 function problem(e: StudioError): APIGatewayProxyResult {
   return {
     statusCode: e.status,
@@ -63,7 +63,7 @@ export async function route(event: APIGatewayProxyEvent, ports: StudioPorts): Pr
     }
   } catch (e) {
     if (e instanceof StudioError) return problem(e);
-    // AWS's services failing: the walk and the narration go on without the studio (API-STUDIO エラー表).
+    // AWS's services failing: the walk and the narration go on without the studio (API-LOCAL-MATERIALS エラー表).
     console.error(JSON.stringify({ event: 'error', error: (e as Error)?.name, message: (e as Error)?.message }));
     return problem(new StudioError('upstream_error', 'A service the studio depends on failed'));
   }
