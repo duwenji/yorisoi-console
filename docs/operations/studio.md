@@ -1,6 +1,6 @@
 # スタジオの手順
 
-スタジオ（platform [REQ-STUDIO](https://github.com/duwenji/yorisoi-platform/blob/main/docs/requirements/REQ-STUDIO.md)・[API-LOCAL-MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-LOCAL-MATERIALS.md)、設計は [DES-013](../design/DES-013-studio.md)）を配備し、利用規約の版を上げ、止め、確かめる手順。スタジオは別のスタック（`YorisoiStudio-<env>`）で、別の CDK アプリ（`infra/bin/studio.ts`）から配備する。提供者・運営の画面は管理システムの「スタジオ」タブにある（使い方は[運営ガイド](../guide/operator.md#13-スタジオ)と[スタジオのガイド](../guide/studio.md)）。
+スタジオ（platform [REQ-STUDIO](https://github.com/duwenji/yorisoi-platform/blob/main/docs/requirements/REQ-STUDIO.md)・[API-LOCAL-MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-LOCAL-MATERIALS.md)、設計は [DES-013](../design/DES-013-studio.md)）を配備し、利用規約の版を上げ、止め、確かめる手順。スタジオは別のスタック（`YorisoiStudio-<env>`）で、別の CDK アプリ（`infra/bin/studio.ts`）から配備する。提供者・運営の画面は管理システムの「スタジオ」タブにある（使い方は[運営ガイド](../guide/operator.md#13-その場の素材スタジオ一言)と[スタジオのガイド](../guide/studio.md)）。
 
 ## 構成
 
@@ -73,7 +73,7 @@ MSYS_NO_PATHCONV=1 aws ssm put-parameter --name /yorisoi-studio/dev/paused --val
 MSYS_NO_PATHCONV=1 aws ssm put-parameter --name /yorisoi-studio/dev/paused --value false --overwrite
 ```
 
-1 つの一言・スタジオだけを止めるときは、管理システムの運営の画面で消す（[運営ガイド](../guide/operator.md#13-スタジオ)）。
+1 つの一言・スタジオだけを止めるときは、管理システムの運営の画面で消す（[運営ガイド](../guide/operator.md#13-その場の素材スタジオ一言)）。
 
 ## 警報が届いたとき
 
