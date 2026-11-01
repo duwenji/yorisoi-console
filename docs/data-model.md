@@ -16,7 +16,7 @@
 
 ## 目的・背景
 
-[ADR-001](adr/ADR-001-aws-architecture.md) A-6 で、データは DynamoDB の 1 テーブルに置き、パッケージ・アイコン・リストの本体は S3 に置くと決めた。本書は、そのテーブルの項目の種類、キー、インデックス、状態の移り方、上限（A-18）を決める。素材提供者の役割と素材集（申請・審査・公開・取り下げ）、チャンネルが素材集を使う記録（依存）は、[platform ADR-MATERIAL-PRODUCERS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-MATERIAL-PRODUCERS.md)（素材の素材提供者）による。
+[ADR-001](adr/ADR-001-aws-architecture.md) A-6 で、データは DynamoDB の 1 テーブルに置き、パッケージ・アイコン・リストの本体は S3 に置くと決めた。本書は、そのテーブルの項目の種類、キー、インデックス、状態の移り方、上限（A-18）を決める。素材提供者の役割と素材集（申請・審査・公開・取り下げ）、チャンネルが素材集を使う記録（依存）は、[platform ADR-MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-MATERIALS.md)（素材の素材提供者）による。
 
 DynamoDB では、取り出し方（アクセスパターン）からキーを決める。本書は、先にアクセスパターンを挙げ、それを満たすキーを決める。
 
@@ -41,9 +41,9 @@ DynamoDB では、取り出し方（アクセスパターン）からキーを�
 | platform API-CHANNEL-LIST | `channels[]` の項目、`revoked[]`、`seq`・`expiresAt`、P-8（要約）、P-9（`publisherChange`）、鍵セット | 公開の Lambda が本書のデータから作る |
 | platform API-CHANNEL-PACKAGE | `channel.json` の `id`・`version`・`publisher`、エラーコード | 申請に保存する |
 | platform チャンネル審査方針 | 判定（承認・差し戻し・却下）、取り下げ | 審査の記録・取り下げにする |
-| platform ADR-MATERIAL-PRODUCERS | D-7（素材集の審査と公開）、D-8（参照中の素材の ID を消す更新を拒む）、D-9（利用許諾）、D-12（取り下げ）、D-14（同じアカウント）、D-17（素材集の ID と鍵の移し替え）、D-18（依存の把握と知らせ）、D-19（退会）、D-20（身元の確認）、D-22（外部の素材の確認） | 1.3 でデータにする |
+| platform ADR-MATERIALS | D-7（素材集の審査と公開）、D-8（参照中の素材の ID を消す更新を拒む）、D-9（利用許諾）、D-12（取り下げ）、D-14（同じアカウント）、D-17（素材集の ID と鍵の移し替え）、D-18（依存の把握と知らせ）、D-19（退会）、D-20（身元の確認）、D-22（外部の素材の確認） | 1.3 でデータにする |
 | platform API-CHANNEL-LIST | P-10〜P-15（`collections[]`・`revokedCollections[]`・`producerChange`・`media`・`resourcesSize`・`tags`・`regions`・`grants`） | 公開の Lambda が本書のデータから作る |
-| platform API-MATERIAL-PRODUCER | 素材集の形式、`CollectionReferences`（手順 3・4）、`Regions` | 機械審査が `core-format` で行う |
+| platform API-MATERIALS | 素材集の形式、`CollectionReferences`（手順 3・4）、`Regions` | 機械審査が `core-format` で行う |
 
 ## 方針・決定事項
 
@@ -76,10 +76,10 @@ DynamoDB では、取り出し方（アクセスパターン）からキーを�
 
 | No. | 論点 | 決定 |
 |---|---|---|
-| M-16 | アカウントの形 | チャンネル提供者の項目（`PUB#`）を「アカウント」として扱い、`roles`（`publisher`・`producer`）を持たせる。鍵・停止・退会・鍵の移し替えは役割に共通（platform ADR-MATERIAL-PRODUCERS D-14）。文書と画面では、役割を言うときに「チャンネル提供者」「素材提供者」、両方を言うときに「アカウント」と呼ぶ |
+| M-16 | アカウントの形 | チャンネル提供者の項目（`PUB#`）を「アカウント」として扱い、`roles`（`publisher`・`producer`）を持たせる。鍵・停止・退会・鍵の移し替えは役割に共通（platform ADR-MATERIALS D-14）。文書と画面では、役割を言うときに「チャンネル提供者」「素材提供者」、両方を言うときに「アカウント」と呼ぶ |
 | M-17 | 素材提供者の役割を有効にする方法 | アカウントの持ち主が自分で有効にできる（D-7 と同じく開かれている）。身元は、最初の素材集を承認するときに運営が確かめて `producerVerification` に記録する。記録がないアカウントの素材集は承認できない。表示名を変えると記録を消し、次の承認で確かめ直す（D-20） |
 | M-18 | 素材集のデータ | チャンネル・申請と同じ形の項目を、`COL#{collectionId}` の下に別に作る（素材集・申請・審査の記録・取り下げ）。素材集の ID はチャンネルの ID と別の名前空間で、最初に登録したアカウントが持ち、再利用しない（D-17）。審査待ちの列は 1 本（`QUEUE#REVIEW`）で、項目の `kind`（`channel` / `collection`）で見分ける |
-| M-19 | 上限 | 素材集は 1 アカウント 5 つ（取り下げたものも数える）。審査待ちの申請は 1 素材集につき 1 つ。申請の回数（1 日 20 回）はチャンネルと素材集で合わせて数える。素材集の試用チケットは作らない（platform API-MATERIAL-PRODUCER の未決事項） |
+| M-19 | 上限 | 素材集は 1 アカウント 5 つ（取り下げたものも数える）。審査待ちの申請は 1 素材集につき 1 つ。申請の回数（1 日 20 回）はチャンネルと素材集で合わせて数える。素材集の試用チケットは作らない（platform API-MATERIALS の未決事項） |
 | M-20 | 外部の素材の確認（申請時） | 機械審査で外部の素材を流し読みし、大きさと SHA-256 を確かめる。中身は保存しない。審査する人は元の URL で見る・聴く |
 | M-21 | 外部の素材の確認（毎日、D-22） | 毎日の公開の処理で、公開中の素材集とチャンネルの外部の素材の URL に HEAD を送り、取得できるかと大きさだけを確かめる。結果は項目の `externalCheck` に残し、新しく見つかった不具合は持ち主にメールで知らせる。ハッシュを確かめ直すのは申請時だけ |
 | M-22 | 依存の記録（D-8・D-18） | チャンネルの承認時に、使う素材集ごとに「利用の記録」（`COL#{collectionId}` / `USEDBY#{channelId}`）を書く。中身は参照している素材の ID とその種類。チャンネルの新しい版の承認で書き直し、取り下げ・退会で消す。素材集の申請では、機械審査と承認の 2 回、利用の記録にある素材の ID が残り、種類が変わっていないことを確かめる（D-8）。基準（`selectors`）で選ぶ使い方は記録しない（ID を指さないため） |
@@ -95,7 +95,7 @@ platform ADR-ECOSYSTEM-PLATFORM（付き添いアプリのエコシステム）�
 |---|---|---|
 | M-26 | 絞り込みの情報（DES-011 N-3・N-11） | 機械審査が、パッケージの `activities`・`genres`・`requires.features` を申請の `listing` に書かれたとおりに記録し、承認が `latestApproved` に写す |
 | M-27 | アプリごとの版（DES-011 N-4〜N-6） | 段と版の対応表を、アプリの ID ごとの設定 `appStageVersions`（`{ sanpoguide: { 0: 1, 1: 1, 2: 9999, 3: 9999 }, cycleguide: { 0: 1, 1: 9999, 2: 9999, 3: 9999 } }`）にする。アプリの名前・過ごし方・機能は `packages/protocol` の `KNOWN_APPS`。承認は `latestApproved.minAppVersions`（アプリの ID → 版）を計算する: チャンネルは過ごし方と必要な機能が合うアプリだけ、素材集は `grants.apps` が含むアプリ（ないときはすべて） |
-| M-28 | 素材集の利用アプリと AI の根拠（DES-011 N-7、platform API-MATERIAL-PRODUCER I-13） | 機械審査が `grants.apps` と `grants.grounding`（真のときだけ）を読み、承認が `latestApproved.grants.apps` に写す。チャンネルが素材集を参照するときの確かめでは、アプリを見ない |
+| M-28 | 素材集の利用アプリと AI の根拠（DES-011 N-7、platform API-MATERIALS I-13） | 機械審査が `grants.apps` と `grants.grounding`（真のときだけ）を読み、承認が `latestApproved.grants.apps` に写す。チャンネルが素材集を参照するときの確かめでは、アプリを見ない |
 
 ## 概念モデル（ERD）
 
@@ -197,7 +197,7 @@ stateDiagram-v2
 
 **チャンネル（CHANNEL）**: `active`（承認済みの版がなくてもよい）→ `revoked`（取り下げ）→ 新しい版の承認で `active` に戻る。取り下げ中はリストに載らない
 
-**素材集（COLLECTION）**: チャンネルと同じ（`active` ⇄ `revoked`）。取り下げると利用の記録は残し（取り下げを知らせる先のため）、使っているチャンネルはアプリ側で次の候補に進む（platform ADR-MATERIAL-PRODUCERS D-12）
+**素材集（COLLECTION）**: チャンネルと同じ（`active` ⇄ `revoked`）。取り下げると利用の記録は残し（取り下げを知らせる先のため）、使っているチャンネルはアプリ側で次の候補に進む（platform ADR-MATERIALS D-12）
 
 **チャンネル提供者（PUBLISHER）**: `pending_key`（登録直後。鍵の紐づけ待ち）→ `active` → `suspended`（運営が停止）→ `active`（運営が戻す）。どの状態からも、チャンネル提供者の退会で `deleted`（戻らない。M-15）。`active` 以外のあいだは申請できない
 
@@ -325,7 +325,7 @@ stateDiagram-v2
 | 属性 | 型 | 必須 | 内容 |
 |---|---|---|---|
 | `kind` | S | ○ | `collection` |
-| `collectionId` | S | ○ | 英小文字・数字・`-`、3〜40 文字（platform API-MATERIAL-PRODUCER）。チャンネルの ID と別の名前空間 |
+| `collectionId` | S | ○ | 英小文字・数字・`-`、3〜40 文字（platform API-MATERIALS）。チャンネルの ID と別の名前空間 |
 | `publisherId` | S | ○ | 持ち主のアカウント（素材提供者の役割を持つこと） |
 | `status` | S | ○ | `active` / `revoked` |
 | `pendingSubmissionId` | S | — | 審査待ちの申請（M-19 の 1 つ） |
@@ -544,7 +544,7 @@ DynamoDB なので DDL はなく、テーブルとインデックスは CDK（`i
 | No. | 内容 | 決める時期 |
 |---|---|---|
 | 1 | 却下（`rejected`）されたパッケージを、根拠として 90 日より長く残すか（M-4 では 90 日） | 運用の開始後 |
-| 2 | platform ADR-MATERIAL-PRODUCERS の未決事項 No.4（「確認済み」の印）を採るなら、`producerVerification` から作る | platform ADR-MATERIAL-PRODUCERS の判断 |
+| 2 | platform ADR-MATERIALS の未決事項 No.4（「確認済み」の印）を採るなら、`producerVerification` から作る | platform ADR-MATERIALS の判断 |
 
 ## 関連ドキュメント・参照リンク
 
@@ -552,4 +552,4 @@ DynamoDB なので DDL はなく、テーブルとインデックスは CDK（`i
 - [platform API-CHANNEL-LIST](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-LIST.md): 承認済みチャンネル・リスト
 - [platform API-CHANNEL-PACKAGE](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-PACKAGE.md): パッケージの形式
 - [platform チャンネル審査方針](https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/channel-review.md): 審査基準
-- [platform ADR-MATERIAL-PRODUCERS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-MATERIAL-PRODUCERS.md)・[platform API-MATERIAL-PRODUCER](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-MATERIAL-PRODUCER.md): 素材の素材提供者と素材集
+- [platform ADR-MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-MATERIALS.md)・[platform API-MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-MATERIALS.md): 素材の素材提供者と素材集

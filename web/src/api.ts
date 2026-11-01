@@ -14,6 +14,7 @@ const MESSAGES: Partial<Record<Problem['code'], string>> = {
   forbidden: 'この操作をする権限がありません。',
   not_found: '見つかりませんでした。',
   invalid_state: '今の状態ではこの操作はできません。',
+  role_required: '素材提供者として始めてから操作してください。',
   keyset_invalid: '鍵セットが正しくありません。',
   invalid_signature: '署名が正しくありません。ルート鍵で署名した鍵セットか確かめてください。',
   throttled: '操作が多すぎます。少し待ってからもう一度お試しください。',

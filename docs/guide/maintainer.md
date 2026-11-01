@@ -239,4 +239,4 @@ aws cognito-idp admin-add-user-to-group --user-pool-id $P --username <メール>
 | [配備の手順](../operations/deploy.md)・[費用](../operations/cost.md) | 環境ごとの値、手順、費用 |
 | [運営の AI の手順](../operations/ai-relay.md)・[スポットのタイルの手順](../operations/spot-tiles.md)・[スタジオの手順](../operations/studio.md) | 中継・タイルの配信・スタジオの配備・上限・作り直し・止め方 |
 | [鍵の手順書](../operations/keys.md) | 署名鍵の入れ替えの予定（4 月・10 月）と、失効・ルート鍵の事故の手順 |
-| platform API-CHANNEL-LIST・platform API-CHANNEL-PACKAGE・platform API-MATERIAL-PRODUCER・審査基準 | アプリとの約束（リスト・パッケージ・素材集・審査） |
+| platform API-CHANNEL-LIST・platform API-CHANNEL-PACKAGE・platform API-MATERIALS・審査基準 | アプリとの約束（リスト・パッケージ・素材集・審査） |

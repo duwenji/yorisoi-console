@@ -13,7 +13,7 @@ import {
 import { hasContact, NOTE_CHECK_SYSTEM, noteCheckUser, readVerdict } from './check.js';
 
 /**
- * The studio's API for the apps (platform API-STUDIO, DES-013): notes that people place for a
+ * The studio's API for the apps (platform API-LOCAL-MATERIALS, DES-013): notes that people place for a
  * while, placements that approved providers put up, both handed out per cell to whoever comes
  * near. The token, the operator's AI and its budget are the relay's (K-3); the studio keeps only
  * the relay's install hash, never an install id, a token or a position finer than a cell (K-6).
@@ -106,7 +106,7 @@ export interface StudioPorts {
   metric: (name: string, value: number) => void;
 }
 
-/** API-STUDIO's limits. */
+/** API-LOCAL-MATERIALS's limits. */
 export const NOTE_MAX_CHARS = 60;
 export const SPOT_MAX_CHARS = 40;
 export const NOTES_PER_DAY = 10;
@@ -119,14 +119,14 @@ export const REPORTS_TO_HIDE = 3;
 export const REFETCH_SECONDS = 240;
 const REFETCH_AFTER = 300;
 const TTLS = { '1h': 3600, '24h': 24 * 3600, '7d': 7 * 24 * 3600 } as const;
-/** How long a note's author is kept after it expires, so it can still be blocked (ADR-STUDIO S-5). */
+/** How long a note's author is kept after it expires, so it can still be blocked (ADR-MATERIALS D-43). */
 const AUTHOR_KEEP_SECONDS = 7 * 24 * 3600;
 const BLOCK_SECONDS = 365 * 24 * 3600;
 const REPORT_KEEP_SECONDS = 30 * 24 * 3600;
 const STATS_KEEP_SECONDS = 120 * 24 * 3600;
 const AREA_CACHE_MS = 5 * 60 * 1000;
 const REASONS = ['danger', 'harassment', 'ad', 'rights', 'inappropriate', 'other'] as const;
-/** Reasons that stop a placement at the first report (platform policies/studio-placement.md 4.1). */
+/** Reasons that stop a placement at the first report (platform policies/studio-rules.md 4.1). */
 const STOPPING_REASONS = new Set(['danger', 'rights']);
 const BUCKETS = [1000, 300, 100, 30, 10, 3];
 
@@ -145,7 +145,7 @@ const GEOHASH = /^[0123456789bcdefghjkmnpqrstuvwxyz]+$/;
 const isCell = (value: unknown, length: number): value is string => typeof value === 'string' && value.length === length && GEOHASH.test(value);
 const chars = (text: string) => [...text].length;
 
-/** API-STUDIO「概数」: hidden below 3, otherwise the lower end of its bucket. */
+/** API-LOCAL-MATERIALS「概数」: hidden below 3, otherwise the lower end of its bucket. */
 export function approx(n: number): { atLeast: number } | null {
   const bucket = BUCKETS.find((b) => n >= b);
   return bucket ? { atLeast: bucket } : null;
@@ -551,7 +551,7 @@ export async function reactions(ports: StudioPorts, authorization: string | unde
       if (isConditionFailure(e)) continue;
       throw e;
     }
-    // The cell's copy carries the likes too, to order the list (API-STUDIO).
+    // The cell's copy carries the likes too, to order the list (API-LOCAL-MATERIALS).
     await ports.db.send(
       new TransactWriteCommand({
         TransactItems: [
@@ -650,7 +650,7 @@ export async function report(ports: StudioPorts, authorization: string | undefin
   }
 
   // Placements: every report reaches the operator; three, or one about safety or rights, stop it
-  // (platform policies/studio-placement.md 4.1).
+  // (platform policies/studio-rules.md 4.1).
   const stop = item.state === 'live' && (reports >= REPORTS_TO_HIDE || STOPPING_REASONS.has(reason));
   if (!stop) {
     await ports.db.send(new TransactWriteCommand({ TransactItems: [queued('REPORTED_PLACEMENT')] }));

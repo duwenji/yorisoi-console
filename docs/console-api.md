@@ -18,7 +18,7 @@
 
 ## 目的・背景
 
-[ADR-001](adr/ADR-001-aws-architecture.md) で管理システムの構成を、[DM-001](data-model.md) でデータを決めた。本書は、チャンネル提供者・素材提供者と運営が SPA から使う API を決める。素材提供者の役割と素材集の操作は、[platform ADR-MATERIAL-PRODUCERS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-MATERIAL-PRODUCERS.md)（素材の素材提供者）による。
+[ADR-001](adr/ADR-001-aws-architecture.md) で管理システムの構成を、[DM-001](data-model.md) でデータを決めた。本書は、チャンネル提供者・素材提供者と運営が SPA から使う API を決める。素材提供者の役割と素材集の操作は、[platform ADR-MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-MATERIALS.md)（素材の素材提供者）による。
 
 この API の利用者は、同じリポジトリの SPA（`web/`）だけ。アプリ（SanpoGuide）はこの API を使わない。アプリが使うのは、公開用の静的ファイル（platform API-CHANNEL-LIST）だけである。
 
@@ -44,7 +44,7 @@
 | platform API-CHANNEL-LIST | `channels[]` の項目（`description`・`tags`・`regions`・`icon`）、試用チケット、鍵セット | 申請の入力・試用チケット・鍵セットの登録 |
 | platform API-CHANNEL-PACKAGE | エラーコード、チャンネル提供者の署名 | 機械審査の結果をそのまま返す |
 | DM-001 | M-16〜M-25、AP-23〜AP-29 | 本書で API にする |
-| platform ADR-MATERIAL-PRODUCERS・platform API-MATERIAL-PRODUCER | D-8・D-9・D-14・D-17〜D-22、素材集の形式、`CollectionReferences` | 本書で API にする。エラーコードは platform API-CHANNEL-PACKAGE・platform API-MATERIAL-PRODUCER のもの |
+| platform ADR-MATERIALS・platform API-MATERIALS | D-8・D-9・D-14・D-17〜D-22、素材集の形式、`CollectionReferences` | 本書で API にする。エラーコードは platform API-CHANNEL-PACKAGE・platform API-MATERIALS のもの |
 
 ## 方針・決定事項
 
@@ -76,7 +76,7 @@
 
 | No. | 論点 | 決定 |
 |---|---|---|
-| C-15 | 役割とパス | アカウントは `/api/publisher` を共通に使う（M-16）。素材提供者の役割は `POST /api/publisher/roles/producer` で有効にする。素材集の操作には `producer` の役割が要る（ないと `role_required`）。Cognito のグループは今の `publisher` のまま（役割はアカウントの項目で見る） |
+| C-15 | 役割とパス | アカウントは `/api/publisher` を共通に使う（M-16）。素材提供者の役割は `POST /api/publisher/roles/producer` で有効にする。素材集の操作とスタジオを出す承認の申し込みには `producer` の役割が要る（ないと `role_required`。REQ-STUDIO D-14）。Cognito のグループは今の `publisher` のまま（役割はアカウントの項目で見る） |
 | C-16 | 素材集の操作 | `/api/collections/…` に、チャンネルと同じ形の操作を置く（登録・一覧・申請・取り消し）。試用チケットとアイコンはない（M-19）。運営の操作は `/api/admin/collections/…` に、チャンネルと同じ判定・取り下げを置く。審査待ちの一覧（`/api/admin/review-queue`）は共通で、項目の `kind` で見分ける |
 | C-17 | 身元の確認（D-20・M-17） | アカウントに身元の記録がないうちは、素材集の `approve` の要求に `verification`（`method`・`detail`）が必須。記録があれば省ける。記録がなく `verification` もないときは `producer_not_verified`。記録の中身は運営だけが見られる（本人には「確認済みか」だけ） |
 | C-18 | 使っているチャンネル（D-18） | `GET /api/collections/{collectionId}/used-by` で、利用の記録（M-22）を返す。素材提供者と運営が見られる。返すのはチャンネルの ID・名前・版・チャンネル提供者の表示名・参照している素材の ID（どれもリストに載っている内容） |
@@ -275,7 +275,7 @@ sequenceDiagram
 ```
 
 - 受け付けるのは、アカウントが `active` で素材提供者の役割を持つ、移し替えの申し出がない、素材集が自分のもの、審査待ちの申請がない、今日の申請の数（チャンネルと合わせて数える。M-19）が上限の内、のとき
-- 機械審査では、platform API-MATERIAL-PRODUCER の確かめる手順 1（`CollectionValidator`）に加えて、次を確かめる: `collection.json` の `id` がこの素材集、`producer` がアカウントの今の鍵、`version` が最後に承認した版より大きい（M-5）、外部の素材の大きさと SHA-256（M-20）、利用の記録にある素材の ID が残り種類が変わっていない（D-8・M-22。`inUse` に理由）。利用許諾を狭めて使えなくなるチャンネルがあれば `warnings` に出す（拒まない）
+- 機械審査では、platform API-MATERIALS の確かめる手順 1（`CollectionValidator`）に加えて、次を確かめる: `collection.json` の `id` がこの素材集、`producer` がアカウントの今の鍵、`version` が最後に承認した版より大きい（M-5）、外部の素材の大きさと SHA-256（M-20）、利用の記録にある素材の ID が残り種類が変わっていない（D-8・M-22。`inUse` に理由）。利用許諾を狭めて使えなくなるチャンネルがあれば `warnings` に出す（拒まない）
 
 ### 機械審査の結果（素材と素材集）
 
@@ -380,7 +380,7 @@ AI の出力だけを保存する（C-13）。応答の `samplesId` を判定の
 | 401 | `unauthorized` | トークンがない・切れた（API Gateway が返す） | トークンを更新して 1 回だけ再送。だめならログインへ |
 | 403 | `forbidden` | 役割が違う、他のチャンネル提供者のもの | 画面を出さない |
 | 403 | `publisher_not_active` | チャンネル提供者が `pending_key` か `suspended` | 状態と理由を出す |
-| 403 | `role_required` | 素材提供者の役割がないアカウントが素材集の操作をした（C-15） | 役割を有効にする画面へ案内 |
+| 403 | `role_required` | 素材提供者の役割がないアカウントが、素材集の操作か、スタジオを出す承認の申し込みをした（C-15） | 役割を有効にする画面へ案内 |
 | 404 | `not_found` | ないもの | 一覧へ戻す |
 | 409 | `already_registered` | チャンネル提供者として登録済み | チャンネル提供者の画面へ |
 | 409 | `channel_id_taken` | チャンネル ID が使われている（取り下げ済み・退会済みを含む） | 別の ID を促す |
@@ -462,4 +462,4 @@ AI の出力だけを保存する（C-13）。応答の `samplesId` を判定の
 - [DM-001](data-model.md): データモデル
 - [platform API-CHANNEL-LIST](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-LIST.md)・[platform API-CHANNEL-PACKAGE](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-PACKAGE.md)・[platform チャンネル審査方針](https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/channel-review.md)
 - [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457): Problem Details for HTTP APIs
-- [platform ADR-MATERIAL-PRODUCERS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-MATERIAL-PRODUCERS.md)・[platform API-MATERIAL-PRODUCER](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-MATERIAL-PRODUCER.md)
+- [platform ADR-MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-MATERIALS.md)・[platform API-MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-MATERIALS.md)

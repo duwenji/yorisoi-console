@@ -38,7 +38,7 @@ tags:
   - name: publications
     description: 公開と操作の記録（運営）
   - name: studio
-    description: スタジオの掲載（提供者。DES-013）
+    description: スタジオ（提供者。DES-013）
   - name: admin-studio
     description: スタジオの提供者の承認と申し出（運営。DES-013）
 
@@ -1125,7 +1125,7 @@ paths:
     post:
       tags: [studio]
       operationId: applyForStudio
-      summary: 掲載を出す承認を申し込む（REQ-STUDIO F-24、掲載の決まり 1.2）
+      summary: スタジオを出す承認を申し込む（REQ-STUDIO D-14・F-24、スタジオの決まり 1.1・1.2）。素材提供者の役割が要る（ないと role_required）
       requestBody:
         required: true
         content: { application/json: { schema: { $ref: '#/components/schemas/StudioApplication' } } }
@@ -1137,14 +1137,14 @@ paths:
     get:
       tags: [studio]
       operationId: listMyPlacements
-      summary: 自分の掲載の一覧（新しい順、50 件まで）
+      summary: 自分のスタジオの一覧（新しい順、50 件まで）
       responses:
         '200': { $ref: '#/components/responses/PlacementList' }
         default: { $ref: '#/components/responses/Error' }
     post:
       tags: [studio]
       operationId: createPlacement
-      summary: 掲載を作る（音声があれば、アップロードの先を返す。なければすぐ確認を始める。K-16）
+      summary: スタジオを作る（音声があれば、アップロードの先を返す。なければすぐ確認を始める。K-16）
       requestBody:
         required: true
         content: { application/json: { schema: { $ref: '#/components/schemas/PlacementInput' } } }
@@ -1161,12 +1161,12 @@ paths:
       - name: action
         in: path
         required: true
-        description: submit（音声を送り終えて確認を始める。uploading → checking）・stop（載っている掲載を止める。F-20）・appeal（確認の誤りを運営に申し出る。掲載の決まり 3。message が要る）
+        description: submit（音声を送り終えて確認を始める。uploading → checking）・stop（載っているスタジオを止める。F-20）・appeal（確認の誤りを運営に申し出る。スタジオの決まり 3。message が要る）
         schema: { type: string, enum: [submit, stop, appeal] }
     post:
       tags: [studio]
       operationId: actOnPlacement
-      summary: 自分の掲載を確認に出す・止める・申し出る
+      summary: 自分のスタジオを確認に出す・止める・申し出る
       parameters: [{ $ref: '#/components/parameters/IfMatch' }]
       requestBody:
         content: { application/json: { schema: { type: object, properties: { message: { type: string, minLength: 1, maxLength: 1000 } } } } }
@@ -1206,7 +1206,7 @@ paths:
     post:
       tags: [admin-studio]
       operationId: decideStudio
-      summary: 提供者の承認を決める（掲載の決まり 1.4・4.3）。止める・取り消すと載っている掲載も届けない
+      summary: 提供者の承認を決める（スタジオの決まり 1.4・4.3）。止める・取り消すと載っているスタジオも届けない
       parameters: [{ $ref: '#/components/parameters/IfMatch' }]
       requestBody:
         content: { application/json: { schema: { $ref: '#/components/schemas/StudioDecision' } } }
@@ -1218,7 +1218,7 @@ paths:
     get:
       tags: [admin-studio]
       operationId: listPlacementAppeals
-      summary: 掲載者の申し出（申し出た順）
+      summary: 素材提供者の申し出（申し出た順）
       responses:
         '200': { $ref: '#/components/responses/PlacementList' }
         default: { $ref: '#/components/responses/Error' }
@@ -1234,7 +1234,7 @@ paths:
     post:
       tags: [admin-studio]
       operationId: decideAppeal
-      summary: 申し出に答える（掲載の決まり 3）か、通報された掲載を戻す・消す（同 4.3）
+      summary: 申し出に答える（スタジオの決まり 3）か、通報されたスタジオを戻す・消す（同 4.3）
       parameters: [{ $ref: '#/components/parameters/IfMatch' }]
       requestBody:
         content: { application/json: { schema: { type: object, properties: { message: { type: string, maxLength: 1000 }, reason: { type: string, maxLength: 1000 } } } } }
@@ -1247,7 +1247,7 @@ paths:
     get:
       tags: [studio]
       operationId: getPlacementStats
-      summary: 掲載の日ごとの聞いた数・開いた数（概数。DES-013 K-18）
+      summary: スタジオの日ごとの聞いた数・開いた数（概数。DES-013 K-18）
       responses:
         '200': { description: 数, content: { application/json: { schema: { $ref: '#/components/schemas/PlacementStats' } } } }
         default: { $ref: '#/components/responses/Error' }
@@ -1256,9 +1256,9 @@ paths:
     get:
       tags: [admin-studio]
       operationId: listReportedPlacements
-      summary: 通報された掲載（最初の通報の順）
+      summary: 通報されたスタジオ（最初の通報の順）
       responses:
-        '200': { description: 通報された掲載, content: { application/json: { schema: { type: object, required: [items], properties: { items: { type: array, items: { $ref: '#/components/schemas/ReportedPlacement' } } } } } } }
+        '200': { description: 通報されたスタジオ, content: { application/json: { schema: { type: object, required: [items], properties: { items: { type: array, items: { $ref: '#/components/schemas/ReportedPlacement' } } } } } } }
         default: { $ref: '#/components/responses/Error' }
 
   /api/admin/studio/reported-notes:
@@ -1326,7 +1326,7 @@ paths:
     get:
       tags: [admin-studio]
       operationId: listClosedAreas
-      summary: 一言・掲載を置けない区画（REQ-STUDIO F-15）
+      summary: 一言・スタジオを置けない区画（REQ-STUDIO・REQ-NOTES F-15）
       responses:
         '200': { description: 置けない区画, content: { application/json: { schema: { type: object, required: [items], properties: { items: { type: array, items: { $ref: '#/components/schemas/ClosedArea' } } } } } } }
         default: { $ref: '#/components/responses/Error' }
@@ -1420,11 +1420,11 @@ components:
       headers: { ETag: { $ref: '#/components/headers/ETag' } }
       content: { application/json: { schema: { $ref: '#/components/schemas/StudioAccount' } } }
     Placement:
-      description: 掲載
+      description: スタジオ
       headers: { ETag: { $ref: '#/components/headers/ETag' } }
       content: { application/json: { schema: { $ref: '#/components/schemas/Placement' } } }
     PlacementList:
-      description: 掲載の一覧
+      description: スタジオの一覧
       content: { application/json: { schema: { $ref: '#/components/schemas/PlacementList' } } }
     Error:
       description: エラー（RFC 9457）
@@ -1610,10 +1610,10 @@ components:
       properties:
         publisherId: { $ref: '#/components/schemas/Ulid' }
         status: { $ref: '#/components/schemas/StudioStatus' }
-        displayName: { type: string, description: 掲載の読み上げに使う名前 }
+        displayName: { type: string, description: スタジオの読み上げに使う名前 }
         description: { type: string }
         plans: { type: string }
-        agreedVersion: { type: integer, description: 同意した掲載の決まりの版 }
+        agreedVersion: { type: integer, description: 同意したスタジオの決まりの版 }
         requestedAt: { type: string, format: date-time }
         decidedAt: { type: string, format: date-time }
         reason: { type: string, description: 見送り・止めた・取り消した理由 }
@@ -1633,7 +1633,7 @@ components:
 
     StudioChecks:
       type: object
-      description: 掲載の決まり 1.3 の 4 項目。承認にはすべて true が要る
+      description: スタジオの決まり 1.3 の 4 項目。承認にはすべて true が要る
       required: [identity, name, content, history]
       properties:
         identity: { type: boolean }
@@ -1651,7 +1651,7 @@ components:
 
     PlacementState:
       type: string
-      description: uploading（音声待ち）・checking（確認中）・returned（返した）・appealed（申し出中）・live（載っている）・stopped（掲載者が止めた）・suspended（通報や承認を止めたことで止まった）・removed（運営が消した）・rejected（申し出を受けて載せないと決めた）
+      description: uploading（音声待ち）・checking（確認中）・returned（返した）・appealed（申し出中）・live（載っている）・stopped（素材提供者が止めた）・suspended（通報や承認を止めたことで止まった）・removed（運営が消した）・rejected（申し出を受けて載せないと決めた）
       enum: [uploading, checking, returned, appealed, live, stopped, suspended, removed, rejected]
 
     PlacementInput:
@@ -1688,7 +1688,7 @@ components:
         state: { $ref: '#/components/schemas/PlacementState' }
         check:
           type: object
-          description: 自動の確認の結果。items は当たった掲載の決まりの項目（2.2.x）か、audio_missing・audio_format・audio_length・transcribe_failed・check_unavailable・unclear
+          description: 自動の確認の結果。items は当たったスタジオの決まりの項目（2.2.x）か、audio_missing・audio_format・audio_length・transcribe_failed・check_unavailable・unclear
           required: [items]
           properties:
             items: { type: array, items: { type: string } }
@@ -1722,7 +1722,7 @@ components:
 
     Approx:
       type: [object, 'null']
-      description: 概数。3 未満は null、3 以上は 3・10・30・100・300・1,000 の区切りの下限（API-STUDIO「概数」）
+      description: 概数。3 未満は null、3 以上は 3・10・30・100・300・1,000 の区切りの下限（API-LOCAL-MATERIALS「概数」）
       required: [atLeast]
       properties:
         atLeast: { type: integer }
@@ -2217,7 +2217,7 @@ components:
                 - { type: string, const: '*' }
                 - { type: array, items: { $ref: '#/components/schemas/AccountId' } }
             apps: { type: array, items: { type: string }, description: DES-011 N-7。使ってよいアプリの ID（ないときはすべてのアプリ） }
-            grounding: { type: boolean, description: platform API-MATERIAL-PRODUCER I-13。AI の根拠に使ってよいとき真（偽は書かない） }
+            grounding: { type: boolean, description: platform API-MATERIALS I-13。AI の根拠に使ってよいとき真（偽は書かない） }
         package: { $ref: '#/components/schemas/ListedPackage' }
         appStage: { type: integer }
         minAppVersions: { $ref: '#/components/schemas/MinAppVersions' }

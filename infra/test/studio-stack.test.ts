@@ -15,7 +15,7 @@ describe('StudioStack', () => {
   const prod = template('prod');
   const dev = template('dev');
 
-  it('has the ten operations of API-STUDIO', () => {
+  it('has the ten operations of API-LOCAL-MATERIALS', () => {
     const methods = Object.values(prod.findResources('AWS::ApiGateway::Method')).map((m) => m.Properties.HttpMethod).sort();
     expect(methods).toEqual(['DELETE', 'DELETE', 'GET', 'GET', 'GET', 'GET', 'POST', 'POST', 'POST', 'POST']);
   });

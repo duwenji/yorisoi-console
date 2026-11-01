@@ -7,7 +7,7 @@ import type { Item } from './shared.js';
 import { downItems, loadPlacement, placementView, stateChange, studioOf } from './studio.js';
 
 // The operator's side of the studio after things are up (DES-013 K-17, platform policies/
-// studio-placement.md 4, studio-note-terms.md 3): reported placements and notes, banning the device
+// studio-rules.md 4, notes-terms.md 3): reported placements and notes, banning the device
 // that placed a note, closed areas; and the provider's day counts (K-18). The operator never sees
 // which device placed a note: a ban is made and listed by the note.
 
@@ -30,7 +30,7 @@ async function queue(deps: Deps, studio: StudioDeps, name: string): Promise<Item
 
 const reportOf = (q: Item) => ({ firstAt: String(q.firstAt), lastAt: String(q.lastAt ?? q.firstAt), reasons: [...((q.reasons as Set<string> | undefined) ?? [])].sort() });
 
-// ---- reported placements (掲載の決まり 4) ----
+// ---- reported placements (スタジオの決まり 4) ----
 
 export async function listReportedPlacements(deps: Deps, req: Request): Promise<Response> {
   requireOperator(req);

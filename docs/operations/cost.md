@@ -31,7 +31,7 @@
 
 ## スタジオ
 
-スタジオ（`YorisoiStudio-<env>`）の費用は、一言と掲載の確認の運営の AI（中継の月の予算に含まれる）と、掲載の音声の Amazon Transcribe（音声の長さに応じた料金）が主で、使った分だけかかる。ほかは警報 4 つが約 0.4 USD/月、本番の WAF が約 7 USD/月。費用はタグ `project=yorisoi-studio` で分けて見る（[スタジオの手順](studio.md)「費用」）。
+スタジオ（`YorisoiStudio-<env>`）の費用は、スタジオと一言の確認の運営の AI（中継の月の予算に含まれる）と、スタジオの音声の Amazon Transcribe（音声の長さに応じた料金）が主で、使った分だけかかる。ほかは警報 4 つが約 0.4 USD/月、本番の WAF が約 7 USD/月。費用はタグ `project=yorisoi-studio` で分けて見る（[スタジオの手順](studio.md)「費用」）。
 
 ## 一度だけ要る操作
 

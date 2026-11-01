@@ -1,6 +1,6 @@
 import { MODELS, relayConfigs, type RelayModel } from './relay-config.js';
 
-/** Settings of the studio in one account (platform API-STUDIO, console DES-013). */
+/** Settings of the studio in one account (platform API-LOCAL-MATERIALS, console DES-013). */
 export interface StudioConfig {
   name: 'dev' | 'prod';
   /** Optional: when set, the stack is pinned to this account. */
@@ -23,7 +23,7 @@ export interface StudioConfig {
   alarmEmail?: string;
 }
 
-const TERMS_URL = 'https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/studio-note-terms.md';
+const TERMS_URL = 'https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/notes-terms.md';
 
 export const studioConfigs: Record<StudioConfig['name'], StudioConfig> = {
   dev: {

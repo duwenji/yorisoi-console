@@ -9,7 +9,7 @@ import { Empty, ReasonForm, Status, Time, useLoad } from './common';
 // The studio's pages (DES-013 K-14〜K-17): providers apply and put up placements; the operator
 // approves providers and answers appeals.
 
-const RULES_URL = 'https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/studio-placement.md';
+const RULES_URL = 'https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/studio-rules.md';
 const RULES_VERSION = 1;
 const AUDIO_MAX_BYTES = 512 * 1024;
 
@@ -22,7 +22,7 @@ const PLACEMENT_STATE: Record<Schemas['PlacementState'], string> = {
   suspended: '止められた', removed: '消された', rejected: '載せない',
 };
 
-/** What the automatic check found (platform policies/studio-placement.md 2.2, 3). */
+/** What the automatic check found (platform policies/studio-rules.md 2.2, 3). */
 const CHECK_ITEMS: Record<string, string> = {
   '2.2.1': '2.2.1 安全を損なう誘い',
   '2.2.2': '2.2.2 連絡先（URL・電話番号・メールアドレス・SNS）',
@@ -59,19 +59,39 @@ function CheckResult({ check }: { check: Schemas['Placement']['check'] }) {
 
 // ---- the provider ----
 
-/** The provider's studio: the application until approved, then their placements. */
+/** The producer's studio: how to start without the producer role, the application until approved, then their placements. */
 export function ProviderStudio() {
   const { api } = useSession();
+  const me = useLoad(async () => (await api.GET('/api/publisher')).data, [api]);
+  const producer = me.data?.roles?.includes('producer') ?? false;
   const studio = useLoad(async () => (await api.GET('/api/studio')).data, [api]);
   const s = studio.data;
+  const [error, setError] = useState<string>();
+  const start = async () => {
+    if (!me.data) return;
+    setError(undefined);
+    try {
+      await api.POST('/api/publisher/roles/producer', { params: { header: ifMatch(me.data.rev) } });
+      me.reload();
+    } catch (err) {
+      setError(describe(err));
+    }
+  };
   return (
     <section>
       <h1>スタジオ</h1>
       <p className="muted">
-        スタジオの掲載は、場所と期間を決めて載せるお知らせです。その場所に来たアプリの利用者に「〇〇からのお知らせです。」に続けて読み上げられます。
-        AI の語りの材料にはならず、出した人の言葉のまま届きます。
+        スタジオは、素材提供者が場所と期間を決めて載せるお知らせです。その場所に来たアプリの利用者に「〇〇からのお知らせです。」に続けて読み上げられます。
+        AI の語りの材料にはならず、出した人の言葉のまま届きます。いつ・どう読み上げるかは利用者が使っているチャンネルが決めるので、チャンネルによっては読み上げられません。
       </p>
-      <Status error={studio.error} loading={studio.loading} />
+      <Status error={me.error ?? studio.error} loading={me.loading || studio.loading} />
+      {me.data && !producer && s?.status === 'none' && (
+        <div className="action">
+          <p>スタジオを出せるのは素材提供者です。素材集を出していなくても、素材提供者として始めれば申し込めます。</p>
+          <button onClick={() => void start()}>素材提供者として始める</button>
+          {error && <p className="error" role="alert">{error}</p>}
+        </div>
+      )}
       {s && (
         <dl className="facts">
           <dt>承認</dt>
@@ -84,7 +104,7 @@ export function ProviderStudio() {
           {s.reason && (<><dt>運営からの理由</dt><dd>{s.reason}</dd></>)}
         </dl>
       )}
-      {s && (s.status === 'none' || s.status === 'declined' || (s.status === 'revoked' && s.reapplyAfter !== undefined && s.reapplyAfter <= new Date().toISOString())) && (
+      {s && producer && (s.status === 'none' || s.status === 'declined' || (s.status === 'revoked' && s.reapplyAfter !== undefined && s.reapplyAfter <= new Date().toISOString())) && (
         <Application previous={s} onDone={studio.reload} />
       )}
       {s?.status === 'requested' && <p>運営が申し込みを確かめています。結果はメールでお知らせします。</p>}
@@ -112,8 +132,8 @@ function Application({ previous, onDone }: { previous: Schemas['StudioAccount'];
   };
   return (
     <form className="action" onSubmit={(e) => void submit(e)}>
-      <h3>掲載を出す承認を申し込む</h3>
-      <p className="muted small">運営が、本人であること・出す名前・載せたいものを確かめて承認します（目安 5 日。無料）。承認のあとは、掲載ごとの承認はなく、あなたの責任で載せます。</p>
+      <h3>スタジオを出す承認を申し込む</h3>
+      <p className="muted small">運営が、本人であること・出す名前・載せたいものを確かめて承認します（目安 5 日。無料）。承認のあとは、スタジオごとの承認はなく、あなたの責任で載せます。</p>
       <label>
         出す名前（読み上げに使います。40 文字まで。個人は屋号・活動名でもかまいません）
         <input required maxLength={40} value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
@@ -128,7 +148,7 @@ function Application({ previous, onDone }: { previous: Schemas['StudioAccount'];
       </label>
       <label className="check">
         <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
-        <span><a href={RULES_URL} target="_blank" rel="noreferrer">掲載の決まり</a>（版 {RULES_VERSION}）を読み、守ることに同意します。中身の責任は自分が持ちます。</span>
+        <span><a href={RULES_URL} target="_blank" rel="noreferrer">スタジオの決まり</a>（版 {RULES_VERSION}）を読み、守ることに同意します。中身の責任は自分が持ちます。</span>
       </label>
       <button disabled={!agreed}>申し込む</button>
       {error && <p className="error" role="alert">{error}</p>}
@@ -154,9 +174,9 @@ function Placements({ approved }: { approved: boolean }) {
   };
   return (
     <>
-      <h2>掲載</h2>
+      <h2>スタジオ</h2>
       <Status error={list.error} loading={list.loading} />
-      {list.data?.items.length === 0 && <Empty>まだ掲載がありません。</Empty>}
+      {list.data?.items.length === 0 && <Empty>まだスタジオがありません。</Empty>}
       {list.data?.items.map((p) => (
         <article key={p.placementId} className="card">
           <p>
@@ -174,14 +194,14 @@ function Placements({ approved }: { approved: boolean }) {
             {p.appeal && (<><dt>申し出</dt><dd><Time value={p.appeal.at} />: {p.appeal.message}</dd></>)}
             {p.decision && (<><dt>運営の判断</dt><dd><Time value={p.decision.at} />{p.decision.message && `: ${p.decision.message}`}</dd></>)}
           </dl>
-          {p.state === 'live' && <button className="danger" onClick={() => window.confirm('この掲載を止めますか？止めた掲載は戻せません。') && void act(p, 'stop')}>止める</button>}
+          {p.state === 'live' && <button className="danger" onClick={() => window.confirm('このスタジオを止めますか？止めたスタジオは戻せません。') && void act(p, 'stop')}>止める</button>}
           {p.state === 'returned' && <Appeal onSubmit={(message) => act(p, 'appeal', message)} />}
           {(p.state === 'live' || p.state === 'stopped' || p.state === 'suspended' || p.state === 'removed') && <Stats placementId={p.placementId} />}
         </article>
       ))}
       <button onClick={() => list.reload()}>読み込み直す</button>
       {error && <p className="error" role="alert">{error}</p>}
-      {approved ? <NewPlacement onDone={list.reload} /> : <p className="muted">今は新しい掲載を作れません。</p>}
+      {approved ? <NewPlacement onDone={list.reload} /> : <p className="muted">今は新しいスタジオを作れません。</p>}
     </>
   );
 }
@@ -190,7 +210,7 @@ function Appeal({ onSubmit }: { onSubmit: (message: string) => Promise<void> }) 
   const [message, setMessage] = useState('');
   return (
     <form className="action" onSubmit={(e) => { e.preventDefault(); void onSubmit(message); }}>
-      <p className="muted small">直すときは、新しい掲載として作り直してください。確認が誤っていると思うときは、運営に申し出られます（7 日以内に返事します）。</p>
+      <p className="muted small">直すときは、新しいスタジオとして作り直してください。確認が誤っていると思うときは、運営に申し出られます（7 日以内に返事します）。</p>
       <label>
         運営への申し出
         <textarea required rows={2} maxLength={1000} value={message} onChange={(e) => setMessage(e.target.value)} />
@@ -219,11 +239,11 @@ function NewPlacement({ onDone }: { onDone: () => void }) {
     setError(undefined);
     if (audio && audio.size > AUDIO_MAX_BYTES) return setError('音声は 512 KB までです');
     try {
-      setProgress('掲載を作っています…');
+      setProgress('スタジオを作っています…');
       const { data } = await api.POST('/api/studio/placements', {
         body: { text, cells, startsAt: JST(startsAt), endsAt: JST(endsAt), ...(useHours ? { hours: { from, to } } : {}), ...(audio ? { audio: { bytes: audio.size } } : {}) },
       });
-      if (!data) throw new Error('掲載を作れませんでした');
+      if (!data) throw new Error('スタジオを作れませんでした');
       if (data.upload && audio) {
         setProgress('音声を送っています…');
         const form = new FormData();
@@ -246,9 +266,9 @@ function NewPlacement({ onDone }: { onDone: () => void }) {
 
   return (
     <form className="action wide" onSubmit={(e) => void submit(e)}>
-      <h3>新しい掲載</h3>
+      <h3>新しいスタジオ</h3>
       <p className="muted small">
-        載せる前に、運営の AI が <a href={RULES_URL} target="_blank" rel="noreferrer">掲載の決まり</a> の「載せない掲載」に当たらないかを確かめます（音声は文字に起こして確かめます）。
+        載せる前に、運営の AI が <a href={RULES_URL} target="_blank" rel="noreferrer">スタジオの決まり</a> の「載せないスタジオ」に当たらないかを確かめます（音声は文字に起こして確かめます）。
         当たらなければすぐに載ります。URL・電話番号は文字にも音声にも入れられません。場所と名前で探せるようにしてください。
       </p>
       <label>
@@ -289,7 +309,7 @@ function NewPlacement({ onDone }: { onDone: () => void }) {
 
 // ---- the operator ----
 
-/** Applications waiting, and appeals (掲載の決まり 1.4・3). */
+/** Applications waiting, and appeals (スタジオの決まり 1.4・3). */
 export function OperatorStudio() {
   const { api } = useSession();
   const apps = useLoad(async () => (await api.GET('/api/admin/studio/applications')).data, [api]);
@@ -298,8 +318,8 @@ export function OperatorStudio() {
     <section>
       <h1>スタジオ</h1>
       <p className="muted">
-        運営は掲載ごとには承認しません。掲載を出す提供者を確かめて承認し（<a href={RULES_URL} target="_blank" rel="noreferrer">掲載の決まり</a> 1）、
-        自動の確認の誤りの申し出に答えます（同 3）。提供者の承認を止める・取り消すのは、提供者の画面から行います。
+        運営はスタジオごとには承認しません。スタジオを出す素材提供者を確かめて承認し（<a href={RULES_URL} target="_blank" rel="noreferrer">スタジオの決まり</a> 1）、
+        自動の確認の誤りの申し出に答えます（同 3）。素材提供者の承認を止める・取り消すのは、提供者の画面から行います。
       </p>
       <h2>承認の審査待ち</h2>
       <Status error={apps.error} loading={apps.loading} />
@@ -320,8 +340,8 @@ export function OperatorStudio() {
 const CHECKS: [keyof Schemas['StudioChecks'], string][] = [
   ['identity', '1.3.1 本人確認ができる。名乗っている団体・人と申し込んだ人が同じ'],
   ['name', '1.3.2 出す名前が、ほかの団体・人と紛らわしくない'],
-  ['content', '1.3.3 載せたいものが、主に「載せない掲載」に当たらない'],
-  ['history', '1.3.4 過去に掲載の承認を取り消されていない'],
+  ['content', '1.3.3 載せたいものが、主に「載せないスタジオ」に当たらない'],
+  ['history', '1.3.4 過去にスタジオの承認を取り消されていない'],
 ];
 
 function ApplicationReview({ account: a, onDone }: { account: Schemas['StudioAccount']; onDone: () => void }) {
@@ -342,7 +362,7 @@ function ApplicationReview({ account: a, onDone }: { account: Schemas['StudioAcc
   return (
     <article className="card">
       <dl className="facts">
-        <dt>提供者</dt>
+        <dt>素材提供者</dt>
         <dd><Link to={`/publishers/${a.publisherId}`}>{a.publisherId}</Link></dd>
         <dt>出す名前</dt>
         <dd>{a.displayName}</dd>
@@ -351,7 +371,7 @@ function ApplicationReview({ account: a, onDone }: { account: Schemas['StudioAcc
         <dt>載せたいもの</dt>
         <dd>{a.plans}</dd>
         <dt>申し込み</dt>
-        <dd><Time value={a.requestedAt} />（掲載の決まり 版 {a.agreedVersion} に同意）</dd>
+        <dd><Time value={a.requestedAt} />（スタジオの決まり 版 {a.agreedVersion} に同意）</dd>
       </dl>
       <form className="action" onSubmit={(e) => void approve(e)}>
         <h3>確かめて承認する</h3>
@@ -371,7 +391,7 @@ function ApplicationReview({ account: a, onDone }: { account: Schemas['StudioAcc
           onDone();
         }}
       >
-        <p className="muted">理由（掲載の決まりの項目番号を付ける）は提供者にメールで伝わります。直せるものは、直して申し込み直せます。</p>
+        <p className="muted">理由（スタジオの決まりの項目番号を付ける）は提供者にメールで伝わります。直せるものは、直して申し込み直せます。</p>
       </ReasonForm>
     </article>
   );
@@ -396,7 +416,7 @@ function AppealReview({ placement: p, onDone }: { placement: Schemas['Placement'
     <article className="card">
       <p>{p.text}</p>
       <dl className="facts">
-        <dt>掲載者</dt>
+        <dt>素材提供者</dt>
         <dd><Link to={`/publishers/${p.publisherId}`}>{p.providerName}</Link></dd>
         <dt>期間・区画</dt>
         <dd><Time value={p.startsAt} /> 〜 <Time value={p.endsAt} />、{p.cells.join(' ')}</dd>
@@ -408,7 +428,7 @@ function AppealReview({ placement: p, onDone }: { placement: Schemas['Placement'
       <form className="action" onSubmit={(e) => void publish(e)}>
         <h3>確かめて載せる</h3>
         <label>
-          掲載者へのメッセージ（任意）
+          素材提供者へのメッセージ（任意）
           <input maxLength={1000} value={message} onChange={(e) => setMessage(e.target.value)} />
         </label>
         <button>載せる</button>
@@ -422,13 +442,13 @@ function AppealReview({ placement: p, onDone }: { placement: Schemas['Placement'
           onDone();
         }}
       >
-        <p className="muted">理由は掲載者にメールで伝わります。AI の指摘だけで載せないと決めないでください。</p>
+        <p className="muted">理由は素材提供者にメールで伝わります。AI の指摘だけで載せないと決めないでください。</p>
       </ReasonForm>
     </article>
   );
 }
 
-/** The studio approval on a provider's page: stop for a while, resume, or revoke (掲載の決まり 4.3). */
+/** The studio approval on a provider's page: stop for a while, resume, or revoke (スタジオの決まり 4.3). */
 export function PublisherStudioAdmin({ publisherId }: { publisherId: string }) {
   const { api } = useSession();
   const studio = useLoad(async () => (await api.GET('/api/admin/publishers/{publisherId}/studio', { params: { path: { publisherId } } })).data, [api, publisherId]);
@@ -458,7 +478,7 @@ export function PublisherStudioAdmin({ publisherId }: { publisherId: string }) {
       )}
       {s?.status === 'approved' && (
         <ReasonForm label="期間を決めて止める" danger submit={(reason) => decide('suspend', { reason, until: JST(`${until}T00:00`) })}>
-          <p className="muted">軽い違反を直さない・繰り返すとき（掲載の決まり 4.3）。載っている掲載も届けなくなります。</p>
+          <p className="muted">軽い違反を直さない・繰り返すとき（スタジオの決まり 4.3）。載っているスタジオも届けなくなります。</p>
           <label>
             いつまで（1〜3 か月先）
             <input type="date" required value={until} onChange={(e) => setUntil(e.target.value)} />
@@ -468,7 +488,7 @@ export function PublisherStudioAdmin({ publisherId }: { publisherId: string }) {
       {s?.status === 'suspended' && <button onClick={() => void decide('resume').catch(() => studio.reload())}>止めたのを戻す</button>}
       {(s?.status === 'approved' || s?.status === 'suspended') && (
         <ReasonForm label="承認を取り消す" danger submit={(reason) => decide('revoke', { reason })}>
-          <p className="muted">重い違反・なりすまし・権利侵害の繰り返しのとき（掲載の決まり 4.3）。載っている掲載を消し、申し込み直しは 1 年後からです。</p>
+          <p className="muted">重い違反・なりすまし・権利侵害の繰り返しのとき（スタジオの決まり 4.3）。載っているスタジオを消し、申し込み直しは 1 年後からです。</p>
         </ReasonForm>
       )}
     </>
@@ -524,15 +544,15 @@ function ReportedPlacements() {
   };
   return (
     <>
-      <h2>通報された掲載</h2>
-      <p className="muted small">3 台以上から、または「安全」「権利」で通報された掲載は、届けるのを止めています（掲載の決まり 4.1）。判断の目安は、重いもの 24 時間・軽いもの 7 日です。</p>
+      <h2>通報されたスタジオ</h2>
+      <p className="muted small">3 台以上から、または「安全」「権利」で通報されたスタジオは、届けるのを止めています（スタジオの決まり 4.1）。判断の目安は、重いもの 24 時間・軽いもの 7 日です。</p>
       <Status error={list.error} loading={list.loading} />
       {list.data?.items.length === 0 && <Empty>ありません。</Empty>}
       {list.data?.items.map(({ placement: p, reports, reasons: rs, firstAt }) => (
         <article key={p.placementId} className="card">
           <p><span className={`tag ${p.state}`}>{PLACEMENT_STATE[p.state]}</span> {p.text}</p>
           <dl className="facts">
-            <dt>掲載者</dt>
+            <dt>素材提供者</dt>
             <dd><Link to={`/publishers/${p.publisherId}`}>{p.providerName}</Link></dd>
             <dt>通報</dt>
             <dd>{reports} 台（{reasons(rs)}）、最初の通報 <Time value={firstAt} /></dd>
@@ -542,7 +562,7 @@ function ReportedPlacements() {
           </dl>
           <button onClick={() => void decide(p, 'restore').catch(() => undefined)}>{p.state === 'suspended' ? '問題なし（戻す）' : '問題なし'}</button>
           <ReasonForm label="消す" danger submit={(reason) => decide(p, 'remove', reason)}>
-            <p className="muted">理由（掲載の決まりの項目番号）は掲載者にメールで伝わります。繰り返すときは、提供者の画面で承認を止める・取り消すも考えてください。</p>
+            <p className="muted">理由（スタジオの決まりの項目番号）は素材提供者にメールで伝わります。繰り返すときは、提供者の画面で承認を止める・取り消すも考えてください。</p>
           </ReasonForm>
         </article>
       ))}
@@ -678,7 +698,7 @@ function ClosedAreas() {
   return (
     <>
       <h2>置けない区画</h2>
-      <p className="muted small">学校・病院・私有地の周りなど。一言は置けず、掲載もその区画を選べなくなります（アプリには 5 分以内に効きます）。区画は geohash の 5〜7 文字（5 文字は約 5 km 四方、6 文字は約 1.2 km × 0.6 km、7 文字は約 150 m 四方）。</p>
+      <p className="muted small">学校・病院・私有地の周りなど。一言は置けず、スタジオもその区画を選べなくなります（アプリには 5 分以内に効きます）。区画は geohash の 5〜7 文字（5 文字は約 5 km 四方、6 文字は約 1.2 km × 0.6 km、7 文字は約 150 m 四方）。</p>
       <Status error={list.error} loading={list.loading} />
       {list.data?.items.length === 0 && <Empty>ありません。</Empty>}
       <ul className="plain">

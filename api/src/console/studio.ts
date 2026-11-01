@@ -3,7 +3,7 @@ import type { Schemas } from '@yorisoi-console/api-types';
 import { auditItem, notifyAfter, type Deps, type StudioDeps } from './deps.js';
 import { fail, ifMatch, json, object, requireOperator, requiredText, text, withEtag, type Request, type Response } from './http.js';
 import { myPublisher, transact } from './publisher.js';
-import { get, loadPublisher, type Item } from './shared.js';
+import { get, loadPublisher, rolesOf, type Item } from './shared.js';
 import { ulid } from './util.js';
 
 // The studio in the console (DES-013 K-14〜K-17): providers apply to put up placements and make
@@ -12,7 +12,7 @@ import { ulid } from './util.js';
 
 type TransactItems = NonNullable<ConstructorParameters<typeof TransactWriteCommand>[0]['TransactItems']>;
 
-/** The version of the placement rules (platform policies/studio-placement.md) providers agree to. */
+/** The version of the placement rules (platform policies/studio-rules.md) providers agree to. */
 export const PLACEMENT_RULES_VERSION = 1;
 export const AUDIO_MAX_BYTES = 512 * 1024;
 const DAY_MS = 24 * 3600_000;
@@ -51,10 +51,11 @@ export async function getMyStudio(deps: Deps, req: Request): Promise<Response> {
   return withEtag(200, studioView(publisherId, await get(deps, studioKey(publisherId).PK, 'STUDIO'), deps.now()));
 }
 
-/** Applies, or applies again after a decline or once a revocation's year is over (掲載の決まり 1.2). */
+/** Applies, or applies again after a decline or once a revocation's year is over (スタジオの決まり 1.1・1.2). Only a producer may (REQ-STUDIO D-14). */
 export async function applyForStudio(deps: Deps, req: Request): Promise<Response> {
   const account = await myPublisher(deps, req);
   if (account.status !== 'active') fail('publisher_not_active', `the account is ${String(account.status)}`);
+  if (!rolesOf(account).includes('producer')) fail('role_required', 'turn on the producer role first');
   const body = object(req.body);
   const displayName = requiredText(body, 'displayName', { max: 40 });
   const description = requiredText(body, 'description', { max: 1000 });
@@ -115,7 +116,7 @@ const DECISIONS = {
   revoke: { from: ['approved', 'suspended'], to: 'revoked', notice: 'studio.revoked' },
 } as const;
 
-/** The operator decides on a provider (掲載の決まり 1.4・4.3). Suspending or revoking takes their placements down. */
+/** The operator decides on a provider (スタジオの決まり 1.4・4.3). Suspending or revoking takes their placements down. */
 export async function decideStudio(deps: Deps, req: Request): Promise<Response> {
   requireOperator(req);
   const publisherId = req.params.publisherId!;
@@ -137,7 +138,7 @@ export async function decideStudio(deps: Deps, req: Request): Promise<Response> 
   if (decision === 'approve') {
     const checks = object(body.checks ?? {});
     const all = ['identity', 'name', 'content', 'history'].every((k) => checks[k] === true);
-    if (!all) fail('invalid_request', 'all four checks of 掲載の決まり 1.3 are required to approve');
+    if (!all) fail('invalid_request', 'all four checks of スタジオの決まり 1.3 are required to approve');
     set.checks = { identity: true, name: true, content: true, history: true };
     remove.push('reason');
   } else if (decision === 'resume') {
@@ -189,7 +190,7 @@ export async function decideStudio(deps: Deps, req: Request): Promise<Response> 
   return withEtag(200, studioView(publisherId, await get(deps, studioKey(publisherId).PK, 'STUDIO'), now));
 }
 
-/** Takes every live placement of a provider out of the cells (掲載の決まり 4.3). */
+/** Takes every live placement of a provider out of the cells (スタジオの決まり 4.3). */
 async function takeDown(deps: Deps, publisherId: string, to: 'suspended' | 'removed') {
   if (!deps.studio) return;
   for (const p of await placementsOf(deps, deps.studio, publisherId)) {
@@ -254,7 +255,7 @@ export async function loadPlacement(deps: Deps, studio: StudioDeps, id: string):
   return out.Item ?? fail('not_found', `no placement ${id}`);
 }
 
-/** The caller's account, approved for the studio now (掲載の決まり 1.4). */
+/** The caller's account, approved for the studio now (スタジオの決まり 1.4). */
 async function approvedProvider(deps: Deps, req: Request): Promise<{ account: Item; studio: Item }> {
   const account = await myPublisher(deps, req);
   if (account.status !== 'active') fail('publisher_not_active', `the account is ${String(account.status)}`);
@@ -411,7 +412,7 @@ export async function listPlacementAppeals(deps: Deps, req: Request): Promise<Re
   return json(200, { items: items.map(placementView) });
 }
 
-/** The operator answers an appeal (掲載の決まり 3): up through the check's Lambda, or not at all. */
+/** The operator answers an appeal (スタジオの決まり 3): up through the check's Lambda, or not at all. */
 export async function decideAppeal(deps: Deps, req: Request): Promise<Response> {
   requireOperator(req);
   const studio = studioOf(deps);
