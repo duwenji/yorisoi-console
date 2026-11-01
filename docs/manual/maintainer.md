@@ -57,7 +57,7 @@ flowchart LR
 | `conformance` | 任意のリストに対する準拠テスト | DES-001 |
 | `infra` | AWS CDK。環境ごとの設定は `infra/lib/config.ts` | ARCH-001 |
 
-機械審査の Lambda（`validator`）は、SanpoGuide が公開する形式の確認（`io.github.duwenji.yorisoi:core-format`）と、審査の見本を作るプロンプト・パック（SanpoGuide の `io.github.duwenji.yorisoi.sanpoguide:prompts`、CycleGuide の `io.github.duwenji.yorisoi.cycleguide:prompts`）を GitHub Packages から読み込みます。読むには `read:packages` のトークンが要ります（CI は `GITHUB_TOKEN`。手元は `~/.gradle/gradle.properties` に `gpr.user`・`gpr.key` を書くか、yorisoi-platform・SanpoGuide・CycleGuide で `./gradlew publishToMavenLocal`）。
+機械審査の Lambda（`validator`）は、yorisoi-platform が公開する形式の確認（`io.github.duwenji.yorisoi:core-format`）と、審査の見本を作るプロンプト・パック（SanpoGuide の `io.github.duwenji.yorisoi.sanpoguide:prompts`、CycleGuide の `io.github.duwenji.yorisoi.cycleguide:prompts`）を GitHub Packages から読み込みます。読むには `read:packages` のトークンが要ります（CI は `GITHUB_TOKEN`。手元は `~/.gradle/gradle.properties` に `gpr.user`・`gpr.key` を書くか、yorisoi-platform・SanpoGuide・CycleGuide で `./gradlew publishToMavenLocal`）。
 
 ## 2. 準備
 
