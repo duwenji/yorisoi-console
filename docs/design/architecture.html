@@ -54,7 +54,7 @@ figcaption{font-size:13.5px;color:var(--muted);max-width:80ch;display:flex;flex-
 .sw.acc{background:var(--accent-soft);border-color:var(--accent)}
 .sw.ext{border:1.4px dashed var(--ext)}
 .sw.warn{background:var(--warn-soft);border-color:var(--warn)}
-/* SVG vocabulary (as SanpoGuide's docs/architecture.html) */
+/* SVG vocabulary (as SanpoGuide's docs/design/architecture.html) */
 .band{fill:var(--band)}
 .bl{fill:var(--muted);font-size:12px;font-weight:700;text-anchor:middle}
 .bl-m{fill:var(--muted);font-family:var(--mono);font-size:11px;text-anchor:middle}
@@ -123,7 +123,7 @@ td.files{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
       <span>DynamoDB <b>1 テーブル</b></span>
       <span>S3 <b>4 バケット</b></span>
     </div>
-    <p style="font-size:13.5px;color:var(--muted)">アプリとの境界は platform の API-CHANNEL-LIST（承認済みチャンネル・リスト）だけです。アプリはこのシステムの API を呼ばず、公開された静的ファイルを取りに来ます。図はコードと CDK から手で書き起こしたもの（2026-10-12 時点。素材集と素材提供者は 2026-10-11 に追加）です。Lambda・バケット・申請の状態を足したり変えたりしたときは、この文書と <code>docs/architecture.md</code> も更新してください。</p>
+    <p style="font-size:13.5px;color:var(--muted)">アプリとの境界は platform の API-CHANNEL-LIST（承認済みチャンネル・リスト）だけです。アプリはこのシステムの API を呼ばず、公開された静的ファイルを取りに来ます。図はコードと CDK から手で書き起こしたもの（2026-10-12 時点。素材集と素材提供者は 2026-10-11 に追加）です。Lambda・バケット・申請の状態を足したり変えたりしたときは、この文書と <code>docs/design/architecture.md</code> も更新してください。</p>
   </header>
 
   <!-- 1. Overview -->
@@ -666,7 +666,7 @@ td.files{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
     <div class="sec-head">
       <div class="eyebrow">スタジオ（DES-013、別のスタック YorisoiLocalMaterials）</div>
       <h2>その場の素材（スタジオ・一言）は別のスタックに置き、管理システムは素材提供者と運営の操作だけを受け持つ</h2>
-      <p>スタジオ（運営が承認した素材提供者が出すお知らせ）と一言（散策者・走る人がその場所に置く投稿）は、どちらも素材の種類で、近くを通る人に読み上げます（platform の REQ-STUDIO・REQ-NOTES・API-LOCAL-MATERIALS）。アプリは運営の配信の API を中継のトークンで直接呼び、管理システムは通りません。管理システムは配備のときに Parameter Store からスタジオの表・バケット・確認の Lambda の名前を読み、次を受け持ちます。資源の図は <code>docs/aws-diagrams.md</code>、手順は <code>docs/operations/studio.md</code> にあります。</p>
+      <p>スタジオ（運営が承認した素材提供者が出すお知らせ）と一言（散策者・走る人がその場所に置く投稿）は、どちらも素材の種類で、近くを通る人に読み上げます（platform の REQ-STUDIO・REQ-NOTES・API-LOCAL-MATERIALS）。アプリは運営の配信の API を中継のトークンで直接呼び、管理システムは通りません。管理システムは配備のときに Parameter Store からスタジオの表・バケット・確認の Lambda の名前を読み、次を受け持ちます。資源の図は <code>docs/design/aws-diagrams.md</code>、手順は <code>docs/operations/studio.md</code> にあります。</p>
     </div>
     <div class="tw">
       <table>
@@ -687,7 +687,7 @@ td.files{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
     <div class="sec-head">
       <div class="eyebrow">データの置き場所</div>
       <h2>DynamoDB は 1 テーブル、S3 は役割ごとに 4 つ</h2>
-      <p>項目と属性の一覧は <code>docs/data-model.md</code>（DM-001）にあります。ここでは「何がどこにあって、いつ消えるか」だけをまとめます。</p>
+      <p>項目と属性の一覧は <code>docs/design/data-model.md</code>（DM-001）にあります。ここでは「何がどこにあって、いつ消えるか」だけをまとめます。</p>
     </div>
     <div class="tw">
       <table>
@@ -722,7 +722,7 @@ td.files{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
     <div class="sec-head">
       <div class="eyebrow">リポジトリ</div>
       <h2>どこに何があるか</h2>
-      <p>npm workspaces のモノレポ（Node.js 22 以上）と、Gradle の Kotlin が 1 つ。管理 API の契約は <code>docs/api/console.openapi.yaml</code> が元で、そこから作った型を API と画面の両方が使います。</p>
+      <p>npm workspaces のモノレポ（Node.js 22 以上）と、Gradle の Kotlin が 1 つ。管理 API の契約は <code>docs/contracts/api/console.openapi.yaml</code> が元で、そこから作った型を API と画面の両方が使います。</p>
     </div>
     <div class="tw">
       <table>
@@ -776,7 +776,7 @@ td.files{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
       <table>
         <thead><tr><th>やりたいこと</th><th>最初に開くファイル</th></tr></thead>
         <tbody>
-          <tr><td>管理 API の操作を足す・変える</td><td><code>docs/api/console.openapi.yaml</code>（型を作り直す）→ <code>api/src/console/router.ts</code> と各ハンドラ。契約は <code>docs/console-api.md</code></td></tr>
+          <tr><td>管理 API の操作を足す・変える</td><td><code>docs/contracts/api/console.openapi.yaml</code>（型を作り直す）→ <code>api/src/console/router.ts</code> と各ハンドラ。契約は <code>docs/contracts/console-api.md</code></td></tr>
           <tr><td>申請の状態の移り方を変える</td><td><code>api/src/console/publisher.ts</code>（申請・取り消し）、<code>review.ts</code>（審査）、<code>validator/</code>（機械審査）。DM-001 の状態図も</td></tr>
           <tr><td>機械で確かめる項目を変える</td><td>パッケージの形式なら yorisoi-platform の <code>core-format</code>、管理システムだけが知る確認（版・チャンネル提供者・アイコン）なら <code>validator/.../MachineReview.kt</code></td></tr>
           <tr><td>リストに載せる項目を変える</td><td><code>api/src/publish/aws.ts</code>（<code>DynamoStore</code>）と <code>packages/protocol/src/types.ts</code>。形式は API-CHANNEL-LIST の改訂が要る</td></tr>

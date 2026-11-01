@@ -13,7 +13,7 @@
 
 ## 目的・背景
 
-チャンネル提供者が登録し、鍵を紐づけ、チャンネル ID を登録し、パッケージに署名して申請（アップロード）できるようにする（[ARCH-001](../architecture.md)）。届いたパッケージの機械審査は [DES-004](DES-004-machine-review.md)、運営の審査は [DES-005](DES-005-review.md)、鍵の移し替えとメールの通知は [DES-006](DES-006-transfer-notify.md)。
+チャンネル提供者が登録し、鍵を紐づけ、チャンネル ID を登録し、パッケージに署名して申請（アップロード）できるようにする（[ARCH-001](architecture.md)）。届いたパッケージの機械審査は [DES-004](DES-004-machine-review.md)、運営の審査は [DES-005](DES-005-review.md)、鍵の移し替えとメールの通知は [DES-006](DES-006-transfer-notify.md)。
 
 ## 対応元ID（トレーサビリティ）
 
@@ -65,5 +65,5 @@
 
 ## 関連ドキュメント・参照リンク
 
-- [API-001](../console-api.md)、[DM-001](../data-model.md)、[DES-002](DES-002-operator-console.md)、[チャンネル提供者ガイド](../guide/publisher.md)
+- [API-001](../contracts/console-api.md)、[DM-001](data-model.md)、[DES-002](DES-002-operator-console.md)、[チャンネル提供者ガイド](../manual/publisher.md)
 - [platform API-CHANNEL-PACKAGE](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-PACKAGE.md)

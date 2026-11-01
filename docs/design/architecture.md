@@ -13,7 +13,7 @@ yorisoi-console を 9 枚の図で説明する。図 1 で「誰が何を使い�
 
 **手で配置した図・凡例・コードから確かめた細部つきの版は [architecture.html](architecture.html)**（ブラウザで開く）。この Markdown 版は GitHub の上で読むためのもので、同じ構成を Mermaid で描いている。
 
-図はコードと CDK から手で書き起こしたもの。CDK から機械的に描いた資源の図は [AWS 資源の図](aws-diagrams.md) にある。Lambda・バケット・項目の種類を足したり変えたりしたときは、この文書と architecture.html の両方を更新する。設計の理由は [ARCH-001](architecture.md)、データの細部は [DM-001](data-model.md)、API は [API-001](console-api.md) を見る。
+図はコードと CDK から手で書き起こしたもの。CDK から機械的に描いた資源の図は [AWS 資源の図](aws-diagrams.md) にある。Lambda・バケット・項目の種類を足したり変えたりしたときは、この文書と architecture.html の両方を更新する。設計の理由は [ARCH-001](architecture.md)、データの細部は [DM-001](data-model.md)、API は [API-001](../contracts/console-api.md) を見る。
 
 ## 図 1 · 全体: 4 種類の利用者と、AWS の上の 2 つの面
 
@@ -80,7 +80,7 @@ flowchart LR
 flowchart TB
   subgraph TS["TypeScript（npm workspaces）"]
     protocol["packages/protocol<br/>platform API-CHANNEL-LIST の文書の作成と検証<br/>（署名・要約・鍵セット）"]
-    types["packages/api-types<br/>管理 API の型<br/>← docs/api/console.openapi.yaml"]
+    types["packages/api-types<br/>管理 API の型<br/>← docs/contracts/api/console.openapi.yaml"]
     api["api<br/>publish（公開）・console（管理 API）・notify（メール）"]
     web["web<br/>画面（React + Vite）<br/>運営・チャンネル提供者"]
     infra["infra<br/>AWS CDK"]
@@ -111,7 +111,7 @@ flowchart TB
   conf -. テストベクタ .-> sf
 ```
 
-- 管理 API の契約は `docs/api/console.openapi.yaml` が元で、`packages/api-types` の型を API と画面の両方が使う
+- 管理 API の契約は `docs/contracts/api/console.openapi.yaml` が元で、`packages/api-types` の型を API と画面の両方が使う
 - 機械審査は、アプリと同じ `core-format` で確かめ、見本は SanpoGuide のプロンプト・パック（`prompts`）で組み立てる（審査とアプリの判定をずらさない）。`conformance` の `app-vectors.ts` が作った署名つきの文書で、アプリ側の確認（`ProviderDocuments`）をテストしている
 
 ## 図 3 · 信頼の鎖: アプリはルート鍵だけを知っていればよい
@@ -135,7 +135,7 @@ flowchart TB
 
 - KMS は 4,096 バイトまでしか署名できないので、リストは本体ではなく要約に署名する（platform API-CHANNEL-LIST P-8）
 - 素材集も同じ形で縛られる。リストの `collections[]` が素材集のパッケージ（`/col/{sha256}.zip`）の SHA-256 を持ち、素材集の中には素材提供者の署名（素材提供者の鍵 = アカウントID）が入る（platform API-MATERIALS）
-- ルート鍵はリポジトリにも AWS にも置かない。開発用のルート鍵は開発者の端末の `~/.yorisoi-console/dev/`、本番のルート鍵はオフラインの端末で作る（[鍵の手順書](operations/keys.md)）
+- ルート鍵はリポジトリにも AWS にも置かない。開発用のルート鍵は開発者の端末の `~/.yorisoi-console/dev/`、本番のルート鍵はオフラインの端末で作る（[鍵の手順書](../operations/keys.md)）
 - チャンネル提供者の鍵はチャンネル提供者のブラウザの中だけ。なくしたときは、運営の本人確認を経て新しい鍵に移す（図 4 の下）
 
 ## 図 4 · 申請から公開まで
@@ -258,7 +258,7 @@ flowchart LR
 | | 開発用（dev） | 本番（prod） |
 |---|---|---|
 | AWS アカウント | 開発用（ap-northeast-1） | 本番用に分ける（未作成） |
-| ルート鍵 | 開発者の端末（`~/.yorisoi-console/dev/`） | オフラインの端末（[鍵の手順書](operations/keys.md)） |
+| ルート鍵 | 開発者の端末（`~/.yorisoi-console/dev/`） | オフラインの端末（[鍵の手順書](../operations/keys.md)） |
 | 一覧のカーソルの鍵 | 配備のたびに作る（環境変数） | Secrets Manager |
 | WAF（Cognito） | なし | あり |
 | DynamoDB のポイントインタイムリカバリ | なし | あり |
@@ -267,11 +267,11 @@ flowchart LR
 | 費用の上限の通知 | 月 5 USD | — |
 | アプリへの内蔵 | しない（散策者が URL とリストIDで足す） | 内蔵するリスト |
 
-配備の手順は [docs/operations/deploy.md](operations/deploy.md)、鍵の手順は [docs/operations/keys.md](operations/keys.md)、費用は [docs/operations/cost.md](operations/cost.md)。
+配備の手順は [docs/operations/deploy.md](../operations/deploy.md)、鍵の手順は [docs/operations/keys.md](../operations/keys.md)、費用は [docs/operations/cost.md](../operations/cost.md)。
 
 ## 図 9 · その場の素材: 管理の面から、別のスタックのスタジオ・一言を扱う
 
-スタジオ（platform [REQ-STUDIO](https://github.com/duwenji/yorisoi-platform/blob/main/docs/requirements/REQ-STUDIO.md)）は別のスタック `YorisoiLocalMaterials-<env>` にあり、アプリはその API を直接呼ぶ（[DES-013](design/DES-013-studio.md)）。管理システムは、配備のときに Parameter Store からスタジオの表・バケット・確認の Lambda の名前を読み、素材提供者のスタジオと運営の対応を受け持つ。
+スタジオ（platform [REQ-STUDIO](https://github.com/duwenji/yorisoi-platform/blob/main/docs/requirements/REQ-STUDIO.md)）は別のスタック `YorisoiLocalMaterials-<env>` にあり、アプリはその API を直接呼ぶ（[DES-013](DES-013-studio.md)）。管理システムは、配備のときに Parameter Store からスタジオの表・バケット・確認の Lambda の名前を読み、素材提供者のスタジオと運営の対応を受け持つ。
 
 ```mermaid
 flowchart LR
@@ -294,13 +294,13 @@ flowchart LR
 
 - 提供者は、運営がスタジオを出すことを承認したあと、スタジオごとの審査なしに自分の責任で載せる。確認に当たったスタジオは提供者に返り、提供者が申し出ると運営が決める
 - 一言は事前の審査がない。確認の Lambda（一言はスタジオの Lambda の中）と通報で守り、3 台から通報されると隠れて運営の列に入る
-- 配備の順番は 中継 → スタジオ → 管理システム（スタジオは中継の表、管理システムはスタジオの表を Parameter Store から読む）。手順は [スタジオの手順](operations/studio.md)
+- 配備の順番は 中継 → スタジオ → 管理システム（スタジオは中継の表、管理システムはスタジオの表を Parameter Store から読む）。手順は [スタジオの手順](../operations/studio.md)
 
 ## 関連する文書
 
-- 使い方: [利用ガイド](guide/README.md)（運営・チャンネル提供者・素材提供者・素材提供者・開発と保守）
-- 設計の決定: [ARCH-001](architecture.md)、データ: [DM-001](data-model.md)、管理 API: [API-001](console-api.md)
-- 実装ごとの設計: [DES-001](design/DES-001-publisher.md)（公開）〜 [DES-006](design/DES-006-transfer-notify.md)（鍵の移し替えとメール）、素材集は [DES-007](design/DES-007-materials-review.md)（機械審査）〜 [DES-010](design/DES-010-materials-screens.md)（画面）、スタジオは [DES-013](design/DES-013-studio.md)
+- 使い方: [利用ガイド](../manual/README.md)（運営・チャンネル提供者・素材提供者・素材提供者・開発と保守）
+- 設計の決定: [ARCH-001](architecture.md)、データ: [DM-001](data-model.md)、管理 API: [API-001](../contracts/console-api.md)
+- 実装ごとの設計: [DES-001](DES-001-publisher.md)（公開）〜 [DES-006](DES-006-transfer-notify.md)（鍵の移し替えとメール）、素材集は [DES-007](DES-007-materials-review.md)（機械審査）〜 [DES-010](DES-010-materials-screens.md)（画面）、スタジオは [DES-013](DES-013-studio.md)
 - アプリとの境界: [platform API-CHANNEL-LIST](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-LIST.md)（リスト）・[platform API-CHANNEL-PACKAGE](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-PACKAGE.md)（パッケージ）・[platform API-MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-MATERIALS.md)（素材集）
 
 ## 決まり
@@ -343,8 +343,8 @@ flowchart LR
 | A-19 | チャンネル提供者への通知 | 判定・取り下げ・鍵の移し替えの結果を、Amazon SES でメールする（API-001 C-14）。API の Lambda は、状態を変えるトランザクションのあとに通知の要求を SQS に入れ、通知の Lambda が SES で送る。送れなければ再送し、それでも失敗したらデッドレターキューに入れて運営に知らせる（操作そのものは失敗にしない）。送信元は独自ドメイン（未決事項 No.1）で DKIM・SPF・DMARC を設定する。本番のアカウントは SES のサンドボックスの解除を申請する。バウンスと苦情は SES の設定セットで受け、操作の記録に残す |
 | A-20 | エコシステム（platform ECOSYSTEM E-17・E-18・E-25・E-26、DES-011） | 管理システムとリストはエコシステムで 1 つ（アプリごとに分けない）。アプリは端末で絞り込む。機械審査は共通の `core-format` だけで確かめ（一覧にない値を拒む）、アプリごとの除外はしない。リストにはアプリごとの必要な版（`minAppVersions`）を載せる。審査の見本は過ごし方ごとの代表アプリのプロンプト・パックで作り（`walk` は SanpoGuide）、代表アプリのない過ごし方は見本を作らず語り手の文章を人が読む |
 | A-17 | 配備 | AWS CDK（TypeScript）で両方のアカウントに配備する。GitHub Actions から OIDC で AWS に入る（長期のアクセスキーを持たない）。本番への配備は手動で承認する |
-| A-21 | 運営の AI の中継（platform API-AI-RELAY） | 管理システムと同じアカウントに、別のスタック `YorisoiAiRelay-<env>`（別の CDK アプリ `infra/bin/relay.ts`）で置く。API Gateway は AWS WAF を付けられる REST API にする（HTTP API には付けられない）。Lambda（`api/src/relay/`）が Bedrock のモデルを、日本の中で処理する形（東京リージョンのモデルか jp 推論プロファイル）で、ロールで呼ぶ（Converse API）。呼べるモデルは設定の一覧（DeepSeek V3.2 と Claude Haiku 4.5）に限り、どれを使うかと 1 日の上限・月の予算は Parameter Store に置く（配備し直さずに切り替える）。月の費用は中継がトークン数から足し上げ、予算に達したらその場で止める（AWS Budgets は反映が遅いため使わない）。手順は [運営の AI の手順](operations/ai-relay.md) |
-| A-22 | 運営のスポットのタイル（platform API-SPOT-TILES） | 管理システムと同じアカウントに、別のスタック `YorisoiSpotTiles-<env>`（別の CDK アプリ `infra/bin/tiles.ts`）で置く。S3 のバケットを CloudFront（OAC、アクセスログなし）で配り、範囲外のタイルが 404 になるようバケットの一覧も許す。毎週、EventBridge Scheduler が ECS Fargate のタスク（`tiles/`。osmium-tool・pyosmium）を動かし、Geofabrik の日本の抽出からタイルを作って、中身が変わったものだけ上げる。前回より 1 割を超えて減ったら上げずに止め、運営に知らせる。VPC は公開サブネットだけで NAT は置かない。手順は [スポットのタイルの手順](operations/spot-tiles.md) |
+| A-21 | 運営の AI の中継（platform API-AI-RELAY） | 管理システムと同じアカウントに、別のスタック `YorisoiAiRelay-<env>`（別の CDK アプリ `infra/bin/relay.ts`）で置く。API Gateway は AWS WAF を付けられる REST API にする（HTTP API には付けられない）。Lambda（`api/src/relay/`）が Bedrock のモデルを、日本の中で処理する形（東京リージョンのモデルか jp 推論プロファイル）で、ロールで呼ぶ（Converse API）。呼べるモデルは設定の一覧（DeepSeek V3.2 と Claude Haiku 4.5）に限り、どれを使うかと 1 日の上限・月の予算は Parameter Store に置く（配備し直さずに切り替える）。月の費用は中継がトークン数から足し上げ、予算に達したらその場で止める（AWS Budgets は反映が遅いため使わない）。手順は [運営の AI の手順](../operations/ai-relay.md) |
+| A-22 | 運営のスポットのタイル（platform API-SPOT-TILES） | 管理システムと同じアカウントに、別のスタック `YorisoiSpotTiles-<env>`（別の CDK アプリ `infra/bin/tiles.ts`）で置く。S3 のバケットを CloudFront（OAC、アクセスログなし）で配り、範囲外のタイルが 404 になるようバケットの一覧も許す。毎週、EventBridge Scheduler が ECS Fargate のタスク（`tiles/`。osmium-tool・pyosmium）を動かし、Geofabrik の日本の抽出からタイルを作って、中身が変わったものだけ上げる。前回より 1 割を超えて減ったら上げずに止め、運営に知らせる。VPC は公開サブネットだけで NAT は置かない。手順は [スポットのタイルの手順](../operations/spot-tiles.md) |
 | A-23 | スタジオ（platform MATERIALS・API-LOCAL-MATERIALS、DES-013） | 管理システムと同じアカウントに、別のスタック `YorisoiLocalMaterials-<env>`（別の CDK アプリ `infra/bin/local-materials.ts`）で置く。API Gateway は AWS WAF を付けられる REST API にする。トークン・運営の AI のモデルと月の予算は中継のものを使い、中継の表と Parameter Store を読む（費用は中継の月の合計に足す）。一言・スタジオは DynamoDB の表に、スタジオの音声は S3 に置いて CloudFront で配る。スタジオの音声は Amazon Transcribe で文字に起こして確かめる。配備は中継 → スタジオ → 管理システムの順 |
 
 ```mermaid

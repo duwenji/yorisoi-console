@@ -13,7 +13,7 @@
 
 ## 目的・背景
 
-承認済みチャンネル・リスト（platform API-CHANNEL-LIST）を作って署名し、公開する土台（[ARCH-001](../architecture.md) A-6〜A-10・A-16・A-17）。チャンネル提供者・運営の画面がなくても、リストの発行元として署名済みのリストを出せる。
+承認済みチャンネル・リスト（platform API-CHANNEL-LIST）を作って署名し、公開する土台（[ARCH-001](architecture.md) A-6〜A-10・A-16・A-17）。チャンネル提供者・運営の画面がなくても、リストの発行元として署名済みのリストを出せる。
 
 ## 対応元ID（トレーサビリティ）
 
@@ -64,5 +64,5 @@
 
 ## 関連ドキュメント・参照リンク
 
-- [ARCH-001](../architecture.md)、[DM-001](../data-model.md)、[API-001](../console-api.md)
+- [ARCH-001](architecture.md)、[DM-001](data-model.md)、[API-001](../contracts/console-api.md)
 - [platform API-CHANNEL-LIST](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-LIST.md)

@@ -30,7 +30,7 @@ flowchart LR
 | **素材提供者**（スタジオを出す人） | [スタジオのガイド](studio.md) | スタジオを出す承認の申し込み、スタジオの作成（文・音声・区画・期間）、返されたときの申し出、聞いた数 |
 | **開発・保守をする人** | [開発・保守ガイド](maintainer.md) | 手元での開発とテスト、配備、初期設定、運営の担当者の追加、費用と監視、障害の対応 |
 | どの立場でも、まず | [仕組み](concepts.md) | 鍵と署名の関係、チャンネルが公開されるまでの流れ |
-| 全体を図で見たい | [構成図](../architecture.md)（HTML 版 `docs/architecture.html` も） | 利用者と AWS の部品、リポジトリ、申請から公開まで、データの置き場所 |
+| 全体を図で見たい | [構成図](../design/architecture.md)（HTML 版 `docs/design/architecture.html` も） | 利用者と AWS の部品、リポジトリ、申請から公開まで、データの置き場所 |
 
 ## 使える機能
 
@@ -82,10 +82,10 @@ flowchart LR
 | 文書 | 内容 |
 |---|---|
 | [platform 関係者と共通用語](https://github.com/duwenji/yorisoi-platform/blob/main/docs/overview/roles-and-vocabulary.md) | 散策者・チャンネル提供者・素材提供者・運営の役割と、関係者ごとの課題 |
-| [構成図](../architecture.md) | システム全体を 8 枚の図で |
-| [ARCH-001](../architecture.md) | AWS の構成と、その理由 |
-| [DM-001](../data-model.md) | データの持ち方と状態の移り方 |
-| [API-001](../console-api.md)・[OpenAPI](../api/console.openapi.yaml) | 管理 API の契約 |
+| [構成図](../design/architecture.md) | システム全体を 8 枚の図で |
+| [ARCH-001](../design/architecture.md) | AWS の構成と、その理由 |
+| [DM-001](../design/data-model.md) | データの持ち方と状態の移り方 |
+| [API-001](../contracts/console-api.md)・[OpenAPI](../contracts/api/console.openapi.yaml) | 管理 API の契約 |
 | [platform API-CHANNEL-LIST](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-LIST.md) | 承認済みチャンネル・リストの形式（アプリとの約束） |
 | [platform API-CHANNEL-PACKAGE](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-PACKAGE.md) | パッケージの形式 |
 | [platform チャンネル審査方針](https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/channel-review.md) | 何を確かめて承認・差し戻しにするか |

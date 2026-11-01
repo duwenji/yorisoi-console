@@ -15,7 +15,7 @@ infra の 4 つの CDK アプリを [cdk-dia](https://github.com/pistazie/cdk-di
 | 外枠 | スタック。中の枠は CDK の construct（管理システムの「管理の面」は `ConsoleApp`） |
 | 並び | 左から右へ。左端が入ってくる人、右へ進むほど使われる側（データ・鍵・設定）、右端が外へ出ていく先 |
 
-矢印の向きは、部品の種類（入口: CloudFront・API Gateway・EventBridge、動くもの: Lambda・ECS、使われるもの: それ以外）と参照の向きから決めている（[infra/tools/diagrams.mjs](../infra/tools/diagrams.mjs) の `arrow`）。データが流れる向きとは限らない。たとえば受付用のバケットにパッケージが届くと機械審査の Lambda が動くが、矢印は「機械審査がバケットを使う」向きに描く。流れの順番は手で描いた [構成図](architecture.md) で読む。外の利用者とサービスは、CDK に現れないので `diagrams.mjs` の `outside` に手で書いている。
+矢印の向きは、部品の種類（入口: CloudFront・API Gateway・EventBridge、動くもの: Lambda・ECS、使われるもの: それ以外）と参照の向きから決めている（[infra/tools/diagrams.mjs](../../infra/tools/diagrams.mjs) の `arrow`）。データが流れる向きとは限らない。たとえば受付用のバケットにパッケージが届くと機械審査の Lambda が動くが、矢印は「機械審査がバケットを使う」向きに描く。流れの順番は手で描いた [構成図](architecture.md) で読む。外の利用者とサービスは、CDK に現れないので `diagrams.mjs` の `outside` に手で書いている。
 
 主要な図は読みやすくするため、次のものを省いている（画像の下にも凡例として書いてある）。省いたものも含めた全部は各節の「全部の図」で見られる。
 
@@ -73,6 +73,6 @@ infra の 4 つの CDK アプリを [cdk-dia](https://github.com/pistazie/cdk-di
 CDK の資源を足したり名前を変えたりしたら作り直す。
 
 1. [Graphviz](https://graphviz.org/download/) を入れ、`dot` を PATH に通す
-2. `npm run diagrams -w infra` を実行する。4 つのアプリを開発用の設定で synth し、`docs/diagrams/` の 8 枚を書き換える。AWS の認証は要らない
+2. `npm run diagrams -w infra` を実行する。4 つのアプリを開発用の設定で synth し、`docs/design/diagrams/` の 8 枚を書き換える。AWS の認証は要らない
 
-日本語の役割・省く資源・枠の名前は [infra/tools/diagrams.mjs](../infra/tools/diagrams.mjs) にある。役割のない資源は英語の名前だけで出るので、新しい資源には役割を足す。
+日本語の役割・省く資源・枠の名前は [infra/tools/diagrams.mjs](../../infra/tools/diagrams.mjs) にある。役割のない資源は英語の名前だけで出るので、新しい資源には役割を足す。

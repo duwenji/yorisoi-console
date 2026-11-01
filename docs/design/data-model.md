@@ -26,7 +26,7 @@ DynamoDB では、取り出し方（アクセスパターン）からキーを�
 - 書き込みの単位（トランザクション）と、同時に書かれたときの守り方
 
 非スコープ:
-- 管理システムの API（[API-001](console-api.md)。本書のアクセスパターンを入力にする）
+- 管理システムの API（[API-001](../contracts/console-api.md)。本書のアクセスパターンを入力にする）
 - リストとパッケージの形式（platform API-CHANNEL-LIST・platform API-CHANNEL-PACKAGE）
 - Cognito のユーザー属性の詳細（メールアドレスなどは Cognito が持ち、本テーブルには複製しない）
 
@@ -86,7 +86,7 @@ DynamoDB では、取り出し方（アクセスパターン）からキーを�
 
 ### エコシステムの決定
 
-platform ECOSYSTEM（付き添いアプリのエコシステム）による。実装は [DES-011](design/DES-011-ecosystem.md)。
+platform ECOSYSTEM（付き添いアプリのエコシステム）による。実装は [DES-011](DES-011-ecosystem.md)。
 
 | No. | 論点 | 決定 |
 |---|---|---|

@@ -13,7 +13,7 @@
 
 ## 目的・背景
 
-[DES-007](DES-007-materials-review.md) の機械審査は、承認のときに写す値（`listing`）を申請に記録する。本書は、素材提供者と運営の操作（[API-001](../console-api.md)）と、[DM-001](../data-model.md) の書き込み（利用の記録・退会・移し替え）を実装する方式を決める。
+[DES-007](DES-007-materials-review.md) の機械審査は、承認のときに写す値（`listing`）を申請に記録する。本書は、素材提供者と運営の操作（[API-001](../contracts/console-api.md)）と、[DM-001](data-model.md) の書き込み（利用の記録・退会・移し替え）を実装する方式を決める。
 
 ## 対応元ID（トレーサビリティ）
 
@@ -49,4 +49,4 @@
 ## 関連ドキュメント・参照リンク
 
 - [DES-007](DES-007-materials-review.md)、[DES-005](DES-005-review.md)（チャンネルの審査）、[DES-006](DES-006-transfer-notify.md)（鍵の移し替え・通知）
-- [DM-001](../data-model.md)・[API-001](../console-api.md)
+- [DM-001](data-model.md)・[API-001](../contracts/console-api.md)

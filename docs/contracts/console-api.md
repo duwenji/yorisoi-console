@@ -15,7 +15,7 @@
 
 ## 目的・背景
 
-[ARCH-001](architecture.md) で管理システムの構成を、[DM-001](data-model.md) でデータを決めた。本書は、チャンネル提供者・素材提供者と運営が SPA から使う API を決める。素材提供者の役割と素材集の操作は、[platform MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/overview/materials.md)（素材の素材提供者）による。
+[ARCH-001](../design/architecture.md) で管理システムの構成を、[DM-001](../design/data-model.md) でデータを決めた。本書は、チャンネル提供者・素材提供者と運営が SPA から使う API を決める。素材提供者の役割と素材集の操作は、[platform MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/overview/materials.md)（素材の素材提供者）による。
 
 この API の利用者は、同じリポジトリの SPA（`web/`）だけ。アプリ（SanpoGuide）はこの API を使わない。アプリが使うのは、公開用の静的ファイル（platform API-CHANNEL-LIST）だけである。
 
@@ -455,8 +455,8 @@ AI の出力だけを保存する（C-13）。応答の `samplesId` を判定の
 ## 関連ドキュメント・参照リンク
 
 - [api/console.openapi.yaml](api/console.openapi.yaml): 入出力の正本
-- [ARCH-001](architecture.md): AWS の構成
-- [DM-001](data-model.md): データモデル
+- [ARCH-001](../design/architecture.md): AWS の構成
+- [DM-001](../design/data-model.md): データモデル
 - [platform API-CHANNEL-LIST](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-LIST.md)・[platform API-CHANNEL-PACKAGE](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-PACKAGE.md)・[platform チャンネル審査方針](https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/channel-review.md)
 - [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457): Problem Details for HTTP APIs
 - [platform MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/overview/materials.md)・[platform API-MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-MATERIALS.md)

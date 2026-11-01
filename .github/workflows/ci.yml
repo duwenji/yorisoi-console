@@ -69,5 +69,5 @@ jobs:
         working-directory: tiles
         run: |
           pip install -r requirements.txt pytest jsonschema
-          curl -fsSL -o /tmp/spot-tile.schema.json https://raw.githubusercontent.com/duwenji/yorisoi-platform/main/docs/api/spot-tile.schema.json
+          curl -fsSL -o /tmp/spot-tile.schema.json https://raw.githubusercontent.com/duwenji/yorisoi-platform/main/docs/contracts/api/spot-tile.schema.json
           SPOT_TILE_SCHEMA=/tmp/spot-tile.schema.json PYTHONPATH=. python -m pytest -q test

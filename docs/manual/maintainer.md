@@ -45,7 +45,7 @@ flowchart LR
 | 場所 | 中身 | 設計書 |
 |---|---|---|
 | `packages/protocol` | platform API-CHANNEL-LIST の文書の作成と検証（署名、要約、ID、エラーコード） | DES-001 |
-| `packages/api-types` | 管理 API の型（`docs/api/console.openapi.yaml` から生成） | DES-002 |
+| `packages/api-types` | 管理 API の型（`docs/contracts/api/console.openapi.yaml` から生成） | DES-002 |
 | `api/src/publish` | 公開の処理（Lambda）。DB・S3・CloudFront・KMS は差し替え口の後ろ。毎日の外部の素材の確認は `external.ts` | DES-001・DES-009 |
 | `api/src/console` | 管理 API（Lambda。運営の操作 `operator.ts`、チャンネル提供者の操作 `publisher.ts`、素材集 `collections.ts`、利用の記録 `uses.ts`、審査 `review.ts`、鍵の移し替え `transfer.ts`）と Cognito の post-confirmation トリガー | DES-002〜DES-006・DES-008 |
 | `api/src/notify` | チャンネル提供者・素材提供者へのメール（SQS で受けて SES で送る Lambda。開発用は記録だけ） | DES-006・DES-008 |
@@ -112,7 +112,7 @@ npm run check -w conformance -- http://127.0.0.1:8787 --allow-local-http --provi
 CONSOLE_URL=https://d32w19p7au8cu2.cloudfront.net npm run dev -w web   # http://localhost:5173
 ```
 
-**管理 API を変えるとき**: 先に `docs/api/console.openapi.yaml` と `docs/console-api.md` を直し、`npm run generate -w packages/api-types` で型を作り直します。
+**管理 API を変えるとき**: 先に `docs/contracts/api/console.openapi.yaml` と `docs/contracts/console-api.md` を直し、`npm run generate -w packages/api-types` で型を作り直します。
 
 ## 4. 変更の進め方
 
@@ -231,9 +231,9 @@ aws cognito-idp admin-add-user-to-group --user-pool-id $P --username <メール>
 
 | 文書 | いつ読むか |
 |---|---|
-| [ARCH-001](../architecture.md) | 構成を変えるとき。なぜ今の形かを知りたいとき |
-| [DM-001](../data-model.md) | テーブルの項目・キー・状態の移り方を変えるとき |
-| [API-001](../console-api.md)・[OpenAPI](../api/console.openapi.yaml) | 管理 API を変えるとき（OpenAPI が入出力の正本） |
+| [ARCH-001](../design/architecture.md) | 構成を変えるとき。なぜ今の形かを知りたいとき |
+| [DM-001](../design/data-model.md) | テーブルの項目・キー・状態の移り方を変えるとき |
+| [API-001](../contracts/console-api.md)・[OpenAPI](../contracts/api/console.openapi.yaml) | 管理 API を変えるとき（OpenAPI が入出力の正本） |
 | [DES-001](../design/DES-001-publisher.md)〜[DES-013](../design/DES-013-studio.md) | 実装の判断と検証の結果（素材集は DES-007〜DES-010、複数のアプリは DES-011、スタジオは DES-013） |
 | [TODO](../TODO.md) | 残っている作業 |
 | [配備の手順](../operations/deploy.md)・[費用](../operations/cost.md) | 環境ごとの値、手順、費用 |

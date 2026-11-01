@@ -46,4 +46,4 @@
 
 ## 関連ドキュメント・参照リンク
 
-- [DES-004](DES-004-machine-review.md)、[API-001](../console-api.md)、[DM-001](../data-model.md)、[運営の使い方](../guide/operator.md)、[通しの確認](../../tools/e2e/README.md)
+- [DES-004](DES-004-machine-review.md)、[API-001](../contracts/console-api.md)、[DM-001](data-model.md)、[運営の使い方](../manual/operator.md)、[通しの確認](../../tools/e2e/README.md)
