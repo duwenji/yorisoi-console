@@ -13,11 +13,11 @@ yorisoi のアプリ（SanpoGuide・CycleGuide）の第三者のチャンネル�
 
 ## 構成
 
-AWS（ap-northeast-1）。API Gateway・Lambda・DynamoDB・Cognito・KMS・SQS、公開は S3 と CloudFront。全体を図で見るには **構成図**（[HTML 版](docs/architecture.html)はブラウザで開く。GitHub の上では [Markdown 版](docs/architecture.md)）、設計の理由は [console ARCH-001](docs/architecture.md)。npm workspaces のモノレポ（Node.js 22 以上）。
+AWS（ap-northeast-1）。API Gateway・Lambda・DynamoDB・Cognito・KMS・SQS、公開は S3 と CloudFront。全体を図で見るには **構成図**（[HTML 版](docs/design/architecture.html)はブラウザで開く。GitHub の上では [Markdown 版](docs/design/architecture.md)）、設計の理由は [console ARCH-001](docs/design/architecture.md)。npm workspaces のモノレポ（Node.js 22 以上）。
 
 ```
 packages/protocol  platform API-CHANNEL-LIST の文書の作成と検証（共通）
-packages/api-types 管理 API の型（docs/api/console.openapi.yaml から生成）
+packages/api-types 管理 API の型（docs/contracts/api/console.openapi.yaml から生成）
 api/               Lambda（TypeScript）。公開の処理（api/src/publish）、管理 API（api/src/console）、チャンネル提供者へのメール（api/src/notify）、運営の AI の中継（api/src/relay）、スタジオ（api/src/studio）
 tools/root-key     ルート鍵の CLI（オフラインで使う）
 tools/provision    配備した環境に署名鍵・鍵セットを登録して公開する（初期設定）
@@ -56,7 +56,7 @@ cd infra && npx cdk synth -c env=dev -c rootPublicKey=<base64url>
 ## 文書
 
 - **[文書一覧](docs/README.md)**: このリポジトリの設計・契約・ガイド・運用文書（まずここから）
-- **[利用ガイド](docs/guide/README.md)**: 運営・チャンネル提供者・素材提供者・素材提供者・開発・保守をする人ごとの使い方（まずここから）
+- **[利用ガイド](docs/manual/README.md)**: 運営・チャンネル提供者・素材提供者・素材提供者・開発・保守をする人ごとの使い方（まずここから）
 
 - [TODO.md](docs/TODO.md): 次にやること
 - [配備の手順](docs/operations/deploy.md): 開発用は配備済み（リスト https://d32t2reyxml47d.cloudfront.net、画面 https://d32w19p7au8cu2.cloudfront.net）

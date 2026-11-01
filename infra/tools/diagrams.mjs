@@ -1,4 +1,4 @@
-// Draws docs/diagrams/*.png from the four CDK apps with cdk-dia (needs Graphviz's dot on PATH):
+// Draws docs/design/diagrams/*.png from the four CDK apps with cdk-dia (needs Graphviz's dot on PATH):
 //   npm run diagrams -w infra
 // Each stack gets two pictures: <name>.png keeps the parts worth reading, labelled in Japanese, with
 // arrows from what uses to what is used and the people and services outside the stack; <name>-all.png
@@ -10,7 +10,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const infraDir = fileURLToPath(new URL('../', import.meta.url));
-const outDir = fileURLToPath(new URL('../../docs/diagrams/', import.meta.url));
+const outDir = fileURLToPath(new URL('../../docs/design/diagrams/', import.meta.url));
 const workDir = join(tmpdir(), 'yorisoi-console-diagrams');
 
 // The console needs a root public key to synth; any 32 bytes draw the same picture.

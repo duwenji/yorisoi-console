@@ -13,7 +13,7 @@
 
 ## 目的・背景
 
-[platform MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/overview/materials.md) で素材の素材提供者を切り出し、管理システムでは [DM-001](../data-model.md) と [API-001](../console-api.md) でデータと API を決めた。本書は、素材集と、素材・きっかけを持つチャンネルの機械審査を決める。`core-format` が、素材・きっかけ・素材集の確認と、リストを使った参照の解決を受け持つ。
+[platform MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/overview/materials.md) で素材の素材提供者を切り出し、管理システムでは [DM-001](data-model.md) と [API-001](../contracts/console-api.md) でデータと API を決めた。本書は、素材集と、素材・きっかけを持つチャンネルの機械審査を決める。`core-format` が、素材・きっかけ・素材集の確認と、リストを使った参照の解決を受け持つ。
 
 ## 対応元ID（トレーサビリティ）
 
@@ -50,5 +50,5 @@
 ## 関連ドキュメント・参照リンク
 
 - [DES-004](DES-004-machine-review.md): チャンネルの機械審査
-- [DM-001](../data-model.md)・[API-001](../console-api.md)
+- [DM-001](data-model.md)・[API-001](../contracts/console-api.md)
 - [platform MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/overview/materials.md)・[platform API-CHANNEL-PACKAGE](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-PACKAGE.md)・[platform API-MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-MATERIALS.md)

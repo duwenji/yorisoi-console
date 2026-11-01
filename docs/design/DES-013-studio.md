@@ -150,7 +150,7 @@ API-LOCAL-MATERIALS のエンドポイントを、1 つの Lambda（`api/src/loc
 
 ## 関連ドキュメント・参照リンク
 
-- [ARCH-001](../architecture.md)（A-21 中継、A-23 スタジオ）
-- [DM-001](../data-model.md)（アカウント `PUB#` と `roles`）
+- [ARCH-001](architecture.md)（A-21 中継、A-23 スタジオ）
+- [DM-001](data-model.md)（アカウント `PUB#` と `roles`）
 - [DES-006](DES-006-transfer-notify.md)（メールの通知）
 - [platform API-LOCAL-MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-LOCAL-MATERIALS.md)

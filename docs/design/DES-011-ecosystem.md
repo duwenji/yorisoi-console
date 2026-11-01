@@ -55,5 +55,5 @@
 ## 関連ドキュメント・参照リンク
 
 - [DES-007](DES-007-materials-review.md)・[DES-008](DES-008-materials-api.md)・[DES-009](DES-009-materials-publish.md): 素材集の審査・API・公開
-- [DM-001](../data-model.md)、[API-001](../console-api.md)
+- [DM-001](data-model.md)、[API-001](../contracts/console-api.md)
 - [platform ECOSYSTEM](https://github.com/duwenji/yorisoi-platform/blob/main/docs/overview/yorisoi-ecosystem.md)、platform API-CHANNEL-LIST・platform API-CHANNEL-PACKAGE・platform API-MATERIALS

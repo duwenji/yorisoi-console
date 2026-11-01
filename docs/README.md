@@ -8,24 +8,24 @@
 
 | 知りたいこと | 文書 |
 |---|---|
-| AWS 構成とコンポーネントの関係、構成の決まり | [構成図と決まり（ARCH-001）](architecture.md) |
-| CDK にある AWS 資源とつながり（生成した図） | [AWS 資源の図](aws-diagrams.md) |
+| AWS 構成とコンポーネントの関係、構成の決まり | [構成図と決まり（ARCH-001）](design/architecture.md) |
+| CDK にある AWS 資源とつながり（生成した図） | [AWS 資源の図](design/aws-diagrams.md) |
 | 機能ごとの設計 | [console DES-001〜DES-011・DES-013](design/) |
-| 管理画面が使う API | [console API-001](console-api.md) と [OpenAPI 定義](api/console.openapi.yaml) |
-| DynamoDB の項目・キー・状態 | [console DM-001](data-model.md) |
+| 管理画面が使う API | [console API-001](contracts/console-api.md) と [OpenAPI 定義](contracts/api/console.openapi.yaml) |
+| DynamoDB の項目・キー・状態 | [console DM-001](design/data-model.md) |
 | 残作業と確認事項 | [console TODO](TODO.md) |
 
 ## 利用ガイド
 
 | 読者 | 文書 |
 |---|---|
-| まず全体を知りたい | [利用ガイド](guide/README.md) |
-| 仕組みと用語 | [仕組み](guide/concepts.md) |
-| 運営 | [運営ガイド](guide/operator.md) |
-| チャンネル提供者 | [チャンネル提供者ガイド](guide/publisher.md) |
-| 素材提供者 | [素材提供者ガイド](guide/producer.md) |
-| 素材提供者（スタジオ） | [スタジオのガイド](guide/studio.md) |
-| 開発・保守 | [開発・保守ガイド](guide/maintainer.md) |
+| まず全体を知りたい | [利用ガイド](manual/README.md) |
+| 仕組みと用語 | [仕組み](manual/concepts.md) |
+| 運営 | [運営ガイド](manual/operator.md) |
+| チャンネル提供者 | [チャンネル提供者ガイド](manual/publisher.md) |
+| 素材提供者 | [素材提供者ガイド](manual/producer.md) |
+| 素材提供者（スタジオ） | [スタジオのガイド](manual/studio.md) |
+| 開発・保守 | [開発・保守ガイド](manual/maintainer.md) |
 
 ## サンプルデータ
 
@@ -53,6 +53,6 @@
 | 関係者の呼び方 | [関係者と共通用語](https://github.com/duwenji/yorisoi-platform/blob/main/docs/overview/roles-and-vocabulary.md) |
 | チャンネル審査方針 | [審査方針](https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/channel-review.md) |
 | スタジオの決まり | [一言の利用規約](https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/notes-terms.md)・[スタジオの決まり](https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/studio-rules.md) |
-| SanpoGuide の使い方と運用 | [SanpoGuide 手引き](https://github.com/duwenji/yorisoi-platform/blob/main/docs/apps/sanpoguide/manual/README.md) |
+| SanpoGuide の使い方と運用 | [SanpoGuide 手引き](https://github.com/duwenji/yorisoi-sanpoguide/blob/main/docs/manual/README.md) |
 
 文書 ID はリポジトリごとに管理します。たとえば `console ARCH-001` と `platform CHANNELS` は別の文書です。platform の文書は canonical ID で指します。

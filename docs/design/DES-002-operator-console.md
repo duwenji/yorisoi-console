@@ -13,7 +13,7 @@
 
 ## 目的・背景
 
-運営が画面から、署名鍵・鍵セットの登録、公開、チャンネル提供者の管理、チャンネルの取り下げ、操作の記録の確認をできるようにする（[ARCH-001](../architecture.md)）。署名鍵と鍵セットの登録は `tools/provision` でもできる。
+運営が画面から、署名鍵・鍵セットの登録、公開、チャンネル提供者の管理、チャンネルの取り下げ、操作の記録の確認をできるようにする（[ARCH-001](architecture.md)）。署名鍵と鍵セットの登録は `tools/provision` でもできる。
 
 ## 対応元ID（トレーサビリティ）
 
@@ -69,5 +69,5 @@
 
 ## 関連ドキュメント・参照リンク
 
-- [ARCH-001](../architecture.md)、[API-001](../console-api.md)、[DM-001](../data-model.md)、[DES-001](DES-001-publisher.md)
+- [ARCH-001](architecture.md)、[API-001](../contracts/console-api.md)、[DM-001](data-model.md)、[DES-001](DES-001-publisher.md)
 - [配備の手順](../operations/deploy.md)
