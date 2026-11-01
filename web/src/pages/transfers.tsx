@@ -8,7 +8,7 @@ import { Empty, ReasonForm, Status, Time, useLoad } from './common';
 const STATE: Record<Schemas['KeyTransferState'], string> = { requested: '確認待ち', approved: '承認', rejected: '認めない', cancelled: '取り消し' };
 const REASONS: Record<string, string> = { lost: 'なくした', leaked: '漏れたおそれ', other: 'その他' };
 
-/** Key transfers waiting for the operator, and past ones (ADR-001 A-15, DES-006). */
+/** Key transfers waiting for the operator, and past ones (ARCH-001 A-15, DES-006). */
 export function TransfersPage() {
   const { api } = useSession();
   const [state, setState] = useState<Schemas['KeyTransferState']>('requested');

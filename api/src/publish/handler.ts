@@ -39,7 +39,7 @@ const deps = {
 };
 
 /**
- * The publishing Lambda (ADR-001 A-10). Invoked asynchronously by the API after an approval,
+ * The publishing Lambda (ARCH-001 A-10). Invoked asynchronously by the API after an approval,
  * revocation, key transfer or keyset registration, and daily by EventBridge Scheduler.
  * Reserved concurrency 1 keeps runs apart; the conditional write on `seq` guards the rest.
  */

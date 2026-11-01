@@ -148,7 +148,7 @@ function CollectionDecision({ sub, account, onDone }: { sub: Schemas['Collection
         <dd>
           {verified
             ? <>確認済み{account?.producerVerification && `（${account.producerVerification.method}）`}</>
-            : '未確認。承認するには、名乗っている団体・個人であることと素材の権利を、登録された連絡先など鍵とは別の経路で確かめ、下に記録してください（審査基準、ADR-002 D-20）'}
+            : '未確認。承認するには、名乗っている団体・個人であることと素材の権利を、登録された連絡先など鍵とは別の経路で確かめ、下に記録してください（審査基準、MATERIALS D-20）'}
         </dd>
       </div>
       {!verified && (

@@ -55,7 +55,7 @@ flowchart LR
 | `tools/provision` | 配備したリストの初期設定（署名鍵・鍵セットの登録と初回の公開） | DES-001 |
 | `tools/e2e` | 開発用の環境での通しの確認（機械審査、試用チケット、審査と承認、鍵の移し替えとメール、素材集 `collections.ts`） | DES-004〜DES-006・DES-009 |
 | `conformance` | 任意のリストに対する準拠テスト | DES-001 |
-| `infra` | AWS CDK。環境ごとの設定は `infra/lib/config.ts` | ADR-001 |
+| `infra` | AWS CDK。環境ごとの設定は `infra/lib/config.ts` | ARCH-001 |
 
 機械審査の Lambda（`validator`）は、SanpoGuide が公開する形式の確認（`io.github.duwenji.yorisoi:core-format`）と、審査の見本を作るプロンプト・パック（SanpoGuide の `io.github.duwenji.yorisoi.sanpoguide:prompts`、CycleGuide の `io.github.duwenji.yorisoi.cycleguide:prompts`）を GitHub Packages から読み込みます。読むには `read:packages` のトークンが要ります（CI は `GITHUB_TOKEN`。手元は `~/.gradle/gradle.properties` に `gpr.user`・`gpr.key` を書くか、yorisoi-platform・SanpoGuide・CycleGuide で `./gradlew publishToMavenLocal`）。
 
@@ -116,7 +116,7 @@ CONSOLE_URL=https://d32w19p7au8cu2.cloudfront.net npm run dev -w web   # http://
 
 ## 4. 変更の進め方
 
-- 設計の判断は、文書（ADR・API・DM・DES）を書いて開発者の承認を得てから実装します
+- 設計の判断は、文書（ARCH・API・DM・DES）を書いて開発者の承認を得てから実装します
 - `main` に直接入れず、ブランチから PR を出します。CI（型の確認・テスト・画面のビルド・`cdk synth`）が通ることを確かめます
 - テキストの改行は LF に固定しています（`.gitattributes`）。署名やハッシュはバイト単位で比べるためです
 
@@ -135,7 +135,7 @@ npx cdk deploy -c env=dev -c rootPublicKey=<ルート鍵の公開鍵>
 
 - **配備の前に必ず `cdk diff` を見ます**。`[-]`（削除）や置き換えがあれば、意図したものか確かめます。DynamoDB のテーブル、KMS の鍵、Cognito のユーザープールの置き換えは、データ・鍵・利用者を失います
 - `rootPublicKey` を間違えると、公開の処理が鍵セットを拒み、公開できなくなります（署名を誤って出すことはありません）
-- 本番（`-c env=prod`）はまだ配備しません。本番用のアカウント、本番のルート鍵（ADR-001 T-1）、独自ドメイン（ADR-001 T-2）、SES（ADR-001 T-3）がそろってから
+- 本番（`-c env=prod`）はまだ配備しません。本番用のアカウント、本番のルート鍵（鍵の手順書）、独自ドメイン（ARCH-001 未決事項 No.1）、SES（ARCH-001 未決事項 No.6）がそろってから
 - 開発用のカーソルの鍵は合成のたびに変わるので、配備すると画面の「さらに読み込む」の続きが切れます（読み込み直せば直る）
 - スタジオを使う環境（`infra/lib/config.ts` の `studio` が `true`）では、管理システムは配備のときにスタジオの表・バケットの名前を Parameter Store から読みます。**中継 → スタジオ → 管理システム** の順に配備します（[スタジオの手順](../operations/studio.md)「配備」）
 
@@ -165,7 +165,7 @@ npx cdk deploy -c env=dev -c rootPublicKey=<ルート鍵の公開鍵>
 
 ## 7. 運営の担当者を足す・外す
 
-運営は、登録の画面からはなれません（ADR-001 A-4）。管理者が作って `operator` グループに入れます。
+運営は、登録の画面からはなれません（ARCH-001 A-4）。管理者が作って `operator` グループに入れます。
 
 ```sh
 P=<ユーザープールID>   # 開発用は ap-northeast-1_dy8A7T1fG
@@ -231,7 +231,7 @@ aws cognito-idp admin-add-user-to-group --user-pool-id $P --username <メール>
 
 | 文書 | いつ読むか |
 |---|---|
-| [ADR-001](../adr/ADR-001-aws-architecture.md) | 構成を変えるとき。なぜ今の形かを知りたいとき |
+| [ARCH-001](../architecture.md) | 構成を変えるとき。なぜ今の形かを知りたいとき |
 | [DM-001](../data-model.md) | テーブルの項目・キー・状態の移り方を変えるとき |
 | [API-001](../console-api.md)・[OpenAPI](../api/console.openapi.yaml) | 管理 API を変えるとき（OpenAPI が入出力の正本） |
 | [DES-001](../design/DES-001-publisher.md)〜[DES-013](../design/DES-013-studio.md) | 実装の判断と検証の結果（素材集は DES-007〜DES-010、複数のアプリは DES-011、スタジオは DES-013） |

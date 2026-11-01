@@ -89,7 +89,7 @@ describe('ConsoleStack', () => {
     dev.hasResource('AWS::KMS::Key', { DeletionPolicy: 'Retain' });
   });
 
-  it('requires TOTP MFA from everyone and lets only sign-ups become publishers (ADR-001 A-4 1.2)', () => {
+  it('requires TOTP MFA from everyone and lets only sign-ups become publishers (ARCH-001 A-4 1.2)', () => {
     prod.hasResourceProperties('AWS::Cognito::UserPool', {
       MfaConfiguration: 'ON',
       EnabledMfas: ['SOFTWARE_TOKEN_MFA'],
@@ -194,7 +194,7 @@ describe('ConsoleStack', () => {
     expect(csp).not.toContain('api.anthropic.com');
   });
 
-  it('emails publishers through a queue with retries, a dead-letter queue and an alarm (ADR-001 A-19)', () => {
+  it('emails publishers through a queue with retries, a dead-letter queue and an alarm (ARCH-001 A-19)', () => {
     prod.hasResourceProperties('AWS::SQS::Queue', { RedrivePolicy: { maxReceiveCount: 3, deadLetterTargetArn: Match.anyValue() } });
     prod.hasResourceProperties('AWS::Lambda::EventSourceMapping', { FunctionResponseTypes: ['ReportBatchItemFailures'] });
     prod.hasResourceProperties('AWS::CloudWatch::Alarm', { AlarmDescription: Match.stringLikeRegexp('dead-letter'), AlarmActions: Match.anyValue() });

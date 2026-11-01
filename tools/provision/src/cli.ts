@@ -33,7 +33,7 @@ async function main() {
     return;
   }
   if (values.env === 'prod') {
-    // The production root key stays on an offline machine (ADR-001 A-9, docs/operations/keys.md).
+    // The production root key stays on an offline machine (ARCH-001 A-9, docs/operations/keys.md).
     console.error('provision is for development only: register production keys in the operator screen and sign keysets offline (docs/operations/keys.md)');
     process.exitCode = 1;
     return;

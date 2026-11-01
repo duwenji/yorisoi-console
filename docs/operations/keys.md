@@ -1,6 +1,6 @@
 # 鍵の手順書
 
-ルート鍵と署名鍵を作る・保管する・入れ替える・失効させる手順（[ADR-001](../adr/ADR-001-aws-architecture.md) A-8・A-9、[platform API-CHANNEL-LIST](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-LIST.md) P-1・P-2）。画面の操作は[運営ガイド 5 章](../guide/operator.md#5-署名鍵と鍵セット)、KMS の鍵の追加は[保守ガイド 8 章](../guide/maintainer.md#8-署名鍵を足す)にあり、この手順書はそれらをいつ・どの順で使うかと、画面の外で行うことを書く。
+ルート鍵と署名鍵を作る・保管する・入れ替える・失効させる手順（[ARCH-001](../architecture.md) A-8・A-9、[platform API-CHANNEL-LIST](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-LIST.md) P-1・P-2）。画面の操作は[運営ガイド 5 章](../guide/operator.md#5-署名鍵と鍵セット)、KMS の鍵の追加は[保守ガイド 8 章](../guide/maintainer.md#8-署名鍵を足す)にあり、この手順書はそれらをいつ・どの順で使うかと、画面の外で行うことを書く。
 
 ## 1. 鍵と置き場所
 
@@ -9,7 +9,7 @@
 | ルート鍵の秘密鍵（`root-key.pem`、合言葉で暗号化） | USB メモリ 2 本（別々の場所）。ネットにつながる端末には置かない | 秘密 | 鍵セットを作れない（[7 章](#7-ルート鍵をなくした漏れた)） |
 | ルート鍵の合言葉 | 紙 1 枚。USB メモリとは別の場所 | 秘密 | 同上 |
 | ルート鍵の公開鍵（`root-key.pub`）とリストID | [配備の手順](deploy.md)の表、CDK の `rootPublicKey`、アプリの内蔵のリスト | 公開してよい | 公開鍵は秘密鍵から作り直せる |
-| 署名鍵 | KMS（取り出せない。ADR-001 A-8） | KMS の外に出ない | 新しい鍵を作って入れ替える（[5 章](#5-署名鍵を入れ替える半年ごと)） |
+| 署名鍵 | KMS（取り出せない。ARCH-001 A-8） | KMS の外に出ない | 新しい鍵を作って入れ替える（[5 章](#5-署名鍵を入れ替える半年ごと)） |
 | 鍵セット（ルート鍵の署名つき） | 管理システムの `KEYSET`、案内文書 | 公開される | 運営の画面の履歴に残る |
 
 担当: ルート鍵と USB メモリ・紙は**運営**が持つ。KMS の鍵を作るのは**開発・保守の担当者**。1 人が両方を兼ねてもよい。
@@ -49,7 +49,7 @@ read -rs ROOT_KEY_PASSPHRASE && export ROOT_KEY_PASSPHRASE
 
 ## 4. 最初の鍵セット（本番の最初の配備）
 
-本番の配備は、ルート鍵・独自ドメイン（ADR-001 T-2）・SES（T-3）がそろってから。
+本番の配備は、ルート鍵・独自ドメイン（ARCH-001 未決事項 No.1）・SES（No.6）がそろってから。
 
 1. 開発・保守の担当者が配備する（[配備の手順](deploy.md)の本番。`-c env=prod -c rootPublicKey=<rootKey>`）。署名鍵 `signingKeyIds` の最初の鍵ができる。出力の `SigningKeyArn0` を運営に渡す
 2. 運営が画面で KMS の鍵を登録する（[運営ガイド 5.3](../guide/operator.md#53-署名鍵の入れ替え半年ごと) の 2）

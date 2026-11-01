@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Root key CLI for an offline machine: create the root key and sign keysets (ADR-001 A-9)",
+  "description": "Root key CLI for an offline machine: create the root key and sign keysets (ARCH-001 A-9)",
   "bin": {
     "sanpo-root-key": "./src/cli.ts"
   },

@@ -5,7 +5,7 @@ import { dirname, join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { generateRootKey, signKeyset, verifyKeyset, type KeysetInput } from './root-key.js';
 
-const USAGE = `sanpo-root-key — the provider's root key, on an offline machine (ADR-001 A-9)
+const USAGE = `sanpo-root-key — the provider's root key, on an offline machine (ARCH-001 A-9)
 
   generate --out <dir>
       Creates root-key.pem (encrypted with $ROOT_KEY_PASSPHRASE) and root-key.pub.

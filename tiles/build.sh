@@ -1,5 +1,5 @@
 #!/bin/sh
-# The weekly batch of the spot tiles (platform ADR-SPOT-TILES S-6), run as the Fargate task's command.
+# The weekly batch of the spot tiles (platform API-SPOT-TILES S-6), run as the Fargate task's command.
 # BUCKET and DISTRIBUTION_ID come from the task's environment; PUBLISH_ARGS may be --force.
 set -eu
 

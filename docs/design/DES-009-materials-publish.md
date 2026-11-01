@@ -13,7 +13,7 @@
 
 ## 目的・背景
 
-素材集の承認・取り下げと、チャンネルの利用の記録（[DES-008](DES-008-materials-api.md)）を、承認済みリスト（platform API-CHANNEL-LIST）に載せる公開の処理と、毎日の外部の素材の確認（DM-001 M-21、platform ADR-MATERIALS D-22）、準拠テストを決める。
+素材集の承認・取り下げと、チャンネルの利用の記録（[DES-008](DES-008-materials-api.md)）を、承認済みリスト（platform API-CHANNEL-LIST）に載せる公開の処理と、毎日の外部の素材の確認（DM-001 M-21、platform MATERIALS D-22）、準拠テストを決める。
 
 ## 対応元ID（トレーサビリティ）
 

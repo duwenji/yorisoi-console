@@ -12,7 +12,7 @@ import { ulid } from '../../api/src/console/util.js';
 import { createKey, sha256, sign, signPackage, type PublisherKey } from '../../web/src/publisher-crypto.js';
 
 /**
- * Lists, on the dev environment, what SanpoGuide needs to show platform ADR-004 on the emulator: a
+ * Lists, on the dev environment, what SanpoGuide needs to show platform AI-ROLES on the emulator: a
  * collection that lets the AI take its text as grounds (`grants.grounding`, API-MATERIALS I-13) about the
  * area of Tsurugaoka Hachimangu in Kamakura, and a walking channel that uses it. On the emulator,
  * set the location there (35.3258, 139.5564), add the dev list, choose the channel: the cost

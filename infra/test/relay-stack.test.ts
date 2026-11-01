@@ -15,7 +15,7 @@ describe('RelayStack', () => {
   const prod = template('prod');
   const dev = template('dev');
 
-  it('calls only the listed models in Japan, starting with DeepSeek V3.2 in Tokyo (ADR-AI-RELAY R-5)', () => {
+  it('calls only the listed models in Japan, starting with DeepSeek V3.2 in Tokyo (API-AI-RELAY R-5)', () => {
     const policies = JSON.stringify(prod.findResources('AWS::IAM::Policy'));
     for (const name of [':bedrock:ap-northeast-1::foundation-model/deepseek.v3.2', 'inference-profile/jp.anthropic.claude-haiku-4-5-20251001-v1:0', 'ap-northeast-3::foundation-model/anthropic.claude-haiku-4-5']) {
       expect(policies).toContain(name);

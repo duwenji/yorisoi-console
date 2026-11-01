@@ -5,7 +5,7 @@ import { useSession } from '../main';
 import { Empty, ReasonForm, Status, Time, useLoad } from './common';
 
 // The operator's page of the closed areas (REQ-STUDIO・REQ-NOTES F-15): where neither studios nor notes may be
-// put, as both are fetched by area (platform ADR-MATERIALS D-44).
+// put, as both are fetched by area (platform MATERIALS D-44).
 
 export function OperatorAreas() {
   return (

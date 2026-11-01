@@ -106,7 +106,7 @@ stateDiagram-v2
 
 ## 6. 素材集と素材提供者
 
-素材（テキスト・画像・音声・映像）は、チャンネルとは別に「素材集」として審査・公開されます（[platform ADR-MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-MATERIALS.md)）。素材集を作るのは素材提供者、それを使って散策者に見せるのはチャンネルです。
+素材（テキスト・画像・音声・映像）は、チャンネルとは別に「素材集」として審査・公開されます（[platform MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/overview/materials.md)）。素材集を作るのは素材提供者、それを使って散策者に見せるのはチャンネルです。
 
 ```mermaid
 flowchart LR
@@ -123,7 +123,7 @@ flowchart LR
 
 ## 7. その場の素材（スタジオ・一言）
 
-**その場の素材** は、運営が置き場を持ち、アプリが区画ごとに取る素材です。今は **スタジオ**（素材提供者が出す店や地域のお知らせ）と **一言**（散策者・走る人がその場所に置く投稿）の 2 種類があり、種類どうしに関係はありません。どちらも、近くを通る人のアプリで、チャンネルが決めたきっかけ（語りの合間など）に読み上げます（platform [ADR-MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-MATERIALS.md) D-44・[REQ-STUDIO](https://github.com/duwenji/yorisoi-platform/blob/main/docs/requirements/REQ-STUDIO.md)・[REQ-NOTES](https://github.com/duwenji/yorisoi-platform/blob/main/docs/requirements/REQ-NOTES.md)）。素材集とは、守り方が違います。
+**その場の素材** は、運営が置き場を持ち、アプリが区画ごとに取る素材です。今は **スタジオ**（素材提供者が出す店や地域のお知らせ）と **一言**（散策者・走る人がその場所に置く投稿）の 2 種類があり、種類どうしに関係はありません。どちらも、近くを通る人のアプリで、チャンネルが決めたきっかけ（語りの合間など）に読み上げます（platform [MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/overview/materials.md) D-44・[REQ-STUDIO](https://github.com/duwenji/yorisoi-platform/blob/main/docs/requirements/REQ-STUDIO.md)・[REQ-NOTES](https://github.com/duwenji/yorisoi-platform/blob/main/docs/requirements/REQ-NOTES.md)）。素材集とは、守り方が違います。
 
 | | チャンネル・素材集 | スタジオ | 一言 |
 |---|---|---|---|

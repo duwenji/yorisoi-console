@@ -13,7 +13,7 @@
 
 ## 目的・背景
 
-[platform ADR-ECOSYSTEM-PLATFORM](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-ECOSYSTEM-PLATFORM.md)（付き添いアプリのエコシステム）で、チャンネル・素材集はアプリをまたいで使うものになった。管理システムはエコシステムで 1 つ、リストも 1 本（E-17）で、アプリが端末で絞り込む。契約:
+[platform ECOSYSTEM](https://github.com/duwenji/yorisoi-platform/blob/main/docs/overview/yorisoi-ecosystem.md)（付き添いアプリのエコシステム）で、チャンネル・素材集はアプリをまたいで使うものになった。管理システムはエコシステムで 1 つ、リストも 1 本（E-17）で、アプリが端末で絞り込む。契約:
 
 - [platform API-CHANNEL-PACKAGE](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-PACKAGE.md): `activities`・`genres`・`requires.features`。審査は一覧にない値を拒む（G-3）
 - [platform API-CHANNEL-LIST](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-LIST.md): リストの `channels[].activities`・`genres`・`requires`（P-19）、`minAppVersions`（P-20）
@@ -25,7 +25,7 @@
 
 | 対応元ID | 内容 | 対応状況 |
 |---|---|---|
-| platform ADR-ECOSYSTEM-PLATFORM | E-17（リストは 1 本）、E-18・E-26（機械審査はコアだけ、見本は過ごし方ごとの代表アプリ）、E-25（アプリの除外はしない） | 本書で実装 |
+| platform ECOSYSTEM | E-17（リストは 1 本）、E-18・E-26（機械審査はコアだけ、見本は過ごし方ごとの代表アプリ）、E-25（アプリの除外はしない） | 本書で実装 |
 | platform API-CHANNEL-PACKAGE | G-1〜G-7、V-24 | 本書で実装 |
 | platform API-CHANNEL-LIST | P-19・P-20、V-27・V-29 | 本書で実装 |
 | platform API-MATERIALS | I-11、W-20 | 本書で実装 |
@@ -56,4 +56,4 @@
 
 - [DES-007](DES-007-materials-review.md)・[DES-008](DES-008-materials-api.md)・[DES-009](DES-009-materials-publish.md): 素材集の審査・API・公開
 - [DM-001](../data-model.md)、[API-001](../console-api.md)
-- [platform ADR-ECOSYSTEM-PLATFORM](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-ECOSYSTEM-PLATFORM.md)、platform API-CHANNEL-LIST・platform API-CHANNEL-PACKAGE・platform API-MATERIALS
+- [platform ECOSYSTEM](https://github.com/duwenji/yorisoi-platform/blob/main/docs/overview/yorisoi-ecosystem.md)、platform API-CHANNEL-LIST・platform API-CHANNEL-PACKAGE・platform API-MATERIALS

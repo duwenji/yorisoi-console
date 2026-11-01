@@ -1,6 +1,6 @@
 # スポットのタイルの手順
 
-運営のスポットのタイル（platform [ADR-SPOT-TILES](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-SPOT-TILES.md)・[API-SPOT-TILES](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-SPOT-TILES.md)）を配備し、作り直し、止まったときに直す手順。タイルは管理システムとも運営の AI とも別のスタック（`YorisoiSpotTiles-<env>`）で、別の CDK アプリ（`infra/bin/tiles.ts`）から配備する。
+運営のスポットのタイル（platform [API-SPOT-TILES](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-SPOT-TILES.md)）を配備し、作り直し、止まったときに直す手順。タイルは管理システムとも運営の AI とも別のスタック（`YorisoiSpotTiles-<env>`）で、別の CDK アプリ（`infra/bin/tiles.ts`）から配備する。
 
 ## 構成
 

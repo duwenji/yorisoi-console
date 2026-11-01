@@ -83,7 +83,7 @@ flowchart LR
 |---|---|
 | [platform 関係者と共通用語](https://github.com/duwenji/yorisoi-platform/blob/main/docs/overview/roles-and-vocabulary.md) | 散策者・チャンネル提供者・素材提供者・運営の役割と、関係者ごとの課題 |
 | [構成図](../architecture.md) | システム全体を 8 枚の図で |
-| [ADR-001](../adr/ADR-001-aws-architecture.md) | AWS の構成と、その理由 |
+| [ARCH-001](../architecture.md) | AWS の構成と、その理由 |
 | [DM-001](../data-model.md) | データの持ち方と状態の移り方 |
 | [API-001](../console-api.md)・[OpenAPI](../api/console.openapi.yaml) | 管理 API の契約 |
 | [platform API-CHANNEL-LIST](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-LIST.md) | 承認済みチャンネル・リストの形式（アプリとの約束） |

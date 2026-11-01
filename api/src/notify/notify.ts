@@ -2,7 +2,7 @@ import { GetCommand, TransactWriteCommand, type DynamoDBDocumentClient } from '@
 import { auditItem, type Notice } from '../console/deps.js';
 
 /**
- * Emails the publisher what happened (ADR-001 A-19, API-001 C-14, DES-006). The console API queues
+ * Emails the publisher what happened (ARCH-001 A-19, API-001 C-14, DES-006). The console API queues
  * a notice after its change; this sends it once, to the publisher's Cognito-verified address, and
  * records the outcome in the audit log (without the address).
  */

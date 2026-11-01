@@ -15,7 +15,7 @@ describe('TilesStack', () => {
   const prod = template('prod');
   const dev = template('dev');
 
-  it('serves a private bucket through CloudFront, without access logs (ADR-SPOT-TILES S-7, S-12)', () => {
+  it('serves a private bucket through CloudFront, without access logs (API-SPOT-TILES S-7, S-12)', () => {
     prod.hasResourceProperties('AWS::S3::Bucket', {
       PublicAccessBlockConfiguration: { BlockPublicAcls: true, BlockPublicPolicy: true, IgnorePublicAcls: true, RestrictPublicBuckets: true },
     });

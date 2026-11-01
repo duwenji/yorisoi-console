@@ -274,7 +274,7 @@ export class CloudFrontCdn implements Cdn {
   }
 }
 
-/** Signs with an Ed25519 key in KMS: pure Ed25519 over the message itself (ADR-001 A-8, at most 4,096 bytes). */
+/** Signs with an Ed25519 key in KMS: pure Ed25519 over the message itself (ARCH-001 A-8, at most 4,096 bytes). */
 export function kmsSigner(key: SigningKeyRecord, kms: KMSClient = new KMSClient({})): Signer {
   return {
     keyId: key.keyId,

@@ -13,7 +13,7 @@ const env = (name: string) => {
   return value;
 };
 
-/** The daily limit the operator may set (ADR-AI-RELAY R-14), and what is used otherwise. */
+/** The daily limit the operator may set (API-AI-RELAY R-14), and what is used otherwise. */
 export const LIMIT_RANGE = { min: 5, max: 100, fallback: 30 } as const;
 const SETTINGS_SECONDS = 300;
 

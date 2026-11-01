@@ -1660,7 +1660,7 @@ components:
 
     StudioCategory:
       type: string
-      description: スタジオの分類（platform API-MATERIALS「スタジオの分類」、ADR-MATERIALS D-55）
+      description: スタジオの分類（platform API-MATERIALS「スタジオの分類」、MATERIALS D-55）
       enum: [shrine-temple, event, food, shopping, sightseeing, nature, culture, traffic, community]
 
     StudioInput:

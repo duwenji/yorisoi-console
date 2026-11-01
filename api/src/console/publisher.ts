@@ -361,7 +361,7 @@ export async function createKeyChallenge(deps: Deps, req: Request): Promise<Resp
   return json(201, { nonce, message, expiresAt: expiresAt.toISOString() });
 }
 
-/** Proof that the caller holds the key: its signature over a challenge they just got (ADR-001 A-5). */
+/** Proof that the caller holds the key: its signature over a challenge they just got (ARCH-001 A-5). */
 export async function provenKey(deps: Deps, pub: Item, body: Record<string, unknown>) {
   const nonce = requiredText(body, 'nonce', { max: 26, pattern: /^[0-9A-HJKMNP-TV-Z]{26}$/ });
   const challenge = await get(deps, `PUB#${String(pub.publisherId)}`, `CHALLENGE#${nonce}`);
@@ -617,7 +617,7 @@ export async function withdrawSubmission(deps: Deps, req: Request): Promise<Resp
   return withEtag(200, submissionView(await loadSubmission(deps, channelId, submissionId)));
 }
 
-// ---- test tickets (API-CHANNEL-LIST 試用チケット, ADR-001 A-13) ----
+// ---- test tickets (API-CHANNEL-LIST 試用チケット, ARCH-001 A-13) ----
 
 /** States whose package passed the machine review and still exists to try. */
 const TRIABLE = ['awaiting_review', 'in_review', 'returned', 'approved'];

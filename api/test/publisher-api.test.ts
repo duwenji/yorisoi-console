@@ -114,7 +114,7 @@ describe('registering', () => {
   });
 });
 
-describe('binding a key (ADR-001 A-5)', () => {
+describe('binding a key (ARCH-001 A-5)', () => {
   it('needs a signature over a fresh challenge by that key', async () => {
     await call(alice, 'POST', '/api/publisher', { body: { displayName: 'a', contact: 'b' } });
     const key = generateEd25519();

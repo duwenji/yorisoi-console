@@ -16,7 +16,7 @@
 platform のその場の素材（区画ごとに運営から取る素材。今はスタジオと一言の 2 種類で、種類どうしに関係はない）の置き場と配信を、管理システムでどう作るかを決める。
 
 - [platform REQ-STUDIO](https://github.com/duwenji/yorisoi-platform/blob/main/docs/requirements/REQ-STUDIO.md): 機能と受入条件。X-2 で、置き場と配信のサーバー、素材提供者の承認、スタジオの作成・申し出の確認・数の画面を管理システムに置く
-- [platform ADR-MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-MATERIALS.md): 人の発言の層、運営が提供者を承認する（S-2）、識別とブロック（S-4・S-5）、契約（S-7）、T-4（管理システムでの素材提供者の承認）
+- [platform MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/overview/materials.md): 人の発言の層、運営が提供者を承認する（S-2）、識別とブロック（S-4・S-5）、契約（S-7）、T-4（管理システムでの素材提供者の承認）
 - [platform API-LOCAL-MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-LOCAL-MATERIALS.md): アプリとの契約
 - [platform 一言の利用規約](https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/notes-terms.md)・[スタジオの決まりと素材提供者の承認の基準](https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/studio-rules.md)
 
@@ -41,8 +41,8 @@ platform のその場の素材（区画ごとに運営から取る素材。今�
 | platform REQ-STUDIO・REQ-NOTES D-6・D-18 | スタジオと一言の確認 | K-10〜K-13 |
 | platform REQ-STUDIO F-13〜F-15・F-18〜F-21・F-24、D-23 | 通報、運営の操作、スタジオを作る、素材提供者の承認、数 | K-14〜K-19 |
 | platform REQ-STUDIO N-2・N-5 | 残すもの、費用 | K-6・K-12、[データモデル](#データモデル) |
-| platform ADR-MATERIALS T-4 | 管理システムでの素材提供者の承認 | K-14・K-15 |
-| ADR-001 A-21 | 運営の AI の中継 | K-3（中継の表と設定を読む） |
+| platform MATERIALS D-39 | 管理システムでの素材提供者の承認 | K-14・K-15 |
+| ARCH-001 A-21 | 運営の AI の中継 | K-3（中継の表と設定を読む） |
 
 ## 方針・決定事項
 
@@ -50,7 +50,7 @@ platform のその場の素材（区画ごとに運営から取る素材。今�
 
 | No. | 判断 | 理由 |
 |---|---|---|
-| K-1 | **別のスタック** `YorisoiLocalMaterials-<env>`（別の CDK アプリ `infra/bin/local-materials.ts`）に、REST API（本番は AWS WAF を付ける）、アプリ向けの Lambda（`api/src/local/`）、確認の Lambda、DynamoDB の表、音声のバケットと CloudFront を置く（ADR-001 A-23） | 中継・タイルと同じ形。管理システムや中継と止め合わない |
+| K-1 | **別のスタック** `YorisoiLocalMaterials-<env>`（別の CDK アプリ `infra/bin/local-materials.ts`）に、REST API（本番は AWS WAF を付ける）、アプリ向けの Lambda（`api/src/local/`）、確認の Lambda、DynamoDB の表、音声のバケットと CloudFront を置く（ARCH-001 A-23） | 中継・タイルと同じ形。管理システムや中継と止め合わない |
 | K-2 | **配備の順番**: 中継 → スタジオ → 管理システム。スタジオは中継の表と設定の名前を、管理システムはスタジオの表とバケットの名前を、Parameter Store から配備のときに読む | スタック間の出力（Export）は消すときに縛られるので使わない |
 | K-3 | **中継との結び付き**: スタジオの Lambda は、中継の表の `TOKEN#…` を読んでトークンを確かめ（API-LOCAL-MATERIALS ST-2）、中継の Parameter Store のモデルと月の予算を読み、運営の AI の費用を中継の表の `SPEND`（月の合計）に足す。予算に達していれば一言を置かせない（`relay_paused`）。中継の 1 日の回数は使わない（ST-7） | 予算を 1 つにまとめる（REQ-NOTES N-5）。中継の作りを変えずに済む |
 | K-4 | **置いた人の値**: 中継のトークンの項目にある `install`（中継の鍵でのインストール ID の HMAC）をそのまま使う。スタジオの表と記録にはこの値だけを残す | 中継と同じ値なので、締め出しと上限が中継と同じ端末にかかる。開発用の中継は配備ごとに鍵が変わるので、開発用ではブロック・締め出しが配備で消える（受け入れる） |
@@ -135,7 +135,7 @@ API-LOCAL-MATERIALS のエンドポイントを、1 つの Lambda（`api/src/loc
 | 段 | 中身 | 確かめること |
 |---|---|---|
 | 1 | スタジオのスタック、アプリ向けの API、一言の確認。中継の表と設定の名前を Parameter Store に出す | API-LOCAL-MATERIALS V-01〜V-05・V-07〜V-12 を単体テストと開発用の配備で |
-| 2 | スタジオの確認（Transcribe・AI）、素材提供者の承認とスタジオの管理 API・画面（T-4） | REQ-STUDIO AC-9・AC-10、V-06 |
+| 2 | スタジオの確認（Transcribe・AI）、素材提供者の承認とスタジオの管理 API・画面 | REQ-STUDIO AC-9・AC-10、V-06 |
 | 3 | 運営の対応の画面（申し出・通報・一言・締め出し・置けない区画）、数の画面 | REQ-NOTES AC-12・AC-13、AC-8 |
 | 4 | 利用ガイド・運用の手順・構成図・AWS 資源の図 | — |
 
@@ -150,7 +150,7 @@ API-LOCAL-MATERIALS のエンドポイントを、1 つの Lambda（`api/src/loc
 
 ## 関連ドキュメント・参照リンク
 
-- [ADR-001](../adr/ADR-001-aws-architecture.md)（A-21 中継、A-23 スタジオ）
+- [ARCH-001](../architecture.md)（A-21 中継、A-23 スタジオ）
 - [DM-001](../data-model.md)（アカウント `PUB#` と `roles`）
 - [DES-006](DES-006-transfer-notify.md)（メールの通知）
 - [platform API-LOCAL-MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-LOCAL-MATERIALS.md)

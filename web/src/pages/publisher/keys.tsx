@@ -9,7 +9,7 @@ const KEY_STATUS: Record<string, string> = { active: '使用中', pending_transf
 const TRANSFER_STATE: Record<string, string> = { requested: '運営の確認待ち', approved: '承認', rejected: '認められなかった', cancelled: '取り消した' };
 const REASONS = { lost: 'なくした', leaked: '漏れたおそれがある', other: 'その他' } as const;
 
-/** The publisher's keys, and moving to a new key when the old one is lost or leaked (ADR-001 A-15, DES-006). */
+/** The publisher's keys, and moving to a new key when the old one is lost or leaked (ARCH-001 A-15, DES-006). */
 export function PublisherKeys() {
   const { api } = useSession();
   const pub = useLoad(async () => (await api.GET('/api/publisher')).data, [api]);

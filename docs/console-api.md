@@ -15,7 +15,7 @@
 
 ## 目的・背景
 
-[ADR-001](adr/ADR-001-aws-architecture.md) で管理システムの構成を、[DM-001](data-model.md) でデータを決めた。本書は、チャンネル提供者・素材提供者と運営が SPA から使う API を決める。素材提供者の役割と素材集の操作は、[platform ADR-MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-MATERIALS.md)（素材の素材提供者）による。
+[ARCH-001](architecture.md) で管理システムの構成を、[DM-001](data-model.md) でデータを決めた。本書は、チャンネル提供者・素材提供者と運営が SPA から使う API を決める。素材提供者の役割と素材集の操作は、[platform MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/overview/materials.md)（素材の素材提供者）による。
 
 この API の利用者は、同じリポジトリの SPA（`web/`）だけ。アプリ（SanpoGuide）はこの API を使わない。アプリが使うのは、公開用の静的ファイル（platform API-CHANNEL-LIST）だけである。
 
@@ -29,19 +29,19 @@
 
 非スコープ:
 - 公開用の静的ファイル（platform API-CHANNEL-LIST）
-- Lambda の内部の呼び出し（機械審査・公開。ADR-001 A-10・A-11）
+- Lambda の内部の呼び出し（機械審査・公開。ARCH-001 A-10・A-11）
 - 通知のメールの文面（実装時に決める。送る出来事と宛先は C-14）
 
 ## 対応元ID（トレーサビリティ）
 
 | 対応元ID | 内容 | 対応状況 |
 |---|---|---|
-| ADR-001 | A-3（HTTP API・JWT）、A-4（Cognito のグループ）、A-5（鍵の紐づけ）、A-11〜A-15、A-18（上限・停止）、D-4（見本はブラウザから） | 本書で API にする |
+| ARCH-001 | A-3（HTTP API・JWT）、A-4（Cognito のグループ）、A-5（鍵の紐づけ）、A-11〜A-15、A-18（上限・停止）、D-4（見本はブラウザから） | 本書で API にする |
 | DM-001 | AP-01〜AP-22、状態の移り方、M-2（上限）、M-5（版の番号）、M-11（`rev`） | 本書の操作の対応先 |
 | platform API-CHANNEL-LIST | `channels[]` の項目（`description`・`tags`・`regions`・`icon`）、試用チケット、鍵セット | 申請の入力・試用チケット・鍵セットの登録 |
 | platform API-CHANNEL-PACKAGE | エラーコード、チャンネル提供者の署名 | 機械審査の結果をそのまま返す |
 | DM-001 | M-16〜M-25、AP-23〜AP-29 | 本書で API にする |
-| platform ADR-MATERIALS・platform API-MATERIALS | D-8・D-9・D-14・D-17〜D-22、素材集の形式、`CollectionReferences` | 本書で API にする。エラーコードは platform API-CHANNEL-PACKAGE・platform API-MATERIALS のもの |
+| platform MATERIALS・platform API-MATERIALS | D-8・D-9・D-14・D-17〜D-22、素材集の形式、`CollectionReferences` | 本書で API にする。エラーコードは platform API-CHANNEL-PACKAGE・platform API-MATERIALS のもの |
 
 ## 方針・決定事項
 
@@ -53,7 +53,7 @@
 | C-2 | エラーの形 | RFC 9457（`application/problem+json`）に `code` を足す。platform の [API-SECRET-MESSAGES](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-SECRET-MESSAGES.md) と同じ |
 | C-3 | 契約の正本 | 本書と OpenAPI 3.1。SPA と Lambda の型は OpenAPI から作る |
 | C-4 | チャンネル提供者の退会 | チャンネル提供者が自分で退会できる。公開中のチャンネルはすべて取り下げ、Cognito のユーザーと連絡先を消す。操作の記録、アカウントIDの予約、チャンネルIDは残す（再利用させない） |
-| C-14 | チャンネル提供者への通知 | 判定（承認・差し戻し・却下）、取り下げ、鍵の移し替えの結果（承認・認めない）を、チャンネル提供者にメールで知らせる。送るのは Amazon SES（ADR-001 A-19）。宛先は Cognito で確認済みのメールアドレス（`contact` ではない）。本文には理由と画面へのリンクだけを入れ、見本・運営の `sub` は入れない。メールが送れなくても操作は成功させ、送信の結果は操作の記録に残す |
+| C-14 | チャンネル提供者への通知 | 判定（承認・差し戻し・却下）、取り下げ、鍵の移し替えの結果（承認・認めない）を、チャンネル提供者にメールで知らせる。送るのは Amazon SES（ARCH-001 A-19）。宛先は Cognito で確認済みのメールアドレス（`contact` ではない）。本文には理由と画面へのリンクだけを入れ、見本・運営の `sub` は入れない。メールが送れなくても操作は成功させ、送信の結果は操作の記録に残す |
 
 ### 設計の決定
 
@@ -256,7 +256,7 @@ sequenceDiagram
 - `name`・`summary`・`lang`・`version` はパッケージの `channel.json` から機械審査が読む。この要求には含めない
 - 受け付けるのは、チャンネル提供者が `active`、移し替えの申し出がない、チャンネルが自分のもの、審査待ちの申請がない（DM-001 M-2）、今日の申請の数が上限の内、のとき
 - 両方のファイルが届いたら機械審査が始まる（`validating`）。結果は `validation` に入る。不合格なら `validation_failed`
-- 機械審査では、platform API-CHANNEL-PACKAGE の確認（ADR-001 A-11）に加えて、次を確かめる: アイコンが PNG で 256×256 以下、`channel.json` の `id` がこのチャンネル、`publisher` がチャンネル提供者の今の鍵、`version` が最後に承認した版より大きい（M-5）
+- 機械審査では、platform API-CHANNEL-PACKAGE の確認（ARCH-001 A-11）に加えて、次を確かめる: アイコンが PNG で 256×256 以下、`channel.json` の `id` がこのチャンネル、`publisher` がチャンネル提供者の今の鍵、`version` が最後に承認した版より大きい（M-5）
 
 ### POST /api/collections/{collectionId}/submissions
 
@@ -443,20 +443,20 @@ AI の出力だけを保存する（C-13）。応答の `samplesId` を判定の
 ## 制約
 
 - API Gateway の HTTP API の本文は 10MB まで、Lambda の応答は 6MB まで。パッケージは本文で送らず S3 に直接上げる
-- HTTP API には AWS WAF を直接付けられない。流量の制限は API Gateway のルートごとの制限と、Cognito に付けた WAF（ADR-001 A-18）で行う
+- HTTP API には AWS WAF を直接付けられない。流量の制限は API Gateway のルートごとの制限と、Cognito に付けた WAF（ARCH-001 A-18）で行う
 
 ## 未決事項・リスク
 
 | No. | 内容 | 決める時期 |
 |---|---|---|
-| 1 | 鍵の移し替えの本人確認で、何を「鍵とは別の経路」とするか（ADR-001 未決事項 No.5）。API では運営が `verification` に自由に書く | 運用の開始前 |
-| 2 | チャンネル提供者向けの API（CI からの申請。ADR-001 未決事項 No.2） | 要望が出たとき |
+| 1 | 鍵の移し替えの本人確認で、何を「鍵とは別の経路」とするか（ARCH-001 未決事項 No.5）。API では運営が `verification` に自由に書く | 運用の開始前 |
+| 2 | チャンネル提供者向けの API（CI からの申請。ARCH-001 未決事項 No.2） | 要望が出たとき |
 
 ## 関連ドキュメント・参照リンク
 
 - [api/console.openapi.yaml](api/console.openapi.yaml): 入出力の正本
-- [ADR-001](adr/ADR-001-aws-architecture.md): AWS の構成
+- [ARCH-001](architecture.md): AWS の構成
 - [DM-001](data-model.md): データモデル
 - [platform API-CHANNEL-LIST](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-LIST.md)・[platform API-CHANNEL-PACKAGE](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-PACKAGE.md)・[platform チャンネル審査方針](https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/channel-review.md)
 - [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457): Problem Details for HTTP APIs
-- [platform ADR-MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-MATERIALS.md)・[platform API-MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-MATERIALS.md)
+- [platform MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/overview/materials.md)・[platform API-MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-MATERIALS.md)

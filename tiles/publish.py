@@ -4,7 +4,7 @@
 
 Only the tiles whose content changed are uploaded, so the others keep their ETag (ST-5). Tiles no
 longer made are deleted. Stops without changing anything when the tiles or the elements in them
-dropped by more than a tenth since last time (platform ADR-SPOT-TILES S-6): the previous week's
+dropped by more than a tenth since last time (platform API-SPOT-TILES S-6): the previous week's
 tiles stay. `--force` publishes anyway.
 """
 

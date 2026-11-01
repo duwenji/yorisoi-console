@@ -13,7 +13,7 @@
 
 ## 目的・背景
 
-チャンネル提供者が登録し、鍵を紐づけ、チャンネル ID を登録し、パッケージに署名して申請（アップロード）できるようにする（[ADR-001](../adr/ADR-001-aws-architecture.md)）。届いたパッケージの機械審査は [DES-004](DES-004-machine-review.md)、運営の審査は [DES-005](DES-005-review.md)、鍵の移し替えとメールの通知は [DES-006](DES-006-transfer-notify.md)。
+チャンネル提供者が登録し、鍵を紐づけ、チャンネル ID を登録し、パッケージに署名して申請（アップロード）できるようにする（[ARCH-001](../architecture.md)）。届いたパッケージの機械審査は [DES-004](DES-004-machine-review.md)、運営の審査は [DES-005](DES-005-review.md)、鍵の移し替えとメールの通知は [DES-006](DES-006-transfer-notify.md)。
 
 ## 対応元ID（トレーサビリティ）
 
@@ -21,7 +21,7 @@
 |---|---|---|
 | API-001 | チャンネル提供者の操作（`/api/publisher*`、`/api/channels*`、申請、取り消し）、C-4（退会）、C-10（署名付き POST） | 実装（下表） |
 | DM-001 | USER・PUB・KEY・ACCOUNT・CHALLENGE・QUOTA・CH・SUB、M-2・M-5・M-7・M-15、DV-02〜DV-04 | 実装 |
-| ADR-001 | A-5（鍵の紐づけ）、A-11（受付用の S3）、D-7（誰でも登録できる） | 実装 |
+| ARCH-001 | A-5（鍵の紐づけ）、A-11（受付用の S3）、D-7（誰でも登録できる） | 実装 |
 | platform API-CHANNEL-PACKAGE | F-6（チャンネル提供者の署名） | 画面の中で署名する |
 
 ## 方針・決定事項

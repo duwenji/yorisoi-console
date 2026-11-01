@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "AWS CDK app of the channel management system (ADR-001)",
+  "description": "AWS CDK app of the channel management system (ARCH-001)",
   "scripts": {
     "synth": "cdk synth --quiet",
     "cdk": "cdk",

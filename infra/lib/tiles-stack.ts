@@ -24,7 +24,7 @@ export interface TilesStackProps extends StackProps {
 }
 
 /**
- * The operator's spot tiles (platform ADR-SPOT-TILES S-6, S-7): a stack of its own, apart from the
+ * The operator's spot tiles (platform API-SPOT-TILES S-6, S-7): a stack of its own, apart from the
  * console and the AI relay. A bucket served by CloudFront without access logs (S-12), and a weekly
  * Fargate task that makes the tiles from Geofabrik's extract of Japan and puts the changed ones in
  * the bucket (`tiles/`).
@@ -96,7 +96,7 @@ export class TilesStack extends Stack {
     );
 
     new scheduler.Schedule(this, 'Weekly', {
-      description: 'Make the spot tiles from the week’s OpenStreetMap (ADR-SPOT-TILES S-5)',
+      description: 'Make the spot tiles from the week’s OpenStreetMap (API-SPOT-TILES S-5)',
       schedule: scheduler.ScheduleExpression.cron({ minute: '0', hour: config.schedule.hour, weekDay: config.schedule.weekDay, timeZone: TimeZone.ASIA_TOKYO }),
       target: new schedulerTargets.EcsRunFargateTask(cluster, {
         taskDefinition: task,
