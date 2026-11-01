@@ -1,23 +1,24 @@
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
 import type { Schemas } from '@yorisoi-console/api-types';
+import { STUDIO_CATEGORIES, type StudioCategory } from '@yorisoi-console/protocol';
 import { describe, ifMatch } from '../api';
 import { useSession } from '../main';
 import { CellMap } from './cell-map';
 import { Empty, ReasonForm, Status, Time, useLoad } from './common';
 
-// The studio's pages (DES-013 K-14〜K-17): providers apply and put up placements; the operator
+// The studio's pages (DES-013 K-14〜K-17): providers apply and put up studios; the operator
 // approves providers and answers appeals.
 
 const RULES_URL = 'https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/studio-rules.md';
-const RULES_VERSION = 1;
+const RULES_VERSION = 2;
 const AUDIO_MAX_BYTES = 512 * 1024;
 
 const STUDIO_STATUS: Record<Schemas['StudioStatus'], string> = {
   none: '申し込んでいない', requested: '審査待ち', approved: '承認', declined: '見送り', suspended: '止めている', revoked: '取り消し',
 };
 
-const PLACEMENT_STATE: Record<Schemas['PlacementState'], string> = {
+const STUDIO_STATE: Record<Schemas['StudioState'], string> = {
   uploading: '音声待ち', checking: '確認中', returned: '返した', appealed: '申し出中', live: '載っている', stopped: '止めた',
   suspended: '止められた', removed: '消された', rejected: '載せない',
 };
@@ -47,7 +48,7 @@ const CHECK_ITEMS: Record<string, string> = {
 const JST = (local: string) => new Date(`${local}:00+09:00`).toISOString();
 const jstInput = (date: Date) => new Date(date.getTime() + 9 * 3600_000).toISOString().slice(0, 16);
 
-function CheckResult({ check }: { check: Schemas['Placement']['check'] }) {
+function CheckResult({ check }: { check: Schemas['Studio']['check'] }) {
   if (!check || check.items.length === 0) return null;
   return (
     <div className="small">
@@ -59,7 +60,7 @@ function CheckResult({ check }: { check: Schemas['Placement']['check'] }) {
 
 // ---- the provider ----
 
-/** The producer's studio: how to start without the producer role, the application until approved, then their placements. */
+/** The producer's studio: how to start without the producer role, the application until approved, then their studios. */
 export function ProviderStudio() {
   const { api } = useSession();
   const me = useLoad(async () => (await api.GET('/api/publisher')).data, [api]);
@@ -108,7 +109,7 @@ export function ProviderStudio() {
         <Application previous={s} onDone={studio.reload} />
       )}
       {s?.status === 'requested' && <p>運営が申し込みを確かめています。結果はメールでお知らせします。</p>}
-      {s && s.status !== 'none' && s.status !== 'requested' && <Placements approved={s.status === 'approved'} />}
+      {s && s.status !== 'none' && s.status !== 'requested' && <Studios approved={s.status === 'approved'} />}
     </section>
   );
 }
@@ -156,15 +157,15 @@ function Application({ previous, onDone }: { previous: Schemas['StudioAccount'];
   );
 }
 
-function Placements({ approved }: { approved: boolean }) {
+function Studios({ approved }: { approved: boolean }) {
   const { api } = useSession();
-  const list = useLoad(async () => (await api.GET('/api/studio/placements')).data, [api]);
+  const list = useLoad(async () => (await api.GET('/api/studio/studios')).data, [api]);
   const [error, setError] = useState<string>();
-  const act = async (p: Schemas['Placement'], action: 'submit' | 'stop' | 'appeal', message?: string) => {
+  const act = async (p: Schemas['Studio'], action: 'submit' | 'stop' | 'appeal', message?: string) => {
     setError(undefined);
     try {
-      await api.POST('/api/studio/placements/{placementId}/{action}', {
-        params: { path: { placementId: p.placementId, action }, header: ifMatch(p.rev) },
+      await api.POST('/api/studio/studios/{studioId}/{action}', {
+        params: { path: { studioId: p.studioId, action }, header: ifMatch(p.rev) },
         ...(message !== undefined ? { body: { message } } : {}),
       });
       list.reload();
@@ -178,10 +179,10 @@ function Placements({ approved }: { approved: boolean }) {
       <Status error={list.error} loading={list.loading} />
       {list.data?.items.length === 0 && <Empty>まだスタジオがありません。</Empty>}
       {list.data?.items.map((p) => (
-        <article key={p.placementId} className="card">
+        <article key={p.studioId} className="card">
           <p>
-            <span className={`tag ${p.state}`}>{PLACEMENT_STATE[p.state]}</span>{' '}
-            {p.state === 'live' && p.endsAt <= new Date().toISOString() && <span className="tag">期間が終わった</span>} {p.text}
+            <span className={`tag ${p.state}`}>{STUDIO_STATE[p.state]}</span>{' '}
+            {p.state === 'live' && p.endsAt <= new Date().toISOString() && <span className="tag">期間が終わった</span>} <span className="tag">{STUDIO_CATEGORIES[p.category]}</span> {p.text}
           </p>
           <dl className="facts">
             <dt>期間</dt>
@@ -196,12 +197,12 @@ function Placements({ approved }: { approved: boolean }) {
           </dl>
           {p.state === 'live' && <button className="danger" onClick={() => window.confirm('このスタジオを止めますか？止めたスタジオは戻せません。') && void act(p, 'stop')}>止める</button>}
           {p.state === 'returned' && <Appeal onSubmit={(message) => act(p, 'appeal', message)} />}
-          {(p.state === 'live' || p.state === 'stopped' || p.state === 'suspended' || p.state === 'removed') && <Stats placementId={p.placementId} />}
+          {(p.state === 'live' || p.state === 'stopped' || p.state === 'suspended' || p.state === 'removed') && <Stats studioId={p.studioId} />}
         </article>
       ))}
       <button onClick={() => list.reload()}>読み込み直す</button>
       {error && <p className="error" role="alert">{error}</p>}
-      {approved ? <NewPlacement onDone={list.reload} /> : <p className="muted">今は新しいスタジオを作れません。</p>}
+      {approved ? <NewStudio onDone={list.reload} /> : <p className="muted">今は新しいスタジオを作れません。</p>}
     </>
   );
 }
@@ -220,9 +221,10 @@ function Appeal({ onSubmit }: { onSubmit: (message: string) => Promise<void> }) 
   );
 }
 
-function NewPlacement({ onDone }: { onDone: () => void }) {
+function NewStudio({ onDone }: { onDone: () => void }) {
   const { api } = useSession();
   const now = new Date();
+  const [category, setCategory] = useState<StudioCategory | ''>('');
   const [text, setText] = useState('');
   const [cells, setCells] = useState<string[]>([]);
   const [startsAt, setStartsAt] = useState(jstInput(now));
@@ -240,8 +242,8 @@ function NewPlacement({ onDone }: { onDone: () => void }) {
     if (audio && audio.size > AUDIO_MAX_BYTES) return setError('音声は 512 KB までです');
     try {
       setProgress('スタジオを作っています…');
-      const { data } = await api.POST('/api/studio/placements', {
-        body: { text, cells, startsAt: JST(startsAt), endsAt: JST(endsAt), ...(useHours ? { hours: { from, to } } : {}), ...(audio ? { audio: { bytes: audio.size } } : {}) },
+      const { data } = await api.POST('/api/studio/studios', {
+        body: { category: category as StudioCategory, text, cells, startsAt: JST(startsAt), endsAt: JST(endsAt), ...(useHours ? { hours: { from, to } } : {}), ...(audio ? { audio: { bytes: audio.size } } : {}) },
       });
       if (!data) throw new Error('スタジオを作れませんでした');
       if (data.upload && audio) {
@@ -251,7 +253,7 @@ function NewPlacement({ onDone }: { onDone: () => void }) {
         form.append('file', new Blob([await audio.arrayBuffer()], { type: 'audio/mp4' }));
         const res = await fetch(data.upload.url, { method: 'POST', body: form });
         if (!res.ok) throw new Error(`音声を送れませんでした（${res.status}）`);
-        await api.POST('/api/studio/placements/{placementId}/{action}', { params: { path: { placementId: data.placement.placementId, action: 'submit' }, header: ifMatch(data.placement.rev) } });
+        await api.POST('/api/studio/studios/{studioId}/{action}', { params: { path: { studioId: data.studio.studioId, action: 'submit' }, header: ifMatch(data.studio.rev) } });
       }
       setProgress(`確認を始めました。${audio ? '音声を文字に起こすので、1〜2 分かかります。' : '数秒で終わります。'}「読み込み直す」で結果を確かめてください。`);
       setText('');
@@ -271,6 +273,13 @@ function NewPlacement({ onDone }: { onDone: () => void }) {
         載せる前に、運営の AI が <a href={RULES_URL} target="_blank" rel="noreferrer">スタジオの決まり</a> の「載せないスタジオ」に当たらないかを確かめます（音声は文字に起こして確かめます）。
         当たらなければすぐに載ります。URL・電話番号は文字にも音声にも入れられません。場所と名前で探せるようにしてください。
       </p>
+      <label>
+        分類（中身に合うものを 1 つ。チャンネルが出すスタジオを選ぶのに使います。合わないと、載せる前の確認で返されます）
+        <select required value={category} onChange={(e) => setCategory(e.target.value as StudioCategory)}>
+          <option value="" disabled>選んでください</option>
+          {Object.entries(STUDIO_CATEGORIES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+        </select>
+      </label>
       <label>
         お知らせの文（200 文字まで。読み上げます）
         <textarea required rows={3} maxLength={200} value={text} onChange={(e) => setText(e.target.value.replace(/[\r\n]/g, ''))} />
@@ -328,8 +337,8 @@ export function OperatorStudio() {
       <h2>申し出</h2>
       <Status error={appeals.error} loading={appeals.loading} />
       {appeals.data?.items.length === 0 && <Empty>ありません。</Empty>}
-      {appeals.data?.items.map((p) => <AppealReview key={p.placementId} placement={p} onDone={appeals.reload} />)}
-      <ReportedPlacements />
+      {appeals.data?.items.map((p) => <AppealReview key={p.studioId} studio={p} onDone={appeals.reload} />)}
+      <ReportedStudios />
       <ReportedNotes />
       <Bans />
       <ClosedAreas />
@@ -397,16 +406,16 @@ function ApplicationReview({ account: a, onDone }: { account: Schemas['StudioAcc
   );
 }
 
-function AppealReview({ placement: p, onDone }: { placement: Schemas['Placement']; onDone: () => void }) {
+function AppealReview({ studio: p, onDone }: { studio: Schemas['Studio']; onDone: () => void }) {
   const { api } = useSession();
   const [message, setMessage] = useState('');
   const [error, setError] = useState<string>();
-  const path = { placementId: p.placementId };
+  const path = { studioId: p.studioId };
   const publish = async (e: FormEvent) => {
     e.preventDefault();
     setError(undefined);
     try {
-      await api.POST('/api/admin/studio/placements/{placementId}/{decision}', { params: { path: { ...path, decision: 'publish' }, header: ifMatch(p.rev) }, body: message ? { message } : {} });
+      await api.POST('/api/admin/studio/studios/{studioId}/{decision}', { params: { path: { ...path, decision: 'publish' }, header: ifMatch(p.rev) }, body: message ? { message } : {} });
       onDone();
     } catch (err) {
       setError(describe(err));
@@ -414,7 +423,7 @@ function AppealReview({ placement: p, onDone }: { placement: Schemas['Placement'
   };
   return (
     <article className="card">
-      <p>{p.text}</p>
+      <p><span className="tag">{STUDIO_CATEGORIES[p.category]}</span> {p.text}</p>
       <dl className="facts">
         <dt>素材提供者</dt>
         <dd><Link to={`/publishers/${p.publisherId}`}>{p.providerName}</Link></dd>
@@ -438,7 +447,7 @@ function AppealReview({ placement: p, onDone }: { placement: Schemas['Placement'
         label="載せない"
         danger
         submit={async (reason) => {
-          await api.POST('/api/admin/studio/placements/{placementId}/{decision}', { params: { path: { ...path, decision: 'reject' }, header: ifMatch(p.rev) }, body: { message: reason } });
+          await api.POST('/api/admin/studio/studios/{studioId}/{decision}', { params: { path: { ...path, decision: 'reject' }, header: ifMatch(p.rev) }, body: { message: reason } });
           onDone();
         }}
       >
@@ -503,11 +512,11 @@ const REASON: Record<string, string> = {
 const reasons = (list: string[]) => list.map((r) => REASON[r] ?? r).join('・');
 const count = (a: Schemas['Approx']) => (a ? `${a.atLeast} 人以上` : '3 人未満');
 
-/** The provider's day counts of a placement, as approximate numbers (K-18). */
-function Stats({ placementId }: { placementId: string }) {
+/** The provider's day counts of a studio, as approximate numbers (K-18). */
+function Stats({ studioId }: { studioId: string }) {
   const { api } = useSession();
   const [open, setOpen] = useState(false);
-  const stats = useLoad(async () => (open ? (await api.GET('/api/studio/placements/{placementId}/stats', { params: { path: { placementId } } })).data : undefined), [api, placementId, open]);
+  const stats = useLoad(async () => (open ? (await api.GET('/api/studio/studios/{studioId}/stats', { params: { path: { studioId } } })).data : undefined), [api, studioId, open]);
   if (!open) return <button className="link" onClick={() => setOpen(true)}>聞いた数を見る</button>;
   const s = stats.data;
   return (
@@ -528,14 +537,14 @@ function Stats({ placementId }: { placementId: string }) {
   );
 }
 
-function ReportedPlacements() {
+function ReportedStudios() {
   const { api } = useSession();
-  const list = useLoad(async () => (await api.GET('/api/admin/studio/reported-placements')).data, [api]);
+  const list = useLoad(async () => (await api.GET('/api/admin/studio/reported-studios')).data, [api]);
   const [error, setError] = useState<string>();
-  const decide = async (p: Schemas['Placement'], decision: 'restore' | 'remove', reason?: string) => {
+  const decide = async (p: Schemas['Studio'], decision: 'restore' | 'remove', reason?: string) => {
     setError(undefined);
     try {
-      await api.POST('/api/admin/studio/placements/{placementId}/{decision}', { params: { path: { placementId: p.placementId, decision }, header: ifMatch(p.rev) }, body: reason ? { reason } : {} });
+      await api.POST('/api/admin/studio/studios/{studioId}/{decision}', { params: { path: { studioId: p.studioId, decision }, header: ifMatch(p.rev) }, body: reason ? { reason } : {} });
       list.reload();
     } catch (err) {
       setError(describe(err));
@@ -548,9 +557,9 @@ function ReportedPlacements() {
       <p className="muted small">3 台以上から、または「安全」「権利」で通報されたスタジオは、届けるのを止めています（スタジオの決まり 4.1）。判断の目安は、重いもの 24 時間・軽いもの 7 日です。</p>
       <Status error={list.error} loading={list.loading} />
       {list.data?.items.length === 0 && <Empty>ありません。</Empty>}
-      {list.data?.items.map(({ placement: p, reports, reasons: rs, firstAt }) => (
-        <article key={p.placementId} className="card">
-          <p><span className={`tag ${p.state}`}>{PLACEMENT_STATE[p.state]}</span> {p.text}</p>
+      {list.data?.items.map(({ studio: p, reports, reasons: rs, firstAt }) => (
+        <article key={p.studioId} className="card">
+          <p><span className={`tag ${p.state}`}>{STUDIO_STATE[p.state]}</span> {p.text}</p>
           <dl className="facts">
             <dt>素材提供者</dt>
             <dd><Link to={`/publishers/${p.publisherId}`}>{p.providerName}</Link></dd>

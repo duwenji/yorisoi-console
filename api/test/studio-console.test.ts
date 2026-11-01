@@ -6,10 +6,10 @@ import { DEFAULT_APPS, type Deps, type Notice } from '../src/console/deps.js';
 import type { Caller } from '../src/console/http.js';
 import { route } from '../src/console/router.js';
 import { CursorCodec } from '../src/console/util.js';
-import { goLive, startCheck, type PlacementPorts } from '../src/studio/placement.js';
+import { goLive, startCheck, type StudioPorts } from '../src/local/studio.js';
 import { freshTable, startDynamoLocal } from './dynamo-local.js';
 
-// DES-013 K-14〜K-17: the provider's approval and placements in the console, with the check run in
+// DES-013 K-14〜K-17: the provider's approval and studios in the console, with the check run in
 // process as the studio stack would.
 
 const alice: Caller = { sub: 'sub-alice', roles: ['publisher'] };
@@ -19,7 +19,7 @@ const CHECKS = { identity: true, name: true, content: true, history: true };
 
 let local: Awaited<ReturnType<typeof startDynamoLocal>>;
 let deps: Deps;
-let check: PlacementPorts;
+let check: StudioPorts;
 let clock: number;
 let notices: Notice[];
 let invoked: unknown[];
@@ -32,15 +32,15 @@ afterAll(() => local?.stop());
 
 beforeEach(async () => {
   const { db, table } = await freshTable(local.endpoint);
-  const studio = await freshTable(local.endpoint);
+  const localTable = await freshTable(local.endpoint);
   const relay = await freshTable(local.endpoint);
-  studioTable = studio.table;
+  studioTable = localTable.table;
   clock = Date.parse('2026-10-31T03:00:00.000Z');
   notices = [];
   invoked = [];
   check = {
     db,
-    table: studio.table,
+    table: localTable.table,
     relayTable: relay.table,
     now: () => new Date(clock),
     settings: async () => ({ termsVersion: 1, termsUrl: '', termsUpdatedAt: '', paused: false, monthlyBudgetUsd: 5, model: { id: 'm', profile: 'm', price: { inputPerMTok: 1, outputPerMTok: 1 } } }),
@@ -73,8 +73,8 @@ beforeEach(async () => {
     notify: async (n) => void notices.push(n),
     publishCollection: async () => '',
     apps: { sanpoguide: { ...DEFAULT_APPS.sanpoguide! } },
-    studio: {
-      table: studio.table,
+    local: {
+      table: localTable.table,
       presignAudio: async (key, maxBytes) => ({ url: 'https://studio-intake.example/', fields: { key, max: String(maxBytes) } }),
       invokeCheck: async (event) => {
         invoked.push(event);
@@ -112,8 +112,8 @@ async function producer(caller: Caller, name: string) {
   return publisherId;
 }
 
-const APPLICATION = { displayName: '谷中銀座商店会', description: '台東区の商店会。公式サイトの連絡先から運営にメールします', plans: '週末の催しを商店街の周りで、月に 2〜3 件', agreedVersion: 1 };
-const PLACEMENT = { text: '今日 15 時から、夕やけだんだんで豆まきをします', cells: ['xn77h2', 'xn77h3'], startsAt: '2026-10-31T00:00:00.000Z', endsAt: '2026-11-02T00:00:00.000Z', hours: { from: '10:00', to: '18:00' } };
+const APPLICATION = { displayName: '谷中銀座商店会', description: '台東区の商店会。公式サイトの連絡先から運営にメールします', plans: '週末の催しを商店街の周りで、月に 2〜3 件', agreedVersion: 2 };
+const STUDIO = { category: 'event', text: '今日 15 時から、夕やけだんだんで豆まきをします', cells: ['xn77h2', 'xn77h3'], startsAt: '2026-10-31T00:00:00.000Z', endsAt: '2026-11-02T00:00:00.000Z', hours: { from: '10:00', to: '18:00' } };
 
 /** Alice applied and the operator approved her. */
 async function approved() {
@@ -162,38 +162,38 @@ describe('the provider’s approval', () => {
   });
 });
 
-describe('placements', () => {
+describe('studios', () => {
   it('need the approval', async () => {
     await account(alice, 'x');
-    expect((await call(alice, 'POST', '/api/studio/placements', { body: PLACEMENT })).body.code).toBe('studio_not_approved');
+    expect((await call(alice, 'POST', '/api/studio/studios', { body: STUDIO })).body.code).toBe('studio_not_approved');
   });
 
   it('go up at once when the check passes, in each cell, and can be stopped (F-18〜F-20)', async () => {
     await approved();
-    const created = await call(alice, 'POST', '/api/studio/placements', { body: PLACEMENT });
+    const created = await call(alice, 'POST', '/api/studio/studios', { body: STUDIO });
     expect(created.status).toBe(201);
-    const id = created.body.placement.placementId as string;
-    expect(created.body.placement).toMatchObject({ providerName: '谷中銀座商店会', state: 'checking' });
+    const id = created.body.studio.studioId as string;
+    expect(created.body.studio).toMatchObject({ providerName: '谷中銀座商店会', state: 'checking' });
     expect(created.body.upload).toBeUndefined();
     expect(invoked).toEqual([{ check: id }]);
 
-    const [listed] = (await call(alice, 'GET', '/api/studio/placements')).body.items;
-    expect(listed).toMatchObject({ placementId: id, state: 'live', hours: { from: '10:00', to: '18:00' } });
+    const [listed] = (await call(alice, 'GET', '/api/studio/studios')).body.items;
+    expect(listed).toMatchObject({ studioId: id, state: 'live', hours: { from: '10:00', to: '18:00' } });
     expect(await cellCopy('xn77h3', id)).toBeDefined();
 
-    expect((await call(bob, 'POST', `/api/studio/placements/${id}/stop`, { ifMatch: listed.rev })).status).toBe(404);
-    const stopped = await call(alice, 'POST', `/api/studio/placements/${id}/stop`, { ifMatch: listed.rev });
+    expect((await call(bob, 'POST', `/api/studio/studios/${id}/stop`, { ifMatch: listed.rev })).status).toBe(404);
+    const stopped = await call(alice, 'POST', `/api/studio/studios/${id}/stop`, { ifMatch: listed.rev });
     expect(stopped.body.state).toBe('stopped');
     expect(await cellCopy('xn77h2', id)).toBeUndefined();
   });
 
   it('with audio wait for the upload, then start the check', async () => {
     await approved();
-    const created = await call(alice, 'POST', '/api/studio/placements', { body: { ...PLACEMENT, audio: { bytes: 200_000 } } });
-    const id = created.body.placement.placementId as string;
-    expect(created.body).toMatchObject({ placement: { state: 'uploading' }, upload: { fields: { key: `uploads/${id}.m4a` }, maxBytes: 524288 } });
+    const created = await call(alice, 'POST', '/api/studio/studios', { body: { ...STUDIO, audio: { bytes: 200_000 } } });
+    const id = created.body.studio.studioId as string;
+    expect(created.body).toMatchObject({ studio: { state: 'uploading' }, upload: { fields: { key: `uploads/${id}.m4a` }, maxBytes: 524288 } });
     expect(invoked).toEqual([]);
-    const submitted = await call(alice, 'POST', `/api/studio/placements/${id}/submit`, { ifMatch: 1 });
+    const submitted = await call(alice, 'POST', `/api/studio/studios/${id}/submit`, { ifMatch: 1 });
     expect(invoked).toEqual([{ check: id }]);
     // Nothing reached the (fake) intake: the check returns it.
     expect(submitted.body).toMatchObject({ state: 'returned', check: { items: ['audio_missing'] } });
@@ -201,29 +201,32 @@ describe('placements', () => {
 
   it('come back when the check flags them; an appeal goes to the operator, who can put it up or not', async () => {
     const publisherId = await approved();
-    const flagged = await call(alice, 'POST', '/api/studio/placements', { body: { ...PLACEMENT, text: '投資の勉強会を開きます' } });
-    const id = flagged.body.placement.placementId as string;
-    let p = (await call(alice, 'GET', '/api/studio/placements')).body.items[0];
+    const flagged = await call(alice, 'POST', '/api/studio/studios', { body: { ...STUDIO, text: '投資の勉強会を開きます' } });
+    const id = flagged.body.studio.studioId as string;
+    let p = (await call(alice, 'GET', '/api/studio/studios')).body.items[0];
     expect(p).toMatchObject({ state: 'returned', check: { items: ['2.2.5'] } });
 
-    expect((await call(alice, 'POST', `/api/studio/placements/${id}/appeal`, { ifMatch: p.rev, body: {} })).body.code).toBe('invalid_request');
-    const appealed = await call(alice, 'POST', `/api/studio/placements/${id}/appeal`, { ifMatch: p.rev, body: { message: '子ども向けのお金の教室で、勧誘ではありません' } });
+    expect((await call(alice, 'POST', `/api/studio/studios/${id}/appeal`, { ifMatch: p.rev, body: {} })).body.code).toBe('invalid_request');
+    const appealed = await call(alice, 'POST', `/api/studio/studios/${id}/appeal`, { ifMatch: p.rev, body: { message: '子ども向けのお金の教室で、勧誘ではありません' } });
     expect(appealed.body).toMatchObject({ state: 'appealed', appeal: { message: '子ども向けのお金の教室で、勧誘ではありません' } });
 
     const appeals = await call(operator, 'GET', '/api/admin/studio/appeals');
-    expect(appeals.body.items.map((i: { placementId: string }) => i.placementId)).toEqual([id]);
+    expect(appeals.body.items.map((i: { studioId: string }) => i.studioId)).toEqual([id]);
     p = appeals.body.items[0];
-    expect((await call(operator, 'POST', `/api/admin/studio/placements/${id}/reject`, { ifMatch: p.rev, body: {} })).body.code).toBe('invalid_request');
-    const published = await call(operator, 'POST', `/api/admin/studio/placements/${id}/publish`, { ifMatch: p.rev, body: { message: '内容を確かめました' } });
+    expect((await call(operator, 'POST', `/api/admin/studio/studios/${id}/reject`, { ifMatch: p.rev, body: {} })).body.code).toBe('invalid_request');
+    const published = await call(operator, 'POST', `/api/admin/studio/studios/${id}/publish`, { ifMatch: p.rev, body: { message: '内容を確かめました' } });
     expect(published.body).toMatchObject({ state: 'live', decision: { message: '内容を確かめました' } });
     expect(invoked).toContainEqual({ publish: id });
     expect((await call(operator, 'GET', '/api/admin/studio/appeals')).body.items).toEqual([]);
-    expect(notices.at(-1)).toMatchObject({ event: 'placement.published', publisherId, placementId: id });
+    expect(notices.at(-1)).toMatchObject({ event: 'studio.published', publisherId, studioId: id });
   });
 
   it('check their times, cells and hours', async () => {
     await approved();
-    const bad = async (body: object) => (await call(alice, 'POST', '/api/studio/placements', { body: { ...PLACEMENT, ...body } })).body.code;
+    const bad = async (body: object) => (await call(alice, 'POST', '/api/studio/studios', { body: { ...STUDIO, ...body } })).body.code;
+    // The category is one of the nine (platform API-MATERIALS「スタジオの分類」).
+    expect(await bad({ category: undefined })).toBe('invalid_request');
+    expect(await bad({ category: 'bars' })).toBe('invalid_request');
     expect(await bad({ cells: [] })).toBe('invalid_request');
     expect(await bad({ cells: ['xn77h2', 'xn77h2'] })).toBe('invalid_request');
     expect(await bad({ cells: ['xn77h'] })).toBe('invalid_request');
@@ -236,22 +239,22 @@ describe('placements', () => {
 });
 
 describe('suspending and revoking', () => {
-  it('takes live placements down, blocks new ones, and resumes', async () => {
+  it('takes live studios down, blocks new ones, and resumes', async () => {
     const publisherId = await approved();
-    const id = (await call(alice, 'POST', '/api/studio/placements', { body: PLACEMENT })).body.placement.placementId as string;
+    const id = (await call(alice, 'POST', '/api/studio/studios', { body: STUDIO })).body.studio.studioId as string;
     const rev = (await call(operator, 'GET', `/api/admin/publishers/${publisherId}/studio`)).body.rev;
     const tooShort = await call(operator, 'POST', `/api/admin/publishers/${publisherId}/studio/suspend`, { ifMatch: rev, body: { reason: '4.3', until: '2026-11-05T00:00:00.000Z' } });
     expect(tooShort.body.code).toBe('invalid_request');
     const suspended = await call(operator, 'POST', `/api/admin/publishers/${publisherId}/studio/suspend`, { ifMatch: rev, body: { reason: '4.3 軽い違反を直さない', until: '2026-12-31T00:00:00.000Z' } });
     expect(suspended.body).toMatchObject({ status: 'suspended', suspendedUntil: '2026-12-31T00:00:00.000Z' });
-    expect((await call(alice, 'GET', '/api/studio/placements')).body.items[0].state).toBe('suspended');
+    expect((await call(alice, 'GET', '/api/studio/studios')).body.items[0].state).toBe('suspended');
     expect(await cellCopy('xn77h2', id)).toBeUndefined();
-    expect((await call(alice, 'POST', '/api/studio/placements', { body: PLACEMENT })).body.code).toBe('studio_not_approved');
+    expect((await call(alice, 'POST', '/api/studio/studios', { body: STUDIO })).body.code).toBe('studio_not_approved');
 
     const resumed = await call(operator, 'POST', `/api/admin/publishers/${publisherId}/studio/resume`, { ifMatch: suspended.body.rev });
     expect(resumed.body.status).toBe('approved');
     expect(resumed.body.reason).toBeUndefined();
-    expect((await call(alice, 'POST', '/api/studio/placements', { body: PLACEMENT })).status).toBe(201);
+    expect((await call(alice, 'POST', '/api/studio/studios', { body: STUDIO })).status).toBe(201);
   });
 
   it('a suspension that has run out counts as approved', async () => {
@@ -260,16 +263,16 @@ describe('suspending and revoking', () => {
     await call(operator, 'POST', `/api/admin/publishers/${publisherId}/studio/suspend`, { ifMatch: rev, body: { reason: 'r', until: '2026-12-01T03:00:00.000Z' } });
     clock = Date.parse('2026-12-02T00:00:00.000Z');
     expect((await call(alice, 'GET', '/api/studio')).body.status).toBe('approved');
-    expect((await call(alice, 'POST', '/api/studio/placements', { body: { ...PLACEMENT, startsAt: '2026-12-02T00:00:00.000Z', endsAt: '2026-12-03T00:00:00.000Z' } })).status).toBe(201);
+    expect((await call(alice, 'POST', '/api/studio/studios', { body: { ...STUDIO, startsAt: '2026-12-02T00:00:00.000Z', endsAt: '2026-12-03T00:00:00.000Z' } })).status).toBe(201);
   });
 
-  it('revoking removes placements and keeps the provider out for a year', async () => {
+  it('revoking removes studios and keeps the provider out for a year', async () => {
     const publisherId = await approved();
-    await call(alice, 'POST', '/api/studio/placements', { body: PLACEMENT });
+    await call(alice, 'POST', '/api/studio/studios', { body: STUDIO });
     const rev = (await call(operator, 'GET', `/api/admin/publishers/${publisherId}/studio`)).body.rev;
     const revoked = await call(operator, 'POST', `/api/admin/publishers/${publisherId}/studio/revoke`, { ifMatch: rev, body: { reason: '2.2.12 なりすまし' } });
     expect(revoked.body).toMatchObject({ status: 'revoked', reapplyAfter: expect.stringMatching(/^2027-10-31/) });
-    expect((await call(alice, 'GET', '/api/studio/placements')).body.items[0].state).toBe('removed');
+    expect((await call(alice, 'GET', '/api/studio/studios')).body.items[0].state).toBe('removed');
     expect((await call(alice, 'POST', '/api/studio/application', { body: APPLICATION })).body.code).toBe('invalid_state');
     clock = Date.parse('2027-11-01T00:00:00.000Z');
     expect((await call(alice, 'POST', '/api/studio/application', { body: APPLICATION })).body.status).toBe('requested');
@@ -288,8 +291,8 @@ describe('suspending and revoking', () => {
 describe('without the studio', () => {
   it('answers 404', async () => {
     await account(alice, 'x');
-    delete deps.studio;
-    expect((await call(alice, 'GET', '/api/studio/placements')).status).toBe(404);
+    delete deps.local;
+    expect((await call(alice, 'GET', '/api/studio/studios')).status).toBe(404);
   });
 });
 
@@ -297,39 +300,39 @@ describe('after things are up (K-17, K-18)', () => {
   const put = (Item: Record<string, unknown>) => deps.db.send(new PutCommand({ TableName: studioTable, Item }));
   const studioGet = async (PK: string, SK: string) => (await deps.db.send(new GetCommand({ TableName: studioTable, Key: { PK, SK } }))).Item;
 
-  /** A live placement that reports stopped, as the studio's API leaves it. */
-  async function reportedPlacement() {
+  /** A live studio that reports stopped, as the studio's API leaves it. */
+  async function reportedStudio() {
     await approved();
-    const id = (await call(alice, 'POST', '/api/studio/placements', { body: PLACEMENT })).body.placement.placementId as string;
-    for (const cell of PLACEMENT.cells) await deps.db.send(new DeleteCommand({ TableName: studioTable, Key: { PK: `CELL#${cell}`, SK: `P#${id}` } }));
+    const id = (await call(alice, 'POST', '/api/studio/studios', { body: STUDIO })).body.studio.studioId as string;
+    for (const cell of STUDIO.cells) await deps.db.send(new DeleteCommand({ TableName: studioTable, Key: { PK: `CELL#${cell}`, SK: `P#${id}` } }));
     await deps.db.send(new UpdateCommand({
-      TableName: studioTable, Key: { PK: `PLACEMENT#${id}`, SK: 'PLACEMENT' },
+      TableName: studioTable, Key: { PK: `STUDIO#${id}`, SK: 'STUDIO' },
       UpdateExpression: 'SET #s = :s, reports = :r', ExpressionAttributeNames: { '#s': 'state' }, ExpressionAttributeValues: { ':s': 'suspended', ':r': 1 },
     }));
-    await put({ PK: 'QUEUE#REPORTED_PLACEMENT', SK: id, type: 'placement', firstAt: '2026-10-31T04:00:00.000Z', lastAt: '2026-10-31T04:00:00.000Z', reasons: new Set(['danger']) });
+    await put({ PK: 'QUEUE#REPORTED_STUDIO', SK: id, type: 'studio', firstAt: '2026-10-31T04:00:00.000Z', lastAt: '2026-10-31T04:00:00.000Z', reasons: new Set(['danger']) });
     return id;
   }
 
-  it('restores a placement that reports stopped, back into its cells', async () => {
-    const id = await reportedPlacement();
-    const list = await call(operator, 'GET', '/api/admin/studio/reported-placements');
-    expect(list.body.items).toEqual([expect.objectContaining({ reports: 1, reasons: ['danger'], placement: expect.objectContaining({ placementId: id, state: 'suspended' }) })]);
-    expect((await call(alice, 'GET', '/api/admin/studio/reported-placements')).body.code).toBe('forbidden');
-    const rev = list.body.items[0].placement.rev;
-    const restored = await call(operator, 'POST', `/api/admin/studio/placements/${id}/restore`, { ifMatch: rev, body: {} });
+  it('restores a studio that reports stopped, back into its cells', async () => {
+    const id = await reportedStudio();
+    const list = await call(operator, 'GET', '/api/admin/studio/reported-studios');
+    expect(list.body.items).toEqual([expect.objectContaining({ reports: 1, reasons: ['danger'], studio: expect.objectContaining({ studioId: id, state: 'suspended' }) })]);
+    expect((await call(alice, 'GET', '/api/admin/studio/reported-studios')).body.code).toBe('forbidden');
+    const rev = list.body.items[0].studio.rev;
+    const restored = await call(operator, 'POST', `/api/admin/studio/studios/${id}/restore`, { ifMatch: rev, body: {} });
     expect(restored.body.state).toBe('live');
     expect(await cellCopy('xn77h2', id)).toMatchObject({ id, providerName: '谷中銀座商店会' });
-    expect((await call(operator, 'GET', '/api/admin/studio/reported-placements')).body.items).toEqual([]);
-    expect(notices.at(-1)).toMatchObject({ event: 'placement.restored', placementId: id });
+    expect((await call(operator, 'GET', '/api/admin/studio/reported-studios')).body.items).toEqual([]);
+    expect(notices.at(-1)).toMatchObject({ event: 'studio.restored', studioId: id });
   });
 
-  it('removes a reported placement, with a reason, and tells its provider', async () => {
-    const id = await reportedPlacement();
-    const rev = (await call(operator, 'GET', '/api/admin/studio/reported-placements')).body.items[0].placement.rev;
-    expect((await call(operator, 'POST', `/api/admin/studio/placements/${id}/remove`, { ifMatch: rev, body: {} })).body.code).toBe('invalid_request');
-    const removed = await call(operator, 'POST', `/api/admin/studio/placements/${id}/remove`, { ifMatch: rev, body: { reason: '2.2.1 安全を損なう誘い' } });
+  it('removes a reported studio, with a reason, and tells its provider', async () => {
+    const id = await reportedStudio();
+    const rev = (await call(operator, 'GET', '/api/admin/studio/reported-studios')).body.items[0].studio.rev;
+    expect((await call(operator, 'POST', `/api/admin/studio/studios/${id}/remove`, { ifMatch: rev, body: {} })).body.code).toBe('invalid_request');
+    const removed = await call(operator, 'POST', `/api/admin/studio/studios/${id}/remove`, { ifMatch: rev, body: { reason: '2.2.1 安全を損なう誘い' } });
     expect(removed.body.state).toBe('removed');
-    expect(notices.at(-1)).toMatchObject({ event: 'placement.removed', message: '2.2.1 安全を損なう誘い' });
+    expect(notices.at(-1)).toMatchObject({ event: 'studio.removed', message: '2.2.1 安全を損なう誘い' });
   });
 
   it('shows reported notes without their device, restores them or removes them and bans the device', async () => {
@@ -372,16 +375,16 @@ describe('after things are up (K-17, K-18)', () => {
 
   it('gives the provider day counts as API-LOCAL-MATERIALS buckets', async () => {
     await approved();
-    const id = (await call(alice, 'POST', '/api/studio/placements', { body: PLACEMENT })).body.placement.placementId as string;
+    const id = (await call(alice, 'POST', '/api/studio/studios', { body: STUDIO })).body.studio.studioId as string;
     await put({ PK: `STATS#${id}`, SK: 'DAY#2026-10-31', heard: 2, opened: 1 });
     await put({ PK: `STATS#${id}`, SK: 'DAY#2026-11-01', heard: 12, opened: 0 });
-    const stats = await call(alice, 'GET', `/api/studio/placements/${id}/stats`);
+    const stats = await call(alice, 'GET', `/api/studio/studios/${id}/stats`);
     expect(stats.body).toEqual({
-      placementId: id,
+      studioId: id,
       total: { heard: { atLeast: 10 }, opened: null },
       days: [{ date: '2026-10-31', heard: null, opened: null }, { date: '2026-11-01', heard: { atLeast: 10 }, opened: null }],
     });
     await account(bob, 'b');
-    expect((await call(bob, 'GET', `/api/studio/placements/${id}/stats`)).status).toBe(404);
+    expect((await call(bob, 'GET', `/api/studio/studios/${id}/stats`)).status).toBe(404);
   });
 });

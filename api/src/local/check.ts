@@ -60,12 +60,12 @@ export function readVerdict(reply: string): { ok: boolean; items: number[] } {
   }
 }
 
-// ---- placements (platform policies/studio-rules.md, REQ-STUDIO D-18, DES-013 K-11) ----
+// ---- studios (platform policies/studio-rules.md, REQ-STUDIO D-18, DES-013 K-11) ----
 
-/** The version of the placement rules this prompt follows. */
-export const PLACEMENT_RULES_VERSION = 1;
+/** The version of the studio rules this prompt follows. */
+export const STUDIO_RULES_VERSION = 2;
 
-export const PLACEMENT_CHECK_SYSTEM = `あなたは、散歩や自転車のアプリで、その場所にいる人に読み上げる「お知らせ（スタジオ）」を確かめる係です。
+export const STUDIO_CHECK_SYSTEM = `あなたは、散歩や自転車のアプリで、その場所にいる人に読み上げる「お知らせ（スタジオ）」を確かめる係です。
 スタジオは、店・神社やお寺・商店街・観光協会・博物館・郷土史家・イベントの主催者などが、自分の名前で出すお知らせです。
 文字と、音声を文字に起こしたもの（あれば）を見て、次の項目のどれかに当たるかを判断します。
 
@@ -81,22 +81,23 @@ export const PLACEMENT_CHECK_SYSTEM = `あなたは、散歩や自転車のア�
 2.2.10 成人向け・暴力的なもの
 2.2.11 違法なもの・権利を侵すもの
 2.2.12 なりすまし（素材提供者の名前と、お知らせの中で名乗っている団体・人が明らかに違う）
+2.5 分類が中身と合わない（素材提供者が選んだ分類と、お知らせの中身が明らかに違う）
 
 店や催しのお知らせ・宣伝そのものは当たりません。迷うときは当たらないとします。
 
 答えは JSON だけを、説明を付けずに返してください。
 当たらないとき: {"ok": true}
-当たるとき: {"ok": false, "items": ["当たった項目の番号（例: 2.2.4）"]}`;
+当たるとき: {"ok": false, "items": ["当たった項目の番号（例: 2.2.4、2.5）"]}`;
 
-/** What the operator's AI is given about a placement. */
-export function placementCheckUser(p: { providerName: string; text: string; transcript?: string }): string {
-  return JSON.stringify({ provider: p.providerName, text: p.text, ...(p.transcript !== undefined ? { audio: p.transcript } : {}) });
+/** What the operator's AI is given about a studio. */
+export function studioCheckUser(p: { providerName: string; category: string; text: string; transcript?: string }): string {
+  return JSON.stringify({ provider: p.providerName, category: p.category, text: p.text, ...(p.transcript !== undefined ? { audio: p.transcript } : {}) });
 }
 
-const RULE = /^2\.2\.(1[0-2]|[1-9])$/;
+const RULE = /^(2\.2\.(1[0-2]|[1-9])|2\.5)$/;
 
-/** Reads the AI's answer about a placement; anything but a clear ok returns it to the provider. */
-export function readPlacementVerdict(reply: string): { ok: boolean; items: string[] } {
+/** Reads the AI's answer about a studio; anything but a clear ok returns it to the provider. */
+export function readStudioVerdict(reply: string): { ok: boolean; items: string[] } {
   const json = /\{[\s\S]*\}/.exec(reply)?.[0];
   if (!json) return { ok: false, items: [] };
   try {

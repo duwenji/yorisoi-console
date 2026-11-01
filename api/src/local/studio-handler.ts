@@ -1,22 +1,22 @@
 import { CopyObjectCommand, GetObjectCommand, HeadObjectCommand, NotFound, NoSuchKey, S3Client } from '@aws-sdk/client-s3';
 import { StartTranscriptionJobCommand, TranscribeClient } from '@aws-sdk/client-transcribe';
 import { bedrockCheck, documentClient, emitMetric, env, settingsLoader } from './aws.js';
-import { finishTranscription, goLive, startCheck, type PlacementPorts } from './placement.js';
+import { finishTranscription, goLive, startCheck, type StudioPorts } from './studio.js';
 
 /**
- * The placement check's Lambda (DES-013 K-11). It is started three ways:
- * - `{ "check": id }` by the console when a provider puts a placement up,
+ * The studio check's Lambda (DES-013 K-11). It is started three ways:
+ * - `{ "check": id }` by the console when a provider puts a studio up,
  * - `{ "publish": id }` by the console when the operator accepts an appeal,
  * - a "Transcribe Job State Change" event for this stack's jobs.
  */
-export type PlacementEvent =
+export type StudioEvent =
   | { check: string }
   | { publish: string }
   | { source: 'aws.transcribe'; detail: { TranscriptionJobName: string; TranscriptionJobStatus: string } };
 
-let cached: PlacementPorts | undefined;
+let cached: StudioPorts | undefined;
 
-function build(): PlacementPorts {
+function build(): StudioPorts {
   const region = env('AWS_REGION');
   const s3 = new S3Client({ region });
   const transcribe = new TranscribeClient({ region });
@@ -77,7 +77,7 @@ function build(): PlacementPorts {
   };
 }
 
-export async function handler(event: PlacementEvent): Promise<void> {
+export async function handler(event: StudioEvent): Promise<void> {
   cached ??= build();
   if ('check' in event) return startCheck(cached, event.check);
   if ('publish' in event) return goLive(cached, event.publish, 'appealed');

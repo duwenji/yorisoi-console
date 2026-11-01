@@ -664,7 +664,7 @@ td.files{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
   <!-- studio -->
   <section>
     <div class="sec-head">
-      <div class="eyebrow">スタジオ（DES-013、別のスタック YorisoiStudio）</div>
+      <div class="eyebrow">スタジオ（DES-013、別のスタック YorisoiLocalMaterials）</div>
       <h2>その場の素材（スタジオ・一言）は別のスタックに置き、管理システムは素材提供者と運営の操作だけを受け持つ</h2>
       <p>スタジオ（運営が承認した素材提供者が出すお知らせ）と一言（散策者・走る人がその場所に置く投稿）は、どちらも素材の種類で、近くを通る人に読み上げます（platform の REQ-STUDIO・REQ-NOTES・API-LOCAL-MATERIALS）。アプリは運営の配信の API を中継のトークンで直接呼び、管理システムは通りません。管理システムは配備のときに Parameter Store からスタジオの表・バケット・確認の Lambda の名前を読み、次を受け持ちます。資源の図は <code>docs/aws-diagrams.md</code>、手順は <code>docs/operations/studio.md</code> にあります。</p>
     </div>
@@ -787,8 +787,8 @@ td.files{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
           <tr><td>審査の見本の AI を足す</td><td><code>web/src/ai.ts</code> の <code>AI_SERVICES</code> と、<code>infra/lib/console-app.ts</code> の CSP（<code>connect-src</code>）</td></tr>
           <tr><td>メールの文面を変える</td><td><code>api/src/notify/notify.ts</code> の <code>render()</code></td></tr>
           <tr><td>環境ごとの守りや費用を変える</td><td><code>infra/lib/config.ts</code>（<code>cost</code>・<code>notify</code>）。費用は <code>docs/operations/cost.md</code></td></tr>
-          <tr><td>スタジオの提供者・運営の操作を変える</td><td><code>api/src/console/studio.ts</code>（提供者）・<code>studio-ops.ts</code>（運営）、画面は <code>web/src/pages/studio.tsx</code>。アプリ向けは <code>api/src/studio/</code>、資源は <code>infra/lib/studio-stack.ts</code></td></tr>
-          <tr><td>一言・スタジオの確認を変える</td><td><code>api/src/studio/check.ts</code>（決まった形と AI への指示）・<code>placement.ts</code>（スタジオの確認の順番）。指示を変えたら確認の見本のテストも</td></tr>
+          <tr><td>スタジオの提供者・運営の操作を変える</td><td><code>api/src/console/studio.ts</code>（提供者）・<code>studio-ops.ts</code>（運営）、画面は <code>web/src/pages/studio.tsx</code>。アプリ向けは <code>api/src/local/</code>、資源は <code>infra/lib/local-materials-stack.ts</code></td></tr>
+          <tr><td>一言・スタジオの確認を変える</td><td><code>api/src/local/check.ts</code>（決まった形と AI への指示）・<code>studio.ts</code>（スタジオの確認の順番）。指示を変えたら確認の見本のテストも</td></tr>
           <tr><td>署名鍵を入れ替える</td><td>KMS に鍵を作り <code>config.ts</code> の <code>signingKeyIds</code> に足す → 画面で登録 → ルート鍵で鍵セットに署名して登録</td></tr>
         </tbody>
       </table>

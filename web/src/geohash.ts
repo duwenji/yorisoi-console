@@ -1,4 +1,4 @@
-// Geohash cells for choosing where a placement goes (platform API-LOCAL-MATERIALS: geohash6, about
+// Geohash cells for choosing where a studio goes (platform API-LOCAL-MATERIALS: geohash6, about
 // 1.2 km × 0.6 km), and the Web Mercator arithmetic to draw them over map tiles.
 
 const BASE32 = '0123456789bcdefghjkmnpqrstuvwxyz';

@@ -23,10 +23,10 @@ async function me(deps: Deps, req: Request): Promise<Response> {
   return json(200, { sub: req.caller.sub, roles: req.caller.roles, publisher });
 }
 
-/** A placement's appeal is answered with publish or reject; a report with restore or remove. */
-function placementDecision(deps: Deps, req: Req): Promise<Response> {
+/** A studio's appeal is answered with publish or reject; a report with restore or remove. */
+function studioDecision(deps: Deps, req: Req): Promise<Response> {
   const d = req.params.decision;
-  return d === 'restore' || d === 'remove' ? ops.decideReportedPlacement(deps, req, d) : studio.decideAppeal(deps, req);
+  return d === 'restore' || d === 'remove' ? ops.decideReportedStudio(deps, req, d) : studio.decideAppeal(deps, req);
 }
 
 const ROUTES: [string, string, Handler][] = [
@@ -104,17 +104,17 @@ const ROUTES: [string, string, Handler][] = [
   // The studio (DES-013 K-14〜K-17).
   ['GET', '/api/studio', studio.getMyStudio],
   ['POST', '/api/studio/application', studio.applyForStudio],
-  ['GET', '/api/studio/placements', studio.listMyPlacements],
-  ['POST', '/api/studio/placements', studio.createPlacement],
-  ['POST', '/api/studio/placements/{placementId}/{action}', studio.actOnPlacement],
+  ['GET', '/api/studio/studios', studio.listMyStudios],
+  ['POST', '/api/studio/studios', studio.createStudio],
+  ['POST', '/api/studio/studios/{studioId}/{action}', studio.actOnStudio],
   ['GET', '/api/admin/studio/applications', studio.listStudioApplications],
   ['GET', '/api/admin/publishers/{publisherId}/studio', studio.getPublisherStudio],
   ['POST', '/api/admin/publishers/{publisherId}/studio/{decision}', studio.decideStudio],
-  ['GET', '/api/admin/studio/appeals', studio.listPlacementAppeals],
-  ['POST', '/api/admin/studio/placements/{placementId}/{decision}', placementDecision],
+  ['GET', '/api/admin/studio/appeals', studio.listStudioAppeals],
+  ['POST', '/api/admin/studio/studios/{studioId}/{decision}', studioDecision],
   // The studio after things are up (DES-013 K-17, K-18).
-  ['GET', '/api/studio/placements/{placementId}/stats', ops.placementStats],
-  ['GET', '/api/admin/studio/reported-placements', ops.listReportedPlacements],
+  ['GET', '/api/studio/studios/{studioId}/stats', ops.studioStats],
+  ['GET', '/api/admin/studio/reported-studios', ops.listReportedStudios],
   ['GET', '/api/admin/studio/reported-notes', ops.listReportedNotes],
   ['POST', '/api/admin/studio/notes/{noteId}/{decision}', ops.decideReportedNote],
   ['GET', '/api/admin/studio/bans', ops.listBans],
@@ -130,7 +130,7 @@ const PARAM: Record<string, RegExp> = {
   publisherId: /^[0-9A-HJKMNP-TV-Z]{26}$/,
   submissionId: /^[0-9A-HJKMNP-TV-Z]{26}$/,
   transferId: /^[0-9A-HJKMNP-TV-Z]{26}$/,
-  placementId: /^[0-9A-HJKMNP-TV-Z]{26}$/,
+  studioId: /^[0-9A-HJKMNP-TV-Z]{26}$/,
   action: /^(submit|stop|appeal)$/,
   decision: /^(approve|decline|suspend|resume|revoke|publish|reject|restore|remove)$/,
   noteId: /^[0-9A-HJKMNP-TV-Z]{26}$/,

@@ -1,7 +1,7 @@
 import { useRef, useState, type PointerEvent } from 'react';
 import { bounds, cellsIn, encode, fromPixel, toPixel } from '../geohash';
 
-// Choosing a placement's cells (DES-013 K-16, REQ-STUDIO D-17): GSI tiles with the geohash6 grid
+// Choosing a studio's cells (DES-013 K-16, REQ-STUDIO D-17): GSI tiles with the geohash6 grid
 // over them; a click takes or leaves a cell. No map library: the tiles are plain images.
 
 const WIDTH = 720;

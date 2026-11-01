@@ -1,7 +1,7 @@
 import { MODELS, relayConfigs, type RelayModel } from './relay-config.js';
 
 /** Settings of the studio in one account (platform API-LOCAL-MATERIALS, console DES-013). */
-export interface StudioConfig {
+export interface LocalMaterialsConfig {
   name: 'dev' | 'prod';
   /** Optional: when set, the stack is pinned to this account. */
   account?: string;
@@ -25,7 +25,7 @@ export interface StudioConfig {
 
 const TERMS_URL = 'https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/notes-terms.md';
 
-export const studioConfigs: Record<StudioConfig['name'], StudioConfig> = {
+export const localMaterialsConfigs: Record<LocalMaterialsConfig['name'], LocalMaterialsConfig> = {
   dev: {
     name: 'dev',
     region: 'ap-northeast-1',

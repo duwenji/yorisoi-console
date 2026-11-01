@@ -1,4 +1,4 @@
-/** The producer's studio: how to start without the producer role, the application until approved, then their placements. */
+/** The producer's studio: how to start without the producer role, the application until approved, then their studios. */
 export declare function ProviderStudio(): import("react").JSX.Element;
 /** Applications waiting, and appeals (スタジオの決まり 1.4・3). */
 export declare function OperatorStudio(): import("react").JSX.Element;

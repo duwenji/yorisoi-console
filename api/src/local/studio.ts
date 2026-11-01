@@ -1,21 +1,21 @@
 import { createHash } from 'node:crypto';
 import { GetCommand, TransactWriteCommand, UpdateCommand, type DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
-import { hasContact, PLACEMENT_CHECK_SYSTEM, placementCheckUser, readPlacementVerdict } from './check.js';
-import type { CheckReply, ModelChoice, StudioSettings } from './studio.js';
+import { hasContact, STUDIO_CHECK_SYSTEM, studioCheckUser, readStudioVerdict } from './check.js';
+import type { CheckReply, ModelChoice, LocalSettings } from './local.js';
 
 /**
- * The check before a placement goes up (platform REQ-STUDIO D-18, DES-013 K-11): its form, the
- * audio written out by Amazon Transcribe, then the operator's AI against the placement rules. A
- * placement that passes goes up at once; one that doesn't goes back to its provider with the
+ * The check before a studio goes up (platform REQ-STUDIO D-18, DES-013 K-11): its form, the
+ * audio written out by Amazon Transcribe, then the operator's AI against the studio rules. A
+ * studio that passes goes up at once; one that doesn't goes back to its provider with the
  * rules it hit. Going up is done here only, for the check and for an appeal the operator accepts.
  */
 
-export interface PlacementPorts {
+export interface StudioPorts {
   db: DynamoDBDocumentClient;
   table: string;
   relayTable: string;
   now: () => Date;
-  settings: () => Promise<StudioSettings>;
+  settings: () => Promise<LocalSettings>;
   check: (model: ModelChoice, system: string, user: string) => Promise<CheckReply>;
   /** The intake bucket: uploads (1 day), held audio and transcripts (30 days). */
   intake: {
@@ -39,7 +39,7 @@ export const AUDIO_MAX_SECONDS = 30;
 export const uploadKey = (id: string) => `uploads/${id}.m4a`;
 const heldKey = (id: string) => `held/${id}.m4a`;
 const transcriptKey = (id: string) => `transcripts/${id}.json`;
-const servedKey = (id: string) => `placements/${id}/audio.m4a`;
+const servedKey = (id: string) => `studios/${id}/audio.m4a`;
 
 const epoch = (date: Date) => Math.floor(date.getTime() / 1000);
 const JST_MS = 9 * 3600 * 1000;
@@ -63,31 +63,31 @@ export function mp4Seconds(bytes: Uint8Array): number | undefined {
   return undefined;
 }
 
-async function load(ports: PlacementPorts, id: string) {
-  return (await ports.db.send(new GetCommand({ TableName: ports.table, Key: { PK: `PLACEMENT#${id}`, SK: 'PLACEMENT' }, ConsistentRead: true }))).Item;
+async function load(ports: StudioPorts, id: string) {
+  return (await ports.db.send(new GetCommand({ TableName: ports.table, Key: { PK: `STUDIO#${id}`, SK: 'STUDIO' }, ConsistentRead: true }))).Item;
 }
 
 /** Back to its provider, with the rules (or form problems) it hit. */
-async function returnToProvider(ports: PlacementPorts, id: string, items: string[], extra: { transcript?: string } = {}) {
+async function returnToProvider(ports: StudioPorts, id: string, items: string[], extra: { transcript?: string } = {}) {
   const now = ports.now().toISOString();
   await ports.db.send(
     new UpdateCommand({
       TableName: ports.table,
-      Key: { PK: `PLACEMENT#${id}`, SK: 'PLACEMENT' },
+      Key: { PK: `STUDIO#${id}`, SK: 'STUDIO' },
       UpdateExpression: 'SET #s = :returned, #c = :check, updatedAt = :now, rev = rev + :one',
       ConditionExpression: '#s = :checking',
       ExpressionAttributeNames: { '#s': 'state', '#c': 'check' },
       ExpressionAttributeValues: { ':returned': 'returned', ':checking': 'checking', ':check': { items, checkedAt: now, ...extra }, ':now': now, ':one': 1 },
     }),
   );
-  ports.metric('PlacementsReturned', 1);
+  ports.metric('StudiosReturned', 1);
 }
 
-/** Starts the check of a placement the provider has just put up (`checking`). */
-export async function startCheck(ports: PlacementPorts, id: string) {
-  const placement = await load(ports, id);
-  if (!placement || placement.state !== 'checking') return;
-  if (!placement.audio) return judge(ports, placement);
+/** Starts the check of a studio the provider has just put up (`checking`). */
+export async function startCheck(ports: StudioPorts, id: string) {
+  const studio = await load(ports, id);
+  if (!studio || studio.state !== 'checking') return;
+  if (!studio.audio) return judge(ports, studio);
 
   const head = await ports.intake.head(uploadKey(id));
   if (!head) return returnToProvider(ports, id, ['audio_missing']);
@@ -104,7 +104,7 @@ export async function startCheck(ports: PlacementPorts, id: string) {
   await ports.db.send(
     new UpdateCommand({
       TableName: ports.table,
-      Key: { PK: `PLACEMENT#${id}`, SK: 'PLACEMENT' },
+      Key: { PK: `STUDIO#${id}`, SK: 'STUDIO' },
       UpdateExpression: 'SET audio = :audio, jobName = :job, updatedAt = :now, rev = rev + :one',
       ConditionExpression: '#s = :checking',
       ExpressionAttributeNames: { '#s': 'state' },
@@ -116,20 +116,20 @@ export async function startCheck(ports: PlacementPorts, id: string) {
 }
 
 /** The end of a Transcribe job this stack started (EventBridge, K-11). */
-export async function finishTranscription(ports: PlacementPorts, jobName: string, status: string) {
+export async function finishTranscription(ports: StudioPorts, jobName: string, status: string) {
   const id = new RegExp(`^${ports.jobPrefix}([0-9A-Z]{26})-\\d+$`).exec(jobName)?.[1];
   if (!id) return;
-  const placement = await load(ports, id);
-  if (!placement || placement.state !== 'checking' || placement.jobName !== jobName) return;
+  const studio = await load(ports, id);
+  if (!studio || studio.state !== 'checking' || studio.jobName !== jobName) return;
   if (status !== 'COMPLETED') return returnToProvider(ports, id, ['transcribe_failed']);
   const raw = await ports.intake.text(transcriptKey(id));
   const transcript = raw ? ((JSON.parse(raw) as { results?: { transcripts?: { transcript?: string }[] } }).results?.transcripts ?? []).map((t) => t.transcript ?? '').join('') : '';
-  return judge(ports, placement, transcript);
+  return judge(ports, studio, transcript);
 }
 
-async function judge(ports: PlacementPorts, placement: Record<string, unknown>, transcript?: string) {
-  const id = String(placement.id);
-  const text = String(placement.text);
+async function judge(ports: StudioPorts, studio: Record<string, unknown>, transcript?: string) {
+  const id = String(studio.id);
+  const text = String(studio.text);
   const kept = transcript !== undefined ? { transcript } : {};
   if (hasContact(text) || (transcript !== undefined && hasContact(transcript))) return returnToProvider(ports, id, ['2.2.2'], kept);
 
@@ -141,7 +141,7 @@ async function judge(ports: PlacementPorts, placement: Record<string, unknown>, 
 
   let reply: CheckReply;
   try {
-    reply = await ports.check(settings.model, PLACEMENT_CHECK_SYSTEM, placementCheckUser({ providerName: String(placement.providerName), text, ...kept }));
+    reply = await ports.check(settings.model, STUDIO_CHECK_SYSTEM, studioCheckUser({ providerName: String(studio.providerName), category: String(studio.category), text, ...kept }));
   } catch (e) {
     ports.metric('UpstreamError', 1);
     console.error(JSON.stringify({ event: 'upstream_error', model: settings.model.id, error: (e as Error)?.name }));
@@ -150,33 +150,34 @@ async function judge(ports: PlacementPorts, placement: Record<string, unknown>, 
   const microUsd = Math.ceil(reply.inputTokens * settings.model.price.inputPerMTok + reply.outputTokens * settings.model.price.outputPerMTok);
   await ports.db.send(new UpdateCommand({ TableName: ports.relayTable, Key: spendKey, UpdateExpression: 'ADD microUsd :c', ExpressionAttributeValues: { ':c': microUsd } }));
 
-  const verdict = readPlacementVerdict(reply.text);
+  const verdict = readStudioVerdict(reply.text);
   if (!verdict.ok) return returnToProvider(ports, id, verdict.items.length > 0 ? verdict.items : ['unclear'], kept);
   return goLive(ports, id, 'checking', { items: [], checkedAt: now.toISOString(), ...kept });
 }
 
 /**
- * Puts a placement up: its audio to the served bucket, and a copy into each of its cells (K-7).
+ * Puts a studio up: its audio to the served bucket, and a copy into each of its cells (K-7).
  * From `checking` after a clean check, or from `appealed` when the operator accepts the appeal.
  */
-export async function goLive(ports: PlacementPorts, id: string, from: 'checking' | 'appealed', check?: Record<string, unknown>) {
-  const placement = await load(ports, id);
-  if (!placement || placement.state !== from) return;
+export async function goLive(ports: StudioPorts, id: string, from: 'checking' | 'appealed', check?: Record<string, unknown>) {
+  const studio = await load(ports, id);
+  if (!studio || studio.state !== from) return;
   const now = ports.now();
-  const audio = placement.audio as { key: string; durationSec: number; bytes: number; contentType: string; sha256: string } | undefined;
+  const audio = studio.audio as { key: string; durationSec: number; bytes: number; contentType: string; sha256: string } | undefined;
   const served = audio ? { ...audio, key: servedKey(id) } : undefined;
   if (audio && served) await ports.serveAudio(audio.key, served.key);
-  const cells = placement.cells as string[];
+  const cells = studio.cells as string[];
   const copy = {
     id,
-    providerName: placement.providerName,
-    text: placement.text,
+    providerName: studio.providerName,
+    category: studio.category,
+    text: studio.text,
     ...(served ? { audio: served } : {}),
     cells,
-    startsAt: placement.startsAt,
-    endsAt: placement.endsAt,
-    ...(placement.hours ? { hours: placement.hours } : {}),
-    ttl: epoch(new Date(String(placement.endsAt))),
+    startsAt: studio.startsAt,
+    endsAt: studio.endsAt,
+    ...(studio.hours ? { hours: studio.hours } : {}),
+    ttl: epoch(new Date(String(studio.endsAt))),
   };
   await ports.db.send(
     new TransactWriteCommand({
@@ -184,7 +185,7 @@ export async function goLive(ports: PlacementPorts, id: string, from: 'checking'
         {
           Update: {
             TableName: ports.table,
-            Key: { PK: `PLACEMENT#${id}`, SK: 'PLACEMENT' },
+            Key: { PK: `STUDIO#${id}`, SK: 'STUDIO' },
             UpdateExpression: `SET #s = :live, liveAt = :now, updatedAt = :now, rev = rev + :one${served ? ', audio = :audio' : ''}${check ? ', #c = :check' : ''}`,
             ConditionExpression: '#s = :from',
             ExpressionAttributeNames: { '#s': 'state', ...(check ? { '#c': 'check' } : {}) },
@@ -198,5 +199,5 @@ export async function goLive(ports: PlacementPorts, id: string, from: 'checking'
       ],
     }),
   );
-  ports.metric('PlacementsLive', 1);
+  ports.metric('StudiosLive', 1);
 }
