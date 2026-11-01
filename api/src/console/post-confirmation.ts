@@ -5,7 +5,7 @@ const cognito = new CognitoIdentityProviderClient({});
 
 /**
  * Cognito post-confirmation trigger: whoever signs up and confirms their address becomes a
- * publisher (ADR-001 D-7). Operators are added to the operator group by an administrator only,
+ * publisher (ARCH-001 D-7). Operators are added to the operator group by an administrator only,
  * so no sign-up can reach the operator API.
  */
 export async function handler(event: PostConfirmationTriggerEvent) {

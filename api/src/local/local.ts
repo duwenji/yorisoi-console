@@ -65,7 +65,7 @@ export class LocalError extends Error {
   }
 }
 
-/** A model of the operator's AI and its price, as the relay has them (ADR-AI-RELAY R-5). */
+/** A model of the operator's AI and its price, as the relay has them (API-AI-RELAY R-5). */
 export interface ModelChoice {
   id: string;
   profile: string;
@@ -119,7 +119,7 @@ export const REPORTS_TO_HIDE = 3;
 export const REFETCH_SECONDS = 240;
 const REFETCH_AFTER = 300;
 const TTLS = { '1h': 3600, '24h': 24 * 3600, '7d': 7 * 24 * 3600 } as const;
-/** How long a note's author is kept after it expires, so it can still be blocked (ADR-MATERIALS D-43). */
+/** How long a note's author is kept after it expires, so it can still be blocked (MATERIALS D-43). */
 const AUTHOR_KEEP_SECONDS = 7 * 24 * 3600;
 const BLOCK_SECONDS = 365 * 24 * 3600;
 const REPORT_KEEP_SECONDS = 30 * 24 * 3600;

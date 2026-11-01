@@ -1,5 +1,5 @@
 /**
- * A model the operator may switch to (ADR-AI-RELAY R-5), processed in Japan: a model Bedrock runs
+ * A model the operator may switch to (API-AI-RELAY R-5), processed in Japan: a model Bedrock runs
  * in Tokyo itself, or a jp inference profile (Tokyo and Osaka).
  */
 export interface RelayModel {
@@ -13,7 +13,7 @@ export interface RelayModel {
   price: { inputPerMTok: number; outputPerMTok: number };
 }
 
-/** Settings of the operator's AI relay in one account (platform ADR-AI-RELAY, API-AI-RELAY). */
+/** Settings of the operator's AI relay in one account (platform API-AI-RELAY). */
 export interface RelayConfig {
   name: 'dev' | 'prod';
   /** Optional: when set, the stack is pinned to this account. */
@@ -42,7 +42,7 @@ export interface RelayConfig {
   alarmEmail?: string;
 }
 
-/** DeepSeek V3.2 in Tokyo for now, and Claude Haiku 4.5 to switch to (ADR-AI-RELAY R-5). */
+/** DeepSeek V3.2 in Tokyo for now, and Claude Haiku 4.5 to switch to (API-AI-RELAY R-5). */
 export const MODELS: RelayModel[] = [
   {
     id: 'deepseek-v3-2',
@@ -82,7 +82,7 @@ export const relayConfigs: Record<RelayConfig['name'], RelayConfig> = {
     packages: ['io.github.duwenji.yorisoi.sanpoguide', 'io.github.duwenji.yorisoi.cycleguide'],
     integritySecretName: 'yorisoi-ai-relay/prod/play-integrity',
     dailyLimit: 30,
-    // Decided before production (ADR-AI-RELAY T-7).
+    // Decided before production (API-AI-RELAY 未決事項 No.2).
     monthlyBudgetUsd: 20,
     waf: true,
     installKey: 'secret',

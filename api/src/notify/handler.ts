@@ -24,7 +24,7 @@ const ports: NotifyPorts = {
     return attr('email_verified') === 'true' ? attr('email') : undefined;
   },
   send: async (mail) => {
-    // Development has no sending domain yet (ADR-001 T-2): record what would be sent, without the address or text.
+    // Development has no sending domain yet (ARCH-001 未決事項 No.1): record what would be sent, without the address or text.
     if (env('NOTIFY_MODE') === 'log') {
       console.log(JSON.stringify({ wouldSend: mail.subject, bodyLength: mail.body.length }));
       return 'log-only';

@@ -18,7 +18,7 @@ export const LIST_PATH = 'v1/channels.json';
 const DAY = 24 * 3600_000;
 
 export interface ProviderConfig {
-  /** The root public key pinned in the configuration (ADR-001 A-9); everything published must chain to it. */
+  /** The root public key pinned in the configuration (ARCH-001 A-9); everything published must chain to it. */
   rootPublicKey: Uint8Array;
   name: string;
   reviewPolicyUrl?: string;
@@ -67,7 +67,7 @@ export function withMaterial(listed: ListedChannel, collections: Map<string, Col
 
 /**
  * Builds the channel list from the store, signs its digest, checks the result as an app would,
- * and puts it out (ADR-001 A-10). Safe to run at any time: each run takes the next `seq`.
+ * and puts it out (ARCH-001 A-10). Safe to run at any time: each run takes the next `seq`.
  */
 export async function publish(deps: PublishDeps, trigger: Trigger): Promise<PublicationRecord> {
   const now = (deps.now ?? (() => new Date()))();

@@ -1,4 +1,4 @@
-/** Settings of one deployment: the development or the production account (ADR-001 A-2). */
+/** Settings of one deployment: the development or the production account (ARCH-001 A-2). */
 export interface EnvConfig {
   name: 'dev' | 'prod';
   /** Optional: when set, the stack is pinned to this account. */
@@ -7,19 +7,19 @@ export interface EnvConfig {
   providerName: string;
   /**
    * The root public key (base64url, 32 bytes), pinned so the publisher only puts out what chains to it
-   * (ADR-001 A-9). The development provider has its own root key and is never built into the app.
+   * (ARCH-001 A-9). The development provider has its own root key and is never built into the app.
    */
   rootPublicKey: string;
-  /** Signing keys in KMS, one per period (ADR-001 A-8: a new key every six months). */
+  /** Signing keys in KMS, one per period (ARCH-001 A-8: a new key every six months). */
   signingKeyIds: string[];
   reviewPolicyUrl?: string;
   termsUrl?: string;
-  /** The discovery document's `contact`: where reports and rights claims go (platform ADR-004 H-11, ADR-002 D-21). */
+  /** The discovery document's `contact`: where reports and rights claims go (platform AI-ROLES H-11, MATERIALS D-21). */
   contact?: string;
   /** Where alarms go; set it before the first deployment. */
   alarmEmail?: string;
   /**
-   * The publishers' emails (ADR-001 A-19): sent with SES from a verified domain, or only recorded
+   * The publishers' emails (ARCH-001 A-19): sent with SES from a verified domain, or only recorded
    * (`log`) where there is no sending domain yet (T-7) or SES is still in the sandbox (T-8).
    */
   notify: { mode: 'log' } | { mode: 'ses'; from: string; configurationSet?: string };
@@ -38,7 +38,7 @@ export interface EnvConfig {
   localMaterials: boolean;
   /** What this environment pays for (see docs/operations/cost.md). Production keeps every protection. */
   cost: {
-    /** AWS WAF on the user pool (ADR-001 A-18): about 7 USD a month. */
+    /** AWS WAF on the user pool (ARCH-001 A-18): about 7 USD a month. */
     waf: boolean;
     /** DynamoDB point-in-time recovery. */
     pointInTimeRecovery: boolean;

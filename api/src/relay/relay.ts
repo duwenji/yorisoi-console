@@ -5,7 +5,7 @@ import { DeleteCommand, GetCommand, PutCommand, UpdateCommand, type DynamoDBDocu
 /**
  * The operator's AI relay (platform API-AI-RELAY): a session for a genuine app, today's count per
  * install, and one call to the model per narration, paid by the operator up to the daily limit.
- * Prompts and replies pass through and are never stored or logged (ADR-AI-RELAY R-13).
+ * Prompts and replies pass through and are never stored or logged (API-AI-RELAY R-13).
  */
 
 export type RelayCode =
@@ -55,7 +55,7 @@ export class RelayError extends Error {
   }
 }
 
-/** A model the operator may switch to: its Bedrock inference profile and price (ADR-AI-RELAY R-5). */
+/** A model the operator may switch to: its Bedrock inference profile and price (API-AI-RELAY R-5). */
 export interface ModelChoice {
   id: string;
   profile: string;
@@ -63,7 +63,7 @@ export interface ModelChoice {
   price: { inputPerMTok: number; outputPerMTok: number };
 }
 
-/** What the operator sets in Parameter Store (ADR-AI-RELAY R-5, R-14), already checked. */
+/** What the operator sets in Parameter Store (API-AI-RELAY R-5, R-14), already checked. */
 export interface Settings {
   dailyLimit: number;
   monthlyBudgetUsd: number;
@@ -300,7 +300,7 @@ export async function generate(ports: RelayPorts, authorization: string | undefi
   );
   ports.metric('SpendRatio', Number(month.Attributes?.microUsd ?? 0) / 1e6 / monthlyBudgetUsd);
   ports.metric('Calls', 1);
-  // Counts and sizes only: never the prompt, the reply or the install (ADR-AI-RELAY R-13).
+  // Counts and sizes only: never the prompt, the reply or the install (API-AI-RELAY R-13).
   console.log(JSON.stringify({ event: 'generate', kind, model: model.id, stop: reply.stop, inputTokens: reply.inputTokens, outputTokens: reply.outputTokens, ms: Date.now() - started }));
 
   const left: Quota = { limit: dailyLimit, remaining: Math.max(0, dailyLimit - used), resetsAt: resetsAt(now) };

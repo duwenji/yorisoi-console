@@ -13,7 +13,7 @@
 
 ## 目的・背景
 
-[ADR-001](adr/ADR-001-aws-architecture.md) A-6 で、データは DynamoDB の 1 テーブルに置き、パッケージ・アイコン・リストの本体は S3 に置くと決めた。本書は、そのテーブルの項目の種類、キー、インデックス、状態の移り方、上限（A-18）を決める。素材提供者の役割と素材集（申請・審査・公開・取り下げ）、チャンネルが素材集を使う記録（依存）は、[platform ADR-MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-MATERIALS.md)（素材の素材提供者）による。
+[ARCH-001](architecture.md) A-6 で、データは DynamoDB の 1 テーブルに置き、パッケージ・アイコン・リストの本体は S3 に置くと決めた。本書は、そのテーブルの項目の種類、キー、インデックス、状態の移り方、上限（A-18）を決める。素材提供者の役割と素材集（申請・審査・公開・取り下げ）、チャンネルが素材集を使う記録（依存）は、[platform MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/overview/materials.md)（素材の素材提供者）による。
 
 DynamoDB では、取り出し方（アクセスパターン）からキーを決める。本書は、先にアクセスパターンを挙げ、それを満たすキーを決める。
 
@@ -34,11 +34,11 @@ DynamoDB では、取り出し方（アクセスパターン）からキーを�
 
 | 対応元ID | 内容 | 対応状況 |
 |---|---|---|
-| ADR-001 | A-4（Cognito）、A-5（鍵の紐づけ）、A-6（1 テーブル）、A-7（公開の名前）、A-10（`seq`）、A-11〜A-13（受付・承認・試用）、A-15（鍵の移し替え）、A-16（操作の記録）、A-18（上限）、D-7（誰でも登録できる） | 本書でデータにする |
+| ARCH-001 | A-4（Cognito）、A-5（鍵の紐づけ）、A-6（1 テーブル）、A-7（公開の名前）、A-10（`seq`）、A-11〜A-13（受付・承認・試用）、A-15（鍵の移し替え）、A-16（操作の記録）、A-18（上限）、D-7（誰でも登録できる） | 本書でデータにする |
 | platform API-CHANNEL-LIST | `channels[]` の項目、`revoked[]`、`seq`・`expiresAt`、P-8（要約）、P-9（`publisherChange`）、鍵セット | 公開の Lambda が本書のデータから作る |
 | platform API-CHANNEL-PACKAGE | `channel.json` の `id`・`version`・`publisher`、エラーコード | 申請に保存する |
 | platform チャンネル審査方針 | 判定（承認・差し戻し・却下）、取り下げ | 審査の記録・取り下げにする |
-| platform ADR-MATERIALS | D-7（素材集の審査と公開）、D-8（参照中の素材の ID を消す更新を拒む）、D-9（利用許諾）、D-12（取り下げ）、D-14（同じアカウント）、D-17（素材集の ID と鍵の移し替え）、D-18（依存の把握と知らせ）、D-19（退会）、D-20（身元の確認）、D-22（外部の素材の確認） | 1.3 でデータにする |
+| platform MATERIALS | D-7（素材集の審査と公開）、D-8（参照中の素材の ID を消す更新を拒む）、D-9（利用許諾）、D-12（取り下げ）、D-14（同じアカウント）、D-17（素材集の ID と鍵の移し替え）、D-18（依存の把握と知らせ）、D-19（退会）、D-20（身元の確認）、D-22（外部の素材の確認） | 1.3 でデータにする |
 | platform API-CHANNEL-LIST | P-10〜P-15（`collections[]`・`revokedCollections[]`・`producerChange`・`media`・`resourcesSize`・`tags`・`regions`・`grants`） | 公開の Lambda が本書のデータから作る |
 | platform API-MATERIALS | 素材集の形式、`CollectionReferences`（手順 3・4）、`Regions` | 機械審査が `core-format` で行う |
 
@@ -62,7 +62,7 @@ DynamoDB では、取り出し方（アクセスパターン）からキーを�
 | M-7 | チャンネル提供者のアカウントID（`sg1…`） | 1 つのアカウントIDを紐づけられるのは 1 つのチャンネル提供者だけ。外した（移し替えた）アカウントIDも、別のチャンネル提供者に紐づけ直せない |
 | M-8 | リストに載せる内容 | チャンネルの項目に、最新の承認済みの版の「リストに載せる内容」を写しておく。公開の Lambda はそれを集めるだけで、パッケージを開かない |
 | M-9 | 取り下げ | 取り下げると、そのチャンネルはリストから消える。前の承認済みの版に自動では戻さない（新しい版の承認が要る）。リストの `revoked` には、取り下げから 7 日載せる。7 日を過ぎてから初めてリストを取得した端末でも、リストに載っていないチャンネルは使わない（platform API-CHANNEL-LIST P-5）。違いは、パッケージを消して理由を知らせるかどうかだけ |
-| M-10 | チャンネル提供者の停止 | 停止中は申請・試用チケット・鍵の紐づけを受け付けない。公開中のチャンネルはそのまま（止めるなら取り下げを別に行う。ADR-001 A-18 ④） |
+| M-10 | チャンネル提供者の停止 | 停止中は申請・試用チケット・鍵の紐づけを受け付けない。公開中のチャンネルはそのまま（止めるなら取り下げを別に行う。ARCH-001 A-18 ④） |
 | M-11 | 同時に書かれたときの守り方 | 状態が変わる項目には `rev`（書くたびに 1 増やす）を持たせ、条件付き書き込みで後勝ちの上書きを防ぐ。状態の移り方は、移る前の状態を条件にして守る |
 | M-12 | 時刻と ID | 時刻は UTC の ISO 8601（ミリ秒まで）。1 日の上限は日本時間の日付で数える。新しく作る ID は ULID（作った順に並ぶ） |
 | M-13 | 公開の記録の本体 | リストの本体（署名済み）は、公開用のバケットのほかに、記録用のバケットに `seq` ごとに期限なしで残す。DynamoDB には `seq`・SHA-256・保存場所だけを持つ |
@@ -73,7 +73,7 @@ DynamoDB では、取り出し方（アクセスパターン）からキーを�
 
 | No. | 論点 | 決定 |
 |---|---|---|
-| M-16 | アカウントの形 | チャンネル提供者の項目（`PUB#`）を「アカウント」として扱い、`roles`（`publisher`・`producer`）を持たせる。鍵・停止・退会・鍵の移し替えは役割に共通（platform ADR-MATERIALS D-14）。文書と画面では、役割を言うときに「チャンネル提供者」「素材提供者」、両方を言うときに「アカウント」と呼ぶ |
+| M-16 | アカウントの形 | チャンネル提供者の項目（`PUB#`）を「アカウント」として扱い、`roles`（`publisher`・`producer`）を持たせる。鍵・停止・退会・鍵の移し替えは役割に共通（platform MATERIALS D-14）。文書と画面では、役割を言うときに「チャンネル提供者」「素材提供者」、両方を言うときに「アカウント」と呼ぶ |
 | M-17 | 素材提供者の役割を有効にする方法 | アカウントの持ち主が自分で有効にできる（D-7 と同じく開かれている）。身元は、最初の素材集を承認するときに運営が確かめて `producerVerification` に記録する。記録がないアカウントの素材集は承認できない。表示名を変えると記録を消し、次の承認で確かめ直す（D-20） |
 | M-18 | 素材集のデータ | チャンネル・申請と同じ形の項目を、`COL#{collectionId}` の下に別に作る（素材集・申請・審査の記録・取り下げ）。素材集の ID はチャンネルの ID と別の名前空間で、最初に登録したアカウントが持ち、再利用しない（D-17）。審査待ちの列は 1 本（`QUEUE#REVIEW`）で、項目の `kind`（`channel` / `collection`）で見分ける |
 | M-19 | 上限 | 素材集は 1 アカウント 5 つ（取り下げたものも数える）。審査待ちの申請は 1 素材集につき 1 つ。申請の回数（1 日 20 回）はチャンネルと素材集で合わせて数える。素材集の試用チケットは作らない（platform API-MATERIALS の未決事項） |
@@ -86,7 +86,7 @@ DynamoDB では、取り出し方（アクセスパターン）からキーを�
 
 ### エコシステムの決定
 
-platform ADR-ECOSYSTEM-PLATFORM（付き添いアプリのエコシステム）による。実装は [DES-011](design/DES-011-ecosystem.md)。
+platform ECOSYSTEM（付き添いアプリのエコシステム）による。実装は [DES-011](design/DES-011-ecosystem.md)。
 
 | No. | 論点 | 決定 |
 |---|---|---|
@@ -194,7 +194,7 @@ stateDiagram-v2
 
 **チャンネル（CHANNEL）**: `active`（承認済みの版がなくてもよい）→ `revoked`（取り下げ）→ 新しい版の承認で `active` に戻る。取り下げ中はリストに載らない
 
-**素材集（COLLECTION）**: チャンネルと同じ（`active` ⇄ `revoked`）。取り下げると利用の記録は残し（取り下げを知らせる先のため）、使っているチャンネルはアプリ側で次の候補に進む（platform ADR-MATERIALS D-12）
+**素材集（COLLECTION）**: チャンネルと同じ（`active` ⇄ `revoked`）。取り下げると利用の記録は残し（取り下げを知らせる先のため）、使っているチャンネルはアプリ側で次の候補に進む（platform MATERIALS D-12）
 
 **チャンネル提供者（PUBLISHER）**: `pending_key`（登録直後。鍵の紐づけ待ち）→ `active` → `suspended`（運営が停止）→ `active`（運営が戻す）。どの状態からも、チャンネル提供者の退会で `deleted`（戻らない。M-15）。`active` 以外のあいだは申請できない
 
@@ -265,7 +265,7 @@ stateDiagram-v2
 | `publisherId` | S | ○ | ULID |
 | `ownerSub` | S | ○ | 持ち主の Cognito の `sub`（M-1） |
 | `displayName` | S | ○ | リストの `publisherName` に使う。1〜40 文字 |
-| `contact` | S | ○ | 審査・移し替えの連絡先（Cognito のメールとは別に持つ。本人確認の「別の経路」の候補。ADR-001 未決事項 No.5） |
+| `contact` | S | ○ | 審査・移し替えの連絡先（Cognito のメールとは別に持つ。本人確認の「別の経路」の候補。ARCH-001 未決事項 No.5） |
 | `status` | S | ○ | `pending_key` / `active` / `suspended` / `deleted` |
 | `pendingTransferId` | S | — | `requested` の移し替え（1 つだけ。あいだは申請を受け付けない） |
 | `activeAccountId` | S | — | 使っている鍵のアカウントID（`sg1…`） |
@@ -479,7 +479,7 @@ DynamoDB なので DDL はなく、テーブルとインデックスは CDK（`i
 | 素材集の取り下げ | 取り下げ、素材集（`revoked`、`LISTED` を外す）、承認済みの申請（→ `revoked`）。利用の記録は残す。使っているチャンネル提供者への知らせは、トランザクションの後に送る（D-18） |
 | 移し替えの承認（素材集の分） | アカウントのすべての素材集（`producerChange`、審査待ちの申請を外す）、素材集の審査待ちの申請（→ `returned`）。素材集 5 つと申請 5 つで 10 件ほど増える |
 
-- 承認・取り下げ・移し替えの承認・鍵セットの登録のあと、公開の Lambda を非同期で呼ぶ（ADR-001 A-10）
+- 承認・取り下げ・移し替えの承認・鍵セットの登録のあと、公開の Lambda を非同期で呼ぶ（ARCH-001 A-10）
 - 1 つのトランザクションは 100 件まで。上の操作は多くても 10 件ほど
 
 ### S3 に置くもの
@@ -541,12 +541,12 @@ DynamoDB なので DDL はなく、テーブルとインデックスは CDK（`i
 | No. | 内容 | 決める時期 |
 |---|---|---|
 | 1 | 却下（`rejected`）されたパッケージを、根拠として 90 日より長く残すか（M-4 では 90 日） | 運用の開始後 |
-| 2 | platform ADR-MATERIALS の未決事項 No.4（「確認済み」の印）を採るなら、`producerVerification` から作る | platform ADR-MATERIALS の判断 |
+| 2 | platform MATERIALS の未決事項 No.4（「確認済み」の印）を採るなら、`producerVerification` から作る | platform MATERIALS の判断 |
 
 ## 関連ドキュメント・参照リンク
 
-- [ADR-001](adr/ADR-001-aws-architecture.md): AWS の構成
+- [ARCH-001](architecture.md): AWS の構成
 - [platform API-CHANNEL-LIST](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-LIST.md): 承認済みチャンネル・リスト
 - [platform API-CHANNEL-PACKAGE](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-CHANNEL-PACKAGE.md): パッケージの形式
 - [platform チャンネル審査方針](https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/channel-review.md): 審査基準
-- [platform ADR-MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-MATERIALS.md)・[platform API-MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-MATERIALS.md): 素材の素材提供者と素材集
+- [platform MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/overview/materials.md)・[platform API-MATERIALS](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-MATERIALS.md): 素材の素材提供者と素材集

@@ -1,6 +1,6 @@
 # 運営の AI（中継）の手順
 
-運営の AI の中継（platform [ADR-AI-RELAY](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/ADR-AI-RELAY.md)・[API-AI-RELAY](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-AI-RELAY.md)）を配備し、モデル・上限・予算を変え、止める手順。中継は管理システムとは別のスタック（`YorisoiAiRelay-<env>`）で、別の CDK アプリ（`infra/bin/relay.ts`）から配備する。管理システムの SPA や鍵がなくても配備できる。
+運営の AI の中継（platform [API-AI-RELAY](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/API-AI-RELAY.md)）を配備し、モデル・上限・予算を変え、止める手順。中継は管理システムとは別のスタック（`YorisoiAiRelay-<env>`）で、別の CDK アプリ（`infra/bin/relay.ts`）から配備する。管理システムの SPA や鍵がなくても配備できる。
 
 ## 構成
 
@@ -22,7 +22,7 @@
 | `deepseek-v3-2` | `deepseek.v3.2` | 東京 | 0.74 / 2.22 USD | 既定 |
 | `haiku-4-5` | `jp.anthropic.claude-haiku-4-5-20251001-v1:0` | 東京・大阪 | 1.10 / 5.50 USD | 切り替え先。使う前に Anthropic のユースケースを申告する |
 
-どちらも開発用で呼べることを確かめた。表にないモデルを足すときは、`models` に足して配備する（ロールが呼べるモデルも一緒に増える）。単価は月の費用の足し上げに使うので、Bedrock の価格表の東京（推論プロファイルなら jp）の値を入れる。日本の外で処理するモデル・プロファイルは足さない（ADR-AI-RELAY R-5）。
+どちらも開発用で呼べることを確かめた。表にないモデルを足すときは、`models` に足して配備する（ロールが呼べるモデルも一緒に増える）。単価は月の費用の足し上げに使うので、Bedrock の価格表の東京（推論プロファイルなら jp）の値を入れる。日本の外で処理するモデル・プロファイルは足さない（API-AI-RELAY R-5）。
 
 ## 配備
 
@@ -43,8 +43,8 @@ npx cdk -a "npx tsx bin/relay.ts" deploy -c env=dev
 
 本番は、配備の前に次を済ませる。
 
-1. Haiku 4.5 に切り替えることがあるなら、Anthropic のモデルのユースケースを申告しておく（ADR-AI-RELAY T-6）
-2. 月の予算を決め、`relay-config.ts` の `monthlyBudgetUsd` に入れる（T-7）
+1. Haiku 4.5 に切り替えることがあるなら、Anthropic のモデルのユースケースを申告しておく
+2. 月の予算を決め、`relay-config.ts` の `monthlyBudgetUsd` に入れる（API-AI-RELAY 未決事項 No.2）
 3. Play Integrity のサービス アカウントを作り、鍵を Secrets Manager に入れる（下の節）
 4. 警報の宛先を `-c alarmEmail=<メール>` で渡す
 
@@ -59,8 +59,8 @@ MSYS_NO_PATHCONV=1 aws ssm put-parameter --name /yorisoi-ai-relay/dev/daily-limi
 MSYS_NO_PATHCONV=1 aws ssm put-parameter --name /yorisoi-ai-relay/dev/monthly-budget-usd --value 10 --overwrite
 ```
 
-- モデルは上の表の値（ADR-AI-RELAY R-5）。ほかの値では `relay-config.ts` の既定のモデルで動き、「設定の値が正しくない」の警報が届く。切り替える前に、そのモデルを呼べること（クォータ）を確かめる。呼べないと、すべての生成が `upstream_error` になる
-- 1 日の上限は 5〜100 の整数（ADR-AI-RELAY R-14）。ほかの値では既定の 30 回で動き、「設定の値が正しくない」の警報が届く
+- モデルは上の表の値（API-AI-RELAY R-5）。ほかの値では `relay-config.ts` の既定のモデルで動き、「設定の値が正しくない」の警報が届く。切り替える前に、そのモデルを呼べること（クォータ）を確かめる。呼べないと、すべての生成が `upstream_error` になる
+- 1 日の上限は 5〜100 の整数（API-AI-RELAY R-14）。ほかの値では既定の 30 回で動き、「設定の値が正しくない」の警報が届く
 - 月の予算は 0 より大きい数（USD）。正しくないときは `relay-config.ts` の値で動く
 - その日の途中で上限を変えても、その日に使った回数はそのまま。新しい上限との差が残りになる
 - CloudFormation は、`relay-config.ts` の値を変えて配備したときだけパラメータを書き換える。手で変えた値は、配備し直しても残る

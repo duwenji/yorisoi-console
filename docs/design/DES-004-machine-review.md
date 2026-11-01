@@ -13,13 +13,13 @@
 
 ## 目的・背景
 
-[DES-003](DES-003-publisher-console.md) でチャンネル提供者が上げたパッケージを、アプリと同じコード（yorisoi-platform の `core-format`）で確かめ、合格なら運営の審査待ちに入れる（ADR-001 A-11）。あわせて、機械審査に合格した申請を、チャンネル提供者が審査の前に自分の端末で試せる試用チケットを出す（ADR-001 A-13、platform API-CHANNEL-LIST）。
+[DES-003](DES-003-publisher-console.md) でチャンネル提供者が上げたパッケージを、アプリと同じコード（yorisoi-platform の `core-format`）で確かめ、合格なら運営の審査待ちに入れる（ARCH-001 A-11）。あわせて、機械審査に合格した申請を、チャンネル提供者が審査の前に自分の端末で試せる試用チケットを出す（ARCH-001 A-13、platform API-CHANNEL-LIST）。
 
 ## 対応元ID（トレーサビリティ）
 
 | 対応元ID | 内容 | 対応状況 |
 |---|---|---|
-| ADR-001 | A-11（機械審査）、A-13（試用チケット）、A-8（署名鍵で署名） | 実装 |
+| ARCH-001 | A-11（機械審査）、A-13（試用チケット）、A-8（署名鍵で署名） | 実装 |
 | API-001 | C-1（見本用のプロンプトをプロンプト・パックで組み立てる）、試用チケットの操作、`Validation` | 実装 |
 | DM-001 | 申請の `uploading` → `validating`/`awaiting_review`/`validation_failed`、`samples/`、TICKET、QUOTA の `tickets`、M-4 | 実装 |
 | platform API-CHANNEL-LIST・platform API-CHANNEL-PACKAGE | 試用チケットの形式、確認の手順 2〜10 とエラーコード | 実装 |
@@ -36,7 +36,7 @@
 | J-6 | 両方のファイルの通知が同時に来ても、記録は `state = uploading` を条件にした 1 つのトランザクションなので、1 回しか記録されない | DM-001 M-11 |
 | J-7 | 機械審査の操作の記録は、actor を `system`（`machine-review`）として残す | DV-10 |
 | J-8 | 試用チケットは、機械審査に合格した申請（審査待ち・審査中・差し戻し・承認）だけ。パッケージを公開用の S3 の `trial/{SHA-256}.zip` に写し（7 日で消える。差し戻しは `archive/` から、承認済みは `pkg/` をそのまま使う）、1 日 10 枚まで | platform API-CHANNEL-LIST、DM-001 M-2 |
-| J-9 | 試用チケットは、ルート鍵で検証した今の鍵セットのうち、期間内で失効しておらず `active` の最新の署名鍵で署名する（公開の処理と同じ選び方）。KMS の署名は、鍵ポリシーで管理 API の Lambda にも、`ED25519_SHA_512`・`RAW` に限って許す | ADR-001 A-8。IAM 側では許さない |
+| J-9 | 試用チケットは、ルート鍵で検証した今の鍵セットのうち、期間内で失効しておらず `active` の最新の署名鍵で署名する（公開の処理と同じ選び方）。KMS の署名は、鍵ポリシーで管理 API の Lambda にも、`ED25519_SHA_512`・`RAW` に限って許す | ARCH-001 A-8。IAM 側では許さない |
 | J-10 | QR コードには、署名済みの文書の JSON をそのまま入れる（約 750 文字）。画面で qrcode-generator で描く | platform API-CHANNEL-LIST |
 | J-11 | 機械審査の Lambda は GitHub Packages から `core-format`（yorisoi-platform）とプロンプト・パック（yorisoi-sanpoguide）を読み込む。CI は `GITHUB_TOKEN`（`packages: read`）、手元は各リポジトリで `publishToMavenLocal` したものでもよい | 公開リポジトリのパッケージなので、ほかのリポジトリの CI からも読める |
 

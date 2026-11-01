@@ -24,7 +24,7 @@ export interface RelayStackProps extends StackProps {
 }
 
 /**
- * The operator's AI relay (platform ADR-AI-RELAY R-6): a stack of its own, so the console and the
+ * The operator's AI relay (platform API-AI-RELAY R-6): a stack of its own, so the console and the
  * relay don't stop each other. A REST API (it takes AWS WAF; an HTTP API doesn't), one Lambda that
  * calls Bedrock with its role, a table of nonces, tokens and counts, and the operator's settings in
  * Parameter Store.
@@ -49,17 +49,17 @@ export class RelayStack extends Stack {
     const dailyLimit = new ssm.StringParameter(this, 'DailyLimit', {
       parameterName: `/yorisoi-ai-relay/${config.name}/daily-limit`,
       stringValue: String(config.dailyLimit),
-      description: 'Calls a day per install on the operator’s AI: an integer from 5 to 100 (ADR-AI-RELAY R-14)',
+      description: 'Calls a day per install on the operator’s AI: an integer from 5 to 100 (API-AI-RELAY R-14)',
     });
     const monthlyBudget = new ssm.StringParameter(this, 'MonthlyBudget', {
       parameterName: `/yorisoi-ai-relay/${config.name}/monthly-budget-usd`,
       stringValue: String(config.monthlyBudgetUsd),
-      description: 'USD a month for the operator’s AI; the relay pauses when the month’s spend reaches it (ADR-AI-RELAY R-10)',
+      description: 'USD a month for the operator’s AI; the relay pauses when the month’s spend reaches it (API-AI-RELAY R-10)',
     });
     const model = new ssm.StringParameter(this, 'Model', {
       parameterName: `/yorisoi-ai-relay/${config.name}/model`,
       stringValue: config.model,
-      description: `The model of the operator’s AI, one of: ${config.models.map((m) => m.id).join(', ')} (ADR-AI-RELAY R-5)`,
+      description: `The model of the operator’s AI, one of: ${config.models.map((m) => m.id).join(', ')} (API-AI-RELAY R-5)`,
     });
 
     const installSecret =
@@ -180,9 +180,9 @@ export class RelayStack extends Stack {
         treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
         alarmDescription: description,
       }).addAlarmAction(new cwActions.SnsAction(alarms));
-    alarm('BudgetNear', 'SpendRatio', 'Maximum', 0.8, 'The month’s spend on the operator’s AI passed 80% of the budget (ADR-AI-RELAY R-10)');
-    alarm('Paused', 'RelayPaused', 'Sum', 1, 'The operator’s AI is paused: the month’s budget is used up (ADR-AI-RELAY R-10)');
-    alarm('BadSetting', 'InvalidSetting', 'Maximum', 1, 'A relay parameter is not valid; the relay uses 30 calls, the default budget or the default model (ADR-AI-RELAY R-5, R-14)');
+    alarm('BudgetNear', 'SpendRatio', 'Maximum', 0.8, 'The month’s spend on the operator’s AI passed 80% of the budget (API-AI-RELAY R-10)');
+    alarm('Paused', 'RelayPaused', 'Sum', 1, 'The operator’s AI is paused: the month’s budget is used up (API-AI-RELAY R-10)');
+    alarm('BadSetting', 'InvalidSetting', 'Maximum', 1, 'A relay parameter is not valid; the relay uses 30 calls, the default budget or the default model (API-AI-RELAY R-5, R-14)');
     alarm('UpstreamErrors', 'UpstreamError', 'Sum', 10, 'Bedrock failed 10 times in 5 minutes');
 
     // The studio reads tokens here and adds its AI's cost to the month (console DES-013 K-2, K-3).

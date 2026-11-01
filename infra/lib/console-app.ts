@@ -57,7 +57,7 @@ const lambdaDefaults = (repoRoot: string): Partial<nodejs.NodejsFunctionProps> =
 /**
  * The console the operators (and later the publishers) use: Cognito with managed login,
  * the console API behind API Gateway's JWT authorizer, and the SPA on CloudFront with `/api/*`
- * sent to the API (ADR-001 A-3, A-4, A-18; API-001 C-5, C-7).
+ * sent to the API (ARCH-001 A-3, A-4, A-18; API-001 C-5, C-7).
  */
 export class ConsoleApp extends Construct {
   /** The console API, which also signs test tickets (the stack lets it sign in the key policy). */
@@ -73,7 +73,7 @@ export class ConsoleApp extends Construct {
     if (!existsSync(`${props.webDist}/index.html`)) throw new Error(`build the SPA first (npm run build -w web): ${props.webDist}`);
     if (!existsSync(props.validatorZip)) throw new Error(`build the machine review first (cd validator && ./gradlew build): ${props.validatorZip}`);
 
-    // ---- Cognito (ADR-001 A-4: one pool, TOTP MFA for everyone) ----
+    // ---- Cognito (ARCH-001 A-4: one pool, TOTP MFA for everyone) ----
     const userPool = new cognito.UserPool(this, 'UserPool', {
       userPoolName: `yorisoi-console-${config.name}`,
       // Publishers register themselves (D-7); operators are created by an administrator.
@@ -219,7 +219,7 @@ export class ConsoleApp extends Construct {
             // The icon of a submission under review comes from a presigned URL on the intake bucket.
             // The studio's cell map shows GSI tiles (DES-013 K-16).
             `img-src 'self' data: https://${intakeBucket.bucketRegionalDomainName}${local ? ' https://cyberjapandata.gsi.go.jp' : ''}`,
-            // The review samples call the AI from the browser with the operator's key (ADR-001 D-4, DES-005).
+            // The review samples call the AI from the browser with the operator's key (ARCH-001 D-4, DES-005).
             `connect-src 'self' https://${authDomain} https://cognito-idp.${stack.region}.${stack.urlSuffix} https://${intakeBucket.bucketRegionalDomainName}${localIntake} https://api.openai.com https://api.deepseek.com`,
             `form-action 'self' https://${authDomain}`,
             "frame-ancestors 'none'",
@@ -382,7 +382,7 @@ export class ConsoleApp extends Construct {
 
     this.consoleFunction = consoleFn;
 
-    // ---- the machine review (ADR-001 A-11) ----
+    // ---- the machine review (ARCH-001 A-11) ----
     const validator = new lambda.Function(this, 'MachineReview', {
       runtime: lambda.Runtime.JAVA_21,
       architecture: lambda.Architecture.ARM_64,
@@ -413,7 +413,7 @@ export class ConsoleApp extends Construct {
     props.publicBucket.grantRead(validator, 'col/*');
     intakeBucket.addEventNotification(s3.EventType.OBJECT_CREATED, new s3n.LambdaDestination(validator), { prefix: 'intake-col/' });
 
-    // ---- the publishers' emails (ADR-001 A-19, API-001 C-14) ----
+    // ---- the publishers' emails (ARCH-001 A-19, API-001 C-14) ----
     const deadNotices = new sqs.Queue(this, 'NotifyDeadLetters', { retentionPeriod: Duration.days(14), enforceSSL: true });
     const notices = new sqs.Queue(this, 'NotifyQueue', {
       visibilityTimeout: Duration.minutes(2),

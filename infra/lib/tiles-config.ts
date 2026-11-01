@@ -1,4 +1,4 @@
-/** Settings of the spot tiles in one account (platform ADR-SPOT-TILES, API-SPOT-TILES). */
+/** Settings of the spot tiles in one account (platform API-SPOT-TILES). */
 export interface TilesConfig {
   name: 'dev' | 'prod';
   /** Optional: when set, the stack is pinned to this account. */

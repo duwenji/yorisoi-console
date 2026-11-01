@@ -6,7 +6,7 @@ import { myPublisher, transact } from './publisher.js';
 import type { Item } from './shared.js';
 import { downItems, loadStudio, studioView, stateChange, localOf } from './studio.js';
 
-// The operator's side of what is fetched by area, studios and notes alike (platform ADR-MATERIALS D-44):
+// The operator's side of what is fetched by area, studios and notes alike (platform MATERIALS D-44):
 // the closed areas, where neither may be put (REQ-STUDIO・REQ-NOTES F-15), and what the studio's and the notes'
 // pages share.
 

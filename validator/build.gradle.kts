@@ -1,6 +1,6 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
-// The machine review (ADR-001 A-11): a Lambda that checks an uploaded package with the very code
+// The machine review (ARCH-001 A-11): a Lambda that checks an uploaded package with the very code
 // the app uses (yorisoi core-format), and renders the review samples with SanpoGuide's prompt pack
 // (API-001 C-1). Published by yorisoi-platform and yorisoi-sanpoguide.
 plugins {

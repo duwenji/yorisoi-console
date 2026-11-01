@@ -31,7 +31,7 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
 /**
- * The machine-review Lambda (ADR-001 A-11, DES-007): S3 calls it for each file under `intake/`
+ * The machine-review Lambda (ARCH-001 A-11, DES-007): S3 calls it for each file under `intake/`
  * (channels) and `intake-col/` (collections, DM-001).
  *
  * A channel's package and icon both raise events, possibly at once: when both are there it reviews

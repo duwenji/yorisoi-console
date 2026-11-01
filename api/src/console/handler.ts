@@ -125,7 +125,7 @@ async function load(): Promise<Deps> {
       await s3.send(new PutObjectCommand({ Bucket: env('RECORDS_BUCKET'), Key: key, Body: body, ContentType: 'application/json' }));
     },
     publishApproved: async ({ packageKey, packageSha256, iconKey, iconSha256 }) => {
-      // Named by their hashes, so they are immutable and cached for long (ADR-001 A-7).
+      // Named by their hashes, so they are immutable and cached for long (ARCH-001 A-7).
       const copy = (from: string, to: string, contentType: string) =>
         s3.send(new CopyObjectCommand({
           Bucket: env('PUBLIC_BUCKET'), Key: to, CopySource: `${env('INTAKE_BUCKET')}/${from}`,
@@ -187,7 +187,7 @@ function apps(): Record<string, AppEntry> {
 
 const MAX_BODY = 1024 * 1024;
 
-/** The console API behind API Gateway's JWT authorizer (ADR-001 A-3, API-001). */
+/** The console API behind API Gateway's JWT authorizer (ARCH-001 A-3, API-001). */
 export async function handler(event: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyResultV2> {
   const requestId = event.requestContext.requestId;
   try {

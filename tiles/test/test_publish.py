@@ -1,4 +1,4 @@
-"""What publish.py uploads, deletes, and refuses (platform ADR-SPOT-TILES S-6)."""
+"""What publish.py uploads, deletes, and refuses (platform API-SPOT-TILES S-6)."""
 
 import publish
 

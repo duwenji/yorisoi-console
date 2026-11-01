@@ -37,7 +37,7 @@ export async function accountIdsOf(deps: Deps, publisherId: string): Promise<str
   return (out.Items ?? []).map((k) => String(k.accountId));
 }
 
-/** Whether a collection's grants let an account (by any of its ids) use it (ADR-002 D-9). */
+/** Whether a collection's grants let an account (by any of its ids) use it (MATERIALS D-9). */
 export function granted(grants: { publishers?: '*' | string[] } | undefined, accountIds: string[]): boolean {
   const publishers = grants?.publishers;
   return publishers === '*' || (Array.isArray(publishers) && accountIds.some((id) => publishers.includes(id)));

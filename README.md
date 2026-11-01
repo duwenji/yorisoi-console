@@ -13,7 +13,7 @@ yorisoi のアプリ（SanpoGuide・CycleGuide）の第三者のチャンネル�
 
 ## 構成
 
-AWS（ap-northeast-1）。API Gateway・Lambda・DynamoDB・Cognito・KMS・SQS、公開は S3 と CloudFront。全体を図で見るには **構成図**（[HTML 版](docs/architecture.html)はブラウザで開く。GitHub の上では [Markdown 版](docs/architecture.md)）、設計の理由は [console ADR-001](docs/adr/ADR-001-aws-architecture.md)。npm workspaces のモノレポ（Node.js 22 以上）。
+AWS（ap-northeast-1）。API Gateway・Lambda・DynamoDB・Cognito・KMS・SQS、公開は S3 と CloudFront。全体を図で見るには **構成図**（[HTML 版](docs/architecture.html)はブラウザで開く。GitHub の上では [Markdown 版](docs/architecture.md)）、設計の理由は [console ARCH-001](docs/architecture.md)。npm workspaces のモノレポ（Node.js 22 以上）。
 
 ```
 packages/protocol  platform API-CHANNEL-LIST の文書の作成と検証（共通）

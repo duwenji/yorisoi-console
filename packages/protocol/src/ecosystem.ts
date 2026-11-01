@@ -1,5 +1,5 @@
 /**
- * The ecosystem's vocabulary (platform API-CHANNEL-PACKAGE, ADR-003 E-9), as `core-format` holds it.
+ * The ecosystem's vocabulary (platform API-CHANNEL-PACKAGE, ECOSYSTEM E-9), as `core-format` holds it.
  * Values are added there first; keep these in step when the console takes a new core-format.
  */
 export const ACTIVITIES = ['walk', 'cycle'] as const;
@@ -10,7 +10,7 @@ export const FEATURES = [
   'present:speak', 'present:card', 'present:notify', 'present:sheet', 'present:play', 'present:ambient', 'present:fullscreen',
 ] as const;
 
-/** An app of the ecosystem: what it is for and what it implements (platform ADR-003 E-6 ①). */
+/** An app of the ecosystem: what it is for and what it implements (platform ECOSYSTEM E-6 ①). */
 export interface KnownApp {
   name: string;
   activity: string;

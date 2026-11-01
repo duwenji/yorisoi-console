@@ -2,15 +2,14 @@
 
 このリポジトリの文書は、チャンネル管理システムの設計・API・データ・利用・運用を説明します。画面や運用手順はこのシステムに固有のものです。
 
-エコシステム共通の方針と契約は [yorisoi-platform](https://github.com/duwenji/yorisoi-platform) が正本です。platform の ADR と API 契約が共有ルールを定め、このリポジトリの ADR・DES はそのルールに従う管理システムの実装を定めます。
+エコシステム共通の方針と契約は [yorisoi-platform](https://github.com/duwenji/yorisoi-platform) が正本です。platform の方針（overview）と API 契約が共有ルールを定め、このリポジトリの構成の決まり（ARCH-001）・DES はそのルールに従う管理システムの実装を定めます。
 
 ## 設計と管理システムの契約
 
 | 知りたいこと | 文書 |
 |---|---|
-| AWS 構成とコンポーネントの関係 | [構成図](architecture.md) |
+| AWS 構成とコンポーネントの関係、構成の決まり | [構成図と決まり（ARCH-001）](architecture.md) |
 | CDK にある AWS 資源とつながり（生成した図） | [AWS 資源の図](aws-diagrams.md) |
-| 管理システムのアーキテクチャ判断 | [console ADR-001](adr/ADR-001-aws-architecture.md) |
 | 機能ごとの設計 | [console DES-001〜DES-011・DES-013](design/) |
 | 管理画面が使う API | [console API-001](console-api.md) と [OpenAPI 定義](api/console.openapi.yaml) |
 | DynamoDB の項目・キー・状態 | [console DM-001](data-model.md) |
@@ -49,11 +48,11 @@
 
 | 知りたいこと | 正本 |
 |---|---|
-| 意思決定と共有方針 | [platform ADR 一覧](https://github.com/duwenji/yorisoi-platform/blob/main/docs/decisions/README.md) |
+| 共有方針 | [platform 文書案内](https://github.com/duwenji/yorisoi-platform/blob/main/docs/README.md)（エコシステム・チャンネル・素材・生成 AI の役割の決まり） |
 | API・データ形式の境界 | [platform API 契約一覧](https://github.com/duwenji/yorisoi-platform/blob/main/docs/contracts/README.md) |
 | 関係者の呼び方 | [関係者と共通用語](https://github.com/duwenji/yorisoi-platform/blob/main/docs/overview/roles-and-vocabulary.md) |
 | チャンネル審査方針 | [審査方針](https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/channel-review.md) |
 | スタジオの決まり | [一言の利用規約](https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/notes-terms.md)・[スタジオの決まり](https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/studio-rules.md) |
 | SanpoGuide の使い方と運用 | [SanpoGuide 手引き](https://github.com/duwenji/yorisoi-platform/blob/main/docs/apps/sanpoguide/manual/README.md) |
 
-文書 ID はリポジトリごとに管理します。たとえば `console ADR-001` と `platform ADR-CHANNELS` は別の文書です。platform の文書は canonical ID で指します。
+文書 ID はリポジトリごとに管理します。たとえば `console ARCH-001` と `platform CHANNELS` は別の文書です。platform の文書は canonical ID で指します。

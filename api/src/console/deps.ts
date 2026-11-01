@@ -11,11 +11,11 @@ export interface Deps {
   table: string;
   now: () => Date;
   cursors: CursorCodec;
-  /** The provider's root public key (base64url), pinned in the configuration (ADR-001 A-9). */
+  /** The provider's root public key (base64url), pinned in the configuration (ARCH-001 A-9). */
   rootPublicKey: string;
   /** Reads a KMS key's public key (DER SubjectPublicKeyInfo) and key spec. */
   kmsPublicKey: (keyArn: string) => Promise<{ keySpec: string | undefined; publicKey: Uint8Array }>;
-  /** Starts the publisher without waiting for it (ADR-001 A-10). */
+  /** Starts the publisher without waiting for it (ARCH-001 A-10). */
   requestPublish: (trigger: Trigger) => Promise<void>;
   /** A presigned S3 POST into the intake bucket; S3 enforces the size (API-001 C-10). */
   presignUpload: (key: string, contentType: string, maxBytes: number) => Promise<{ url: string; fields: Record<string, string> }>;
@@ -23,11 +23,11 @@ export interface Deps {
   archiveUpload: (key: string) => Promise<void>;
   /** Deletes the Cognito user (API-001 C-4, leaving). */
   deleteUser: (sub: string) => Promise<void>;
-  /** Copies a package from the intake bucket to the public `trial/{sha256}.zip` (7 days) and returns its URL (ADR-001 A-13). */
+  /** Copies a package from the intake bucket to the public `trial/{sha256}.zip` (7 days) and returns its URL (ARCH-001 A-13). */
   publishTrial: (intakeKey: string, sha256: string) => Promise<string>;
   /** The public URL of an approved package. */
   packageUrl: (sha256: string) => string;
-  /** Signs a document with the active signing key in KMS (ADR-001 A-8). */
+  /** Signs a document with the active signing key in KMS (ARCH-001 A-8). */
   signDocument: (content: object) => Promise<SignedDocument>;
   /** Reads an uploaded file from the intake bucket. */
   readUpload: (key: string) => Promise<Uint8Array>;
@@ -38,7 +38,7 @@ export interface Deps {
   writeRecord: (key: string, body: string) => Promise<void>;
   /** Copies an approved package and icon to the public bucket (`pkg/`, `icons/`) and returns their URLs. */
   publishApproved: (files: { packageKey: string; packageSha256: string; iconKey: string; iconSha256: string }) => Promise<{ packageUrl: string; iconUrl: string }>;
-  /** Queues an email to the publisher (ADR-001 A-19); the notification Lambda sends it. */
+  /** Queues an email to the publisher (ARCH-001 A-19); the notification Lambda sends it. */
   notify: (notice: Notice) => Promise<void>;
   /** Copies an approved collection package to the public `col/{sha256}.zip` and returns its URL (DES-008 K-4). */
   publishCollection: (packageKey: string, sha256: string) => Promise<string>;

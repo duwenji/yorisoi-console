@@ -1,4 +1,4 @@
-# The weekly batch of the spot tiles (platform ADR-SPOT-TILES S-6): osmium-tool cuts the extract,
+# The weekly batch of the spot tiles (platform API-SPOT-TILES S-6): osmium-tool cuts the extract,
 # pyosmium and shapely make the tiles, boto3 puts them in the bucket.
 FROM python:3.12-slim-bookworm
 

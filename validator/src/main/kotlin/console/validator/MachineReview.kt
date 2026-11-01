@@ -149,7 +149,7 @@ sealed interface CollectionOutcome {
 }
 
 /**
- * The machine review (ADR-001 A-11, API-CHANNEL-PACKAGE 確認の手順 2〜10, API-MATERIALS 確かめる手順 1〜4):
+ * The machine review (ARCH-001 A-11, API-CHANNEL-PACKAGE 確認の手順 2〜10, API-MATERIALS 確かめる手順 1〜4):
  * core-format's checks, the same the app runs, plus what only the console knows (which channel or
  * collection, which account, which version came before, which channels use a collection) and the
  * icon. Pure: the Lambda reads and writes, this decides.
@@ -356,7 +356,7 @@ object MachineReview {
 
     /**
      * The scenes the AI is asked to speak, with the prompts of each activity's representative app
-     * (platform ADR-ECOSYSTEM-PLATFORM E-26): SanpoGuide's for walking, CycleGuide's for cycling,
+     * (platform ECOSYSTEM E-26): SanpoGuide's for walking, CycleGuide's for cycling,
      * both for a channel of both. A channel of neither has none (DES-011 N-8); the operator reads
      * its slots instead.
      */

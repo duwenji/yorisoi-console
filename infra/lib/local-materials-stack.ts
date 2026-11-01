@@ -170,7 +170,7 @@ export class LocalMaterialsStack extends Stack {
         conditions: { 'ForAllValues:StringLike': { 'dynamodb:LeadingKeys': ['TOKEN#*', 'SPEND'] } },
       }),
     );
-    // The relay's models only, as the relay calls them (ADR-AI-RELAY R-5).
+    // The relay's models only, as the relay calls them (API-AI-RELAY R-5).
     relayAccess.push(
       new iam.PolicyStatement({
         actions: ['bedrock:InvokeModel'],

@@ -1420,7 +1420,7 @@ export interface components {
          */
         StudioState: "uploading" | "checking" | "returned" | "appealed" | "live" | "stopped" | "suspended" | "removed" | "rejected";
         /**
-         * @description スタジオの分類（platform API-MATERIALS「スタジオの分類」、ADR-MATERIALS D-55）
+         * @description スタジオの分類（platform API-MATERIALS「スタジオの分類」、MATERIALS D-55）
          * @enum {string}
          */
         StudioCategory: "shrine-temple" | "event" | "food" | "shopping" | "sightseeing" | "nature" | "culture" | "traffic" | "community";

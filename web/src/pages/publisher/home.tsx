@@ -83,7 +83,7 @@ function Register({ onDone }: { onDone: () => void }) {
   );
 }
 
-/** Binds a key: proves possession by signing the server's one-time challenge (ADR-001 A-5). */
+/** Binds a key: proves possession by signing the server's one-time challenge (ARCH-001 A-5). */
 export async function bindKey(api: ReturnType<typeof useSession>['api'], key: PublisherKey) {
   const { data: challenge } = await api.POST('/api/publisher/keys/challenge');
   if (!challenge) throw new Error('一度きりの文字列を受け取れませんでした');

@@ -8,7 +8,7 @@ import { get, loadPublisher, page, type Item } from './shared.js';
 import { ulid } from './util.js';
 
 /**
- * Moving a publisher to a new key when the old one is lost or leaked (ADR-001 A-15, API-001 C-11,
+ * Moving a publisher to a new key when the old one is lost or leaked (ARCH-001 A-15, API-001 C-11,
  * DES-006): the publisher binds a new key and asks; an operator checks who they are by another
  * route and approves. All the publisher's channels move together.
  */

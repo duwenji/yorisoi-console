@@ -640,7 +640,7 @@ td.files{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
     <div class="sec-head">
       <div class="eyebrow">素材集と素材提供者（DM-001 1.3）</div>
       <h2>素材集は、チャンネルと同じ仕組みに乗る別の単位</h2>
-      <p>素材集は、チャンネルが参照する文字・画像などの素材のまとまりです（platform の ADR-MATERIALS・API-MATERIALS）。素材提供者が自分の鍵で署名して申請し、運営がチャンネルとは別に審査・承認して、同じリストの <code>collections[]</code> に載せます。申請の状態の移り方（図 2）・信頼の鎖（図 3）・公開の処理（図 4）・メール（図 5）は、チャンネルと同じ仕組みを使います。違いだけをまとめます。</p>
+      <p>素材集は、チャンネルが参照する文字・画像などの素材のまとまりです（platform の MATERIALS・API-MATERIALS）。素材提供者が自分の鍵で署名して申請し、運営がチャンネルとは別に審査・承認して、同じリストの <code>collections[]</code> に載せます。申請の状態の移り方（図 2）・信頼の鎖（図 3）・公開の処理（図 4）・メール（図 5）は、チャンネルと同じ仕組みを使います。違いだけをまとめます。</p>
     </div>
     <div class="tw">
       <table>
@@ -753,13 +753,13 @@ td.files{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
       <table>
         <thead><tr><th></th><th>開発用（dev）</th><th>本番（prod）</th></tr></thead>
         <tbody>
-          <tr><td>ルート鍵</td><td>開発者の端末（<code>~/.yorisoi-console/dev/</code>）</td><td>オフラインの端末（ADR-001 T-1 の手順）</td></tr>
+          <tr><td>ルート鍵</td><td>開発者の端末（<code>~/.yorisoi-console/dev/</code>）</td><td>オフラインの端末（鍵の手順書）</td></tr>
           <tr><td>アプリへの内蔵</td><td>しない（散策者が URL とリストID で足す）</td><td>内蔵するリスト</td></tr>
           <tr><td>アプリの段（<code>appStageVersions</code>）</td><td>段 0 = 1、段 1 = 2、段 2・3 = 9999</td><td>開発用と同じ</td></tr>
           <tr><td>一覧のカーソルの鍵</td><td>配備のたびに作り直す（古いカーソルは使えなくなる）</td><td>Secrets Manager</td></tr>
           <tr><td>WAF（Cognito）・DynamoDB の復旧</td><td>なし</td><td>あり</td></tr>
           <tr><td>ログの保持</td><td>14 日</td><td>期限なし</td></tr>
-          <tr><td>メール</td><td>送らずに記録だけ（<code>notify: log</code>）</td><td>独自ドメイン（T-7）と SES の準備（T-8）のあと送る</td></tr>
+          <tr><td>メール</td><td>送らずに記録だけ（<code>notify: log</code>）</td><td>独自ドメインと SES の準備（ARCH-001 未決事項 No.1・No.6）のあと送る</td></tr>
           <tr><td>費用</td><td>月 5 USD を超えそうなら通知（タグで集計）</td><td>—</td></tr>
         </tbody>
       </table>

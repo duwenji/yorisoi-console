@@ -10,7 +10,7 @@ const base = configs[name];
 if (!base) throw new Error(`unknown env ${name}; use dev or prod`);
 const rootPublicKey = app.node.tryGetContext('rootPublicKey') as string | undefined;
 if (!rootPublicKey) {
-  throw new Error('pass -c rootPublicKey=<base64url>: the root public key of this provider (tools/root-key generate; ADR-001 T-1)');
+  throw new Error('pass -c rootPublicKey=<base64url>: the root public key of this provider (tools/root-key generate; docs/operations/keys.md)');
 }
 const config: EnvConfig = { ...base, rootPublicKey, ...(app.node.tryGetContext('alarmEmail') ? { alarmEmail: app.node.tryGetContext('alarmEmail') } : {}) };
 

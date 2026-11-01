@@ -13,13 +13,13 @@
 
 ## 目的・背景
 
-[DES-004](DES-004-machine-review.md) で機械審査に合格した申請を、運営が中身と AI の見本を見て判定し、承認したものを公開のリストに載せる（ADR-001 A-11・A-12、審査基準）。
+[DES-004](DES-004-machine-review.md) で機械審査に合格した申請を、運営が中身と AI の見本を見て判定し、承認したものを公開のリストに載せる（ARCH-001 A-11・A-12、審査基準）。
 
 ## 対応元ID（トレーサビリティ）
 
 | 対応元ID | 内容 | 対応状況 |
 |---|---|---|
-| ADR-001 | A-11（審査）、A-12（承認したものだけを公開）、D-4（AI の見本は運営のキーでブラウザから） | 実装 |
+| ARCH-001 | A-11（審査）、A-12（承認したものだけを公開）、D-4（AI の見本は運営のキーでブラウザから） | 実装 |
 | API-001 | 審査待ちの一覧、パッケージの取得、見本用のプロンプト、見本の保存、審査の開始・中断、承認・差し戻し・却下 | 実装 |
 | DM-001 | 申請の `awaiting_review` ⇄ `in_review` → `approved`/`returned`/`rejected`、REVIEW、`reviews/`、CH の `latestApproved`、`superseded` | 実装 |
 | 審査基準 | 項目 1・2.1〜2.7 の指摘、2.7（2 つ以上の AI で見本を作る） | 実装 |
@@ -28,7 +28,7 @@
 
 | No. | 判断 | 理由 |
 |---|---|---|
-| J-1 | 審査の見本は、運営のブラウザから AI を直接呼ぶ。対応するのは OpenAI と DeepSeek（どちらも chat completions の形）。返答の長さの指定は OpenAI が `max_completion_tokens`、DeepSeek が `max_tokens` | ADR-001 D-4。審査基準 2.7 は 2 つ以上の AI を求める |
+| J-1 | 審査の見本は、運営のブラウザから AI を直接呼ぶ。対応するのは OpenAI と DeepSeek（どちらも chat completions の形）。返答の長さの指定は OpenAI が `max_completion_tokens`、DeepSeek が `max_tokens` | ARCH-001 D-4。審査基準 2.7 は 2 つ以上の AI を求める |
 | J-2 | AI の API キーはページのメモリにだけ置き、サービスごとに分けて持つ。保存せず、管理システムのサーバーには送らない | キーを預からない |
 | J-3 | CSP の `connect-src` に `https://api.openai.com` と `https://api.deepseek.com` だけを足す | 他へは送れないようにする |
 | J-4 | 見本用のプロンプトは機械審査が置いた `samples/{申請ID}/prompts.json` を使う（アプリと同じプロンプト・パックで組み立てたもの） | 審査とアプリの話し方をずらさない |
@@ -36,7 +36,7 @@
 | J-6 | 審査の開始と中断は `awaiting_review` ⇄ `in_review`（`If-Match`）。判定は `in_review` のときだけ | 2 人の運営が同時に判定しない |
 | J-7 | 承認: パッケージを読み直して SHA-256 を確かめ、`channel.json` から名前・説明・言語を取り、公開用の S3 に `pkg/{SHA-256}.zip`・`icons/{SHA-256}.png`（変わらないので `immutable`）を置く。1 つのトランザクションで、申請を `approved`、チャンネルに `latestApproved` を記録してリスト（`LISTED`）に入れ、前に承認した申請を `superseded` にし、REVIEW と操作の記録を残す。そのあと公開を頼み、アップロードしたファイルを `archive/` に移す | 確かめたものだけを載せる。DM-001 |
 | J-8 | 差し戻し・却下は、審査基準の項目番号（`^[0-9]+(\.[0-9]+)*$`）付きの指摘を 1 つ以上必須にし、チャンネルを空け、ファイルを `archive/` に移す。チャンネル提供者の画面に理由を出す | チャンネル提供者が直せるように |
-| J-9 | 結果のメールは [DES-006](DES-006-transfer-notify.md)（SES） | ADR-001 A-19 |
+| J-9 | 結果のメールは [DES-006](DES-006-transfer-notify.md)（SES） | ARCH-001 A-19 |
 
 ## 未決事項・リスク
 

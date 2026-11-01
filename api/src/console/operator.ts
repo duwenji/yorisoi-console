@@ -273,7 +273,7 @@ export async function listKeysets(deps: Deps, req: Request): Promise<Response> {
 }
 
 /**
- * Registers a keyset signed by the root key offline (ADR-001 A-9). Every key it lists must be a
+ * Registers a keyset signed by the root key offline (ARCH-001 A-9). Every key it lists must be a
  * registered signing key with the same public key; listed keys become active, revoked ones revoked,
  * and active keys it drops are retiring. Then the list is published again.
  */
