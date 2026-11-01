@@ -45,7 +45,7 @@ export interface KeysetInput {
   revokedKeys?: string[];
 }
 
-/** Checks the keyset against API-002 before signing, so a mistake never gets the root key's signature. */
+/** Checks the keyset against API-CHANNEL-LIST before signing, so a mistake never gets the root key's signature. */
 export function buildKeyset(input: KeysetInput, provider: string, now: Date): Keyset {
   if (!Number.isInteger(input.seq) || input.seq < 1) throw new Error('seq must be a positive integer');
   if (!Array.isArray(input.keys) || input.keys.length === 0) throw new Error('a keyset needs at least one key');

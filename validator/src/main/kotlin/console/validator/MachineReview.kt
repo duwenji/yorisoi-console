@@ -36,11 +36,11 @@ data class Upload(
     val accountId: String,
     /** The version last approved for this channel, if any (DM-001 M-5). */
     val latestApprovedVersion: Int?,
-    /** The account's ids before it moved to a new key: a collection granted to one still counts (API-004 W-13). */
+    /** The account's ids before it moved to a new key: a collection granted to one still counts (API-MATERIALS W-13). */
     val formerAccountIds: Set<String> = emptySet(),
 )
 
-/** One reason a submission failed, with API-003's code where there is one (API-001 `Validation`). */
+/** One reason a submission failed, with API-CHANNEL-PACKAGE's code where there is one (API-001 `Validation`). */
 data class Finding(val code: String, val detail: String)
 
 /** The collections that are listed now, as the list would show them (DES-007 J-2). */
@@ -72,7 +72,7 @@ data class ChannelListing(
     val ownPrefetchBytes: Long,
     val ownMedia: List<String>,
     val uses: Map<String, Map<String, String>>,
-    /** As the package writes them; format 1's are walk, none, none (DES-011 N-3, API-003 G-6). */
+    /** As the package writes them; format 1's are walk, none, none (DES-011 N-3, API-CHANNEL-PACKAGE G-6). */
     val activities: List<String> = listOf(Activity.WALK.json),
     val genres: List<String> = emptyList(),
     val requires: List<String> = emptyList(),
@@ -149,7 +149,7 @@ sealed interface CollectionOutcome {
 }
 
 /**
- * The machine review (ADR-001 A-11, API-003 確認の手順 2〜10, API-004 確かめる手順 1〜4):
+ * The machine review (ADR-001 A-11, API-CHANNEL-PACKAGE 確認の手順 2〜10, API-MATERIALS 確かめる手順 1〜4):
  * core-format's checks, the same the app runs, plus what only the console knows (which channel or
  * collection, which account, which version came before, which channels use a collection) and the
  * icon. Pure: the Lambda reads and writes, this decides.
@@ -200,7 +200,7 @@ object MachineReview {
 
     private class Resolved(val results: List<CollectionResult>, val rejection: Pair<String, String>?, val listing: ChannelListing)
 
-    /** API-004 手順 3・4 against the collections listed now (J-2); a collection not readable counts as not listed. */
+    /** API-MATERIALS 手順 3・4 against the collections listed now (J-2); a collection not readable counts as not listed. */
     private fun resolveCollections(upload: Upload, ok: StationCheck.Ok, catalog: Catalog): Resolved {
         val media = ok.station.media
         val listed = media.collections.mapNotNull { catalog.listed(it.id) }.distinctBy { it.id }
@@ -320,7 +320,7 @@ object MachineReview {
         }
     }
 
-    /** The values approval copies (J-8; DM-001 M-23・M-24, API-002 P-15). */
+    /** The values approval copies (J-8; DM-001 M-23・M-24, API-CHANNEL-LIST P-15). */
     private fun listing(pkg: CollectionPackage, packageSize: Int): CollectionListing {
         val items = pkg.resources.items
         val stage = items.maxOf { if (it.type == MaterialType.VIDEO) 3 else if (it.type == MaterialType.AUDIO) 2 else 1 }

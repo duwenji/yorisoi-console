@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "platform API-002 (approved channel list): signed documents, ids, building and verifying",
+  "description": "platform API-CHANNEL-LIST (approved channel list): signed documents, ids, building and verifying",
   "exports": {
     ".": {
       "types": "./src/index.ts",

@@ -4,7 +4,7 @@ import { checkProvider, title } from './check.js';
 
 const USAGE = `sanpo-conformance <provider base URL> [--provider sc1…] [--min-seq N] [--allow-local-http] [--json]
 
-Checks a SanpoGuide channel provider against API-002. Exits with 1 if any check fails.
+Checks a SanpoGuide channel provider against API-CHANNEL-LIST. Exits with 1 if any check fails.
 Pass --provider with the provider id you got by another route; it is never taken from the URL.`;
 
 async function main() {

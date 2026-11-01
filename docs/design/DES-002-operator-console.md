@@ -7,9 +7,6 @@
 | 文書ID | DES-002 |
 | ドキュメント種別 | 機能設計書 |
 | 対象システム/機能 | Cognito（マネージドログイン）、管理 API の Lambda（運営の操作）、SPA |
-| 関連Skill | feature-implementation-unified |
-| 作成日 | 2026-10-04 |
-| 作成者 | Claude（開発者との検討） |
 | 承認者 | 開発者 |
 | ステータス | 実装済 |
 | 版 | 1.0 |

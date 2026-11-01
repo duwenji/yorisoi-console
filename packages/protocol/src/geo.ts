@@ -1,7 +1,7 @@
 const BASE32 = '0123456789bcdefghjkmnpqrstuvwxyz';
 
 /**
- * The geohash of a position (API-002 P-15: a collection's regions are 3-letter geohashes of its
+ * The geohash of a position (API-CHANNEL-LIST P-15: a collection's regions are 3-letter geohashes of its
  * resources' subjects). The same encoding as core-format's `Regions.geohash`.
  */
 export function geohash(lat: number, lon: number, precision = 3): string {

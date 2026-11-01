@@ -47,7 +47,7 @@ export class MemoryStore implements PublicationStore {
   }
 
   async listedChannels(now: Date): Promise<ListedChannel[]> {
-    // As DynamoStore: shown once the listed version is by the new account, until `until` (API-002 P-9).
+    // As DynamoStore: shown once the listed version is by the new account, until `until` (API-CHANNEL-LIST P-9).
     return this.channels.map(({ entry, publisherChange, material }) => {
       const change = shown(publisherChange, entry.publisher, now);
       return { entry: { ...entry, ...(change ? { publisherChange: change } : {}) }, material: material ?? NO_MATERIAL };

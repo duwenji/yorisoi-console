@@ -430,7 +430,7 @@ class Handler(
 /**
  * A collection's grants as stored with its listing, and read back whole: a channel's review compares
  * them with the package's, so dropping `apps` or `grounding` would reject every channel using the
- * collection (API-002 P-15).
+ * collection (API-CHANNEL-LIST P-15).
  */
 internal object StoredGrants {
     /** As the list copies them: the app checks the copy against the package, `grounding` included. */

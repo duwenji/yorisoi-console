@@ -46,11 +46,11 @@ export interface SignedPackage {
     version: number;
     files: string[];
 }
-/** A channel package (API-003 F-6). */
+/** A channel package (API-CHANNEL-PACKAGE F-6). */
 export declare function signPackage(zip: Uint8Array, key: PublisherKey, expect: {
     channel: string;
 }): Promise<SignedPackage>;
-/** A collection package (API-004, DES-010 N-3): the same, as its producer. */
+/** A collection package (API-MATERIALS, DES-010 N-3): the same, as its producer. */
 export declare function signCollectionPackage(zip: Uint8Array, key: PublisherKey, expect: {
     collection: string;
 }): Promise<{

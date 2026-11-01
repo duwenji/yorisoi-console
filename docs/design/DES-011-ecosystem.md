@@ -7,9 +7,6 @@
 | 文書ID | DES-011 |
 | ドキュメント種別 | 機能設計書 |
 | 対象システム/機能 | 機械審査（validator）、承認（`api/src/console/review.ts`）、公開（`api/src/publish`）、`packages/protocol`、準拠テスト、画面（`web`）、設定（`infra/lib/config.ts`） |
-| 関連Skill | feature-implementation-unified |
-| 作成日 | 2026-10-12 |
-| 作成者 | Claude（開発者との検討） |
 | 承認者 | 開発者 |
 | ステータス | 実装済 |
 | 版 | 1.0 |

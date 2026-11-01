@@ -59,7 +59,7 @@ export function PublisherChannels() {
 
 const TRIABLE = ['awaiting_review', 'in_review', 'returned', 'approved'];
 
-/** A test ticket as a QR code: the signed document itself (API-002 試用チケット). */
+/** A test ticket as a QR code: the signed document itself (API-CHANNEL-LIST 試用チケット). */
 function TicketQr({ ticket }: { ticket: Schemas['TestTicket'] }) {
   const qr = qrcode(0, 'L');
   qr.addData(ticket.qr);

@@ -7,9 +7,6 @@
 | 文書ID | API-001（yorisoi-console） |
 | ドキュメント種別 | API契約書 |
 | 対象システム/機能 | チャンネル管理システムの管理 API（SPA と Lambda の間。API Gateway の HTTP API と Cognito） |
-| 関連Skill | 020_api-contract-design |
-| 作成日 | 2026-10-03 |
-| 作成者 | Claude（開発者との検討） |
 | 承認者 | 開発者 |
 | ステータス | 承認済 |
 | 版 | 1.0 |

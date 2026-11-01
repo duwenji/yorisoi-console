@@ -7,9 +7,6 @@
 | 文書ID | DES-001 |
 | ドキュメント種別 | 機能設計書 |
 | 対象システム/機能 | チャンネル管理システムの土台: 公開の処理（Lambda）、ルート鍵の CLI、platform API-CHANNEL-LIST の準拠テスト、AWS CDK |
-| 関連Skill | feature-implementation-unified |
-| 作成日 | 2026-10-03 |
-| 作成者 | Claude（開発者との検討） |
 | 承認者 | 開発者 |
 | ステータス | 実装済 |
 | 版 | 1.0 |

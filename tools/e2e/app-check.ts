@@ -13,7 +13,7 @@ import { createKey, sha256, sign, signPackage, type PublisherKey } from '../../w
 
 /**
  * Lists, on the dev environment, what SanpoGuide needs to show platform ADR-004 on the emulator: a
- * collection that lets the AI take its text as grounds (`grants.grounding`, API-004 I-13) about the
+ * collection that lets the AI take its text as grounds (`grants.grounding`, API-MATERIALS I-13) about the
  * area of Tsurugaoka Hachimangu in Kamakura, and a walking channel that uses it. On the emulator,
  * set the location there (35.3258, 139.5564), add the dev list, choose the channel: the cost
  * dialog, the report link (to the list's `contact`) and, with an AI key, the credit line
@@ -58,7 +58,7 @@ async function invoke(sub: string, groups: string, method: string, path: string,
   return body;
 }
 
-/** A collection package signed as a producer signs it (API-004 `collection-package`). */
+/** A collection package signed as a producer signs it (API-MATERIALS `collection-package`). */
 async function signCollection(files: Record<string, Uint8Array>, key: PublisherKey, id: string, version: number): Promise<Uint8Array> {
   const hashes: Record<string, string> = {};
   for (const name of Object.keys(files).sort()) hashes[name] = hex(await sha256(files[name]!));

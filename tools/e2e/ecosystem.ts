@@ -17,7 +17,7 @@ import { createKey, signPackage } from '../../web/src/publisher-crypto.js';
  * for cycling only, pass the machine review with the samples of each activity's representative app
  * (SanpoGuide's for walking, CycleGuide's `ride-` ones for cycling; N-8, CycleGuide AC-23) and are
  * approved and listed. The list must carry their activities, genres, requires and `minAppVersions`
- * (API-002 P-19・P-20). Then the conformance checks (V-27, V-29).
+ * (API-CHANNEL-LIST P-19・P-20). Then the conformance checks (V-27, V-29).
  *
  * `--keep` leaves them listed so the apps (the emulator) can be checked to offer only theirs
  * (CycleGuide AC-9: not the walking one); `--cleanup` removes them afterwards.

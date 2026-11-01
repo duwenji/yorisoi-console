@@ -315,7 +315,7 @@ describe('channels using collections', () => {
     expect(forSanpo).toMatchObject({ grants: { publishers: '*', apps: ['sanpoguide'] }, minAppVersions: { sanpoguide: 1 } });
   });
 
-  it('gives the older SanpoGuide a version no app has when the collection isn’t granted to it (API-002 P-21)', async () => {
+  it('gives the older SanpoGuide a version no app has when the collection isn’t granted to it (API-CHANNEL-LIST P-21)', async () => {
     await approvedCollection({ ...LISTING, appStage: 0, grants: { publishers: '*', apps: ['boat'] } });
     const elsewhere = (await call(alice, 'GET', '/api/collections/kamakura-audio-guide')).body.latestApproved;
     expect(elsewhere).toMatchObject({ minAppVersions: {} });

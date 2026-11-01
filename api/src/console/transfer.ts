@@ -17,7 +17,7 @@ type TransactItems = NonNullable<ConstructorParameters<typeof TransactWriteComma
 
 const REASONS = ['lost', 'leaked', 'other'] as const;
 const PENDING = ['uploading', 'validating', 'awaiting_review', 'in_review'];
-/** How long the list carries `publisherChange` after the first version with the new key (API-002 P-9). */
+/** How long the list carries `publisherChange` after the first version with the new key (API-CHANNEL-LIST P-9). */
 export const PUBLISHER_CHANGE_DAYS = 90;
 
 export function transferView(item: Item): Schemas['KeyTransfer'] {
@@ -209,7 +209,7 @@ export async function approveKeyTransfer(deps: Deps, req: Request): Promise<Resp
   const returned: string[] = [];
   const archives: string[] = [];
   const message = 'チャンネル提供者の鍵が移し替えられたため差し戻しました。新しい鍵で署名し直して申請してください。';
-  // Its collections move with it, as its channels do (DM-001, API-002 P-13).
+  // Its collections move with it, as its channels do (DM-001, API-CHANNEL-LIST P-13).
   for (const col of collections) {
     const collectionId = String(col.collectionId);
     const sets: string[] = [];

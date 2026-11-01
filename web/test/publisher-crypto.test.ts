@@ -38,7 +38,7 @@ describe('publisher keys in the browser', () => {
   });
 });
 
-describe('signing a package (API-003 F-6)', () => {
+describe('signing a package (API-CHANNEL-PACKAGE F-6)', () => {
   it('writes a signature.json that verifies and covers every file', async () => {
     const { key } = await createKey(passphrase);
     const signed = await signPackage(unsignedPackage(key.accountId), key, { channel: 'kamakura-history' });
@@ -72,7 +72,7 @@ describe('signing a package (API-003 F-6)', () => {
   });
 });
 
-describe('signing a collection (API-004, DES-010 N-3)', () => {
+describe('signing a collection (API-MATERIALS, DES-010 N-3)', () => {
   const unsignedCollection = (producer: string, change: Record<string, unknown> = {}) =>
     zipSync({
       'collection.json': utf8.encode(JSON.stringify({ format: 1, id: 'kamakura-audio-guide', version: 2, producer, ...change })),

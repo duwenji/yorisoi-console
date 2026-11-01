@@ -273,7 +273,7 @@ describe('leaving (API-001 C-4)', () => {
   });
 });
 
-describe('test tickets (API-002 試用チケット)', () => {
+describe('test tickets (API-CHANNEL-LIST 試用チケット)', () => {
   async function passedSubmission(state = 'awaiting_review') {
     await activePublisher();
     await call(alice, 'POST', '/api/channels', { body: { channelId: 'kamakura-history' } });

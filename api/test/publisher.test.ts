@@ -90,7 +90,7 @@ describe('publish', () => {
     expect(store.revoked.find((r) => r.id === 'old')?.listed).toBe(false);
   });
 
-  it('shows a publisher change until its end date (API-002 P-9)', async () => {
+  it('shows a publisher change until its end date (API-CHANNEL-LIST P-9)', async () => {
     const change = { from: 'sg1' + 'b'.repeat(32), at: days(-1).toISOString(), reason: '配信元の鍵の紛失' };
     store.channels = [{ entry: sampleChannel(), publisherChange: { ...change, until: days(89).toISOString() } }];
     await publish(deps, 'transfer');

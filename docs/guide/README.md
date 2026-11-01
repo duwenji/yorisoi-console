@@ -3,7 +3,6 @@
 | 項目 | 内容 |
 |---|---|
 | 対象 | yorisoi-console（SanpoGuide の第三者のチャンネルを審査して公開するシステム） |
-| 版 | 1.0 |
 | 前提 | [DES-001](../design/DES-001-publisher.md)〜[DES-011](../design/DES-011-ecosystem.md)・[DES-013](../design/DES-013-studio.md)（スタジオ）の機能 |
 
 ## このシステムでできること
