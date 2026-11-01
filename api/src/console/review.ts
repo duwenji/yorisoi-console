@@ -304,7 +304,7 @@ export async function approveSubmission(deps: Deps, req: Request): Promise<Respo
   const manifest = JSON.parse(utf8.decode(unzipSync(zip, { filter: (f) => f.name === 'channel.json' })['channel.json']!)) as {
     format: number; name: string; summary: string; lang: string;
   };
-  // What the list copies for the apps to choose by (API-002 P-19).
+  // What the list copies for the apps to choose by (API-CHANNEL-LIST P-19).
   const { activities, genres, requires } = listing;
   const minAppVersions = channelMinVersions(deps, listing.appStage, activities, requires);
   const { packageUrl, iconUrl } = await deps.publishApproved({
@@ -324,7 +324,7 @@ export async function approveSubmission(deps: Deps, req: Request): Promise<Respo
     appStage: listing.appStage, collections: listing.collections, ownPrefetchBytes: listing.ownPrefetchBytes, ownMedia: listing.ownMedia,
   };
   const decision = { action: 'approve', at, ...(message ? { message } : {}) };
-  // The first version with a transferred key starts the 90 days the list shows the change (API-002 P-9).
+  // The first version with a transferred key starts the 90 days the list shows the change (API-CHANNEL-LIST P-9).
   const pending = channel.publisherChange as { from: string; at: string; reason: string; until?: string } | undefined;
   const change = pending && !pending.until && pending.from !== sub.accountId
     ? { ...pending, until: new Date(Date.parse(at) + PUBLISHER_CHANGE_DAYS * 86_400_000).toISOString() }
@@ -483,7 +483,7 @@ export async function approveCollectionSubmission(deps: Deps, req: Request): Pro
     appStage: listing.appStage, minAppVersions, approvedAt: at,
   };
   const decision = { action: 'approve', at, ...(message ? { message } : {}) };
-  // The first version with a transferred key starts the 90 days the list shows the change (API-002 P-13, as P-9).
+  // The first version with a transferred key starts the 90 days the list shows the change (API-CHANNEL-LIST P-13, as P-9).
   const pending = collection.producerChange as { from: string; at: string; reason: string; until?: string } | undefined;
   const change = pending && !pending.until && pending.from !== sub.accountId
     ? { ...pending, until: new Date(Date.parse(at) + PUBLISHER_CHANGE_DAYS * 86_400_000).toISOString() }

@@ -617,7 +617,7 @@ export async function withdrawSubmission(deps: Deps, req: Request): Promise<Resp
   return withEtag(200, submissionView(await loadSubmission(deps, channelId, submissionId)));
 }
 
-// ---- test tickets (API-002 試用チケット, ADR-001 A-13) ----
+// ---- test tickets (API-CHANNEL-LIST 試用チケット, ADR-001 A-13) ----
 
 /** States whose package passed the machine review and still exists to try. */
 const TRIABLE = ['awaiting_review', 'in_review', 'returned', 'approved'];

@@ -4,7 +4,7 @@ import io.github.duwenji.yorisoi.core.format.material.Grants
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-/** A collection's grants survive being stored and read back, so a channel using it isn't rejected (API-002 P-15). */
+/** A collection's grants survive being stored and read back, so a channel using it isn't rejected (API-CHANNEL-LIST P-15). */
 class StoredGrantsTest {
     private fun roundTrip(g: Grants): Grants = StoredGrants.read(Handler.av(StoredGrants.write(g)).m())
 

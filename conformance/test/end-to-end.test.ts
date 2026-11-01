@@ -16,7 +16,7 @@ let server: Server;
 let base: string;
 let store: MemoryStore;
 
-/** The collection the channel uses (API-004): one text resource about a spot in Kamakura. */
+/** The collection the channel uses (API-MATERIALS): one text resource about a spot in Kamakura. */
 function collectionJson(change: Record<string, unknown> = {}) {
   return {
     format: 1, id: 'kamakura-audio-guide', version: 2, producer: 'sg1' + 'c'.repeat(32), name: '鎌倉音声ガイド', summary: '寺社の音声ガイド', lang: 'ja',
@@ -86,7 +86,7 @@ describe('a provider published by this system', () => {
   });
 });
 
-describe('the checks catch a broken provider (API-002)', () => {
+describe('the checks catch a broken provider (API-CHANNEL-LIST)', () => {
   it('V-19: a collection package changed after approval', async () => {
     const [col] = store.collections;
     store.collections = [{ entry: { ...col!.entry, package: { ...col!.entry.package, size: col!.entry.package.size + 1 } } }];
@@ -118,7 +118,7 @@ describe('the checks catch a broken provider (API-002)', () => {
     expect(failed(await statuses())).toEqual(['V-25']);
   });
 
-  it('V-25: the apps a collection is granted to, in any order (API-004)', async () => {
+  it('V-25: the apps a collection is granted to, in any order (API-MATERIALS)', async () => {
     listCollection(collectionJson({ grants: { publishers: '*', apps: ['sanpoguide', 'cycle'] } }), { grants: { publishers: '*', apps: ['cycle', 'sanpoguide'] } });
     await republish();
     expect(failed(await statuses())).toEqual([]);
@@ -127,7 +127,7 @@ describe('the checks catch a broken provider (API-002)', () => {
     expect(failed(await statuses())).toEqual(['V-25']);
   });
 
-  it('V-25: whether the AI may take the texts as grounds (API-004 I-13)', async () => {
+  it('V-25: whether the AI may take the texts as grounds (API-MATERIALS I-13)', async () => {
     listCollection(collectionJson({ grants: { publishers: '*', grounding: true } }), { grants: { publishers: '*', grounding: true } });
     await republish();
     expect(failed(await statuses())).toEqual([]);
@@ -137,7 +137,7 @@ describe('the checks catch a broken provider (API-002)', () => {
     expect(failed(await statuses())).toEqual(['V-25']);
   });
 
-  it('V-27: activities, genres or requires that differ from the package (API-002)', async () => {
+  it('V-27: activities, genres or requires that differ from the package (API-CHANNEL-LIST)', async () => {
     store.channels[0]!.entry = { ...store.channels[0]!.entry, activities: ['cycle'] };
     await republish();
     expect(failed(await statuses())).toEqual(['V-27']);

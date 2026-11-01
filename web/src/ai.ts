@@ -95,7 +95,7 @@ const POLICY: Record<'channel' | 'collection', string> = {
   ].join('\n'),
 };
 
-/** The package's text can't close its own tag and pass for the instructions (as API-004 I-15). */
+/** The package's text can't close its own tag and pass for the instructions (as API-MATERIALS I-15). */
 const fence = (text: string) => text.replace(/</g, '＜').replace(/>/g, '＞');
 
 /**

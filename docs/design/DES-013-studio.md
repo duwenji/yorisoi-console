@@ -7,9 +7,6 @@
 | 文書ID | DES-013 |
 | ドキュメント種別 | 機能設計書 |
 | 対象システム/機能 | 新しいスタック `YorisoiLocalMaterials-<env>`（`infra/bin/local-materials.ts`・`infra/lib/local-materials-stack.ts`、`api/src/local/`）、中継のスタック（表の名前の公開）、管理 API（`api/src/console/`）、画面（`web`）、データモデル |
-| 関連Skill | feature-implementation-unified |
-| 作成日 | 2026-10-31 |
-| 作成者 | Claude（開発者との検討） |
 | 承認者 | 開発者 |
 | ステータス | 承認済（2026-10-31） |
 | 版 | 1.0 |

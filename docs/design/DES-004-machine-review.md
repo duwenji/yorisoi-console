@@ -7,9 +7,6 @@
 | 文書ID | DES-004 |
 | ドキュメント種別 | 機能設計書 |
 | 対象システム/機能 | 機械審査の Lambda（Kotlin、`core-format`）、試用チケットの API と画面 |
-| 関連Skill | feature-implementation-unified |
-| 作成日 | 2026-10-04 |
-| 作成者 | Claude（開発者との検討） |
 | 承認者 | 開発者 |
 | ステータス | 実装済 |
 | 版 | 1.0 |

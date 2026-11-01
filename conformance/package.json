@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Conformance checks for any SanpoGuide channel provider (API-002), run against its public URL",
+  "description": "Conformance checks for any SanpoGuide channel provider (API-CHANNEL-LIST), run against its public URL",
   "bin": { "sanpo-conformance": "./src/cli.ts" },
   "scripts": {
     "check": "tsx src/cli.ts",

@@ -14,7 +14,7 @@ import {
 } from '@yorisoi-console/protocol';
 import { unzipSync } from 'fflate';
 
-/** The checks of API-002 「確認観点」 that a provider is responsible for. */
+/** The checks of API-CHANNEL-LIST 「確認観点」 that a provider is responsible for. */
 export type CheckId = 'V-01' | 'V-02' | 'V-03' | 'V-04' | 'V-05' | 'V-06' | 'V-07' | 'V-08' | 'V-09' | 'V-15' | 'V-16' | 'V-19' | 'V-20' | 'V-21' | 'V-25' | 'V-27' | 'V-29';
 
 export interface CheckResult {
@@ -24,7 +24,7 @@ export interface CheckResult {
 }
 
 export interface CheckOptions {
-  /** The provider id obtained by another route (API-002: never taken from the URL). */
+  /** The provider id obtained by another route (API-CHANNEL-LIST: never taken from the URL). */
   expectedProvider?: string;
   /** The seq seen last time, to catch a rollback (V-05). */
   minSeq?: number;
@@ -50,13 +50,13 @@ const TITLES: Record<CheckId, string> = {
   'V-20': 'collections a channel declares are listed, new enough and granted to its publisher',
   'V-21': 'media and resourcesSize are well-formed',
   'V-25': 'collections’ tags, regions and grants match their packages',
-  'V-27': 'channels’ activities, genres and requires match their packages (API-002)',
-  'V-29': 'minAppVersions name app ids with positive versions (API-002)',
+  'V-27': 'channels’ activities, genres and requires match their packages (API-CHANNEL-LIST)',
+  'V-29': 'minAppVersions name app ids with positive versions (API-CHANNEL-LIST)',
 };
 
 const MEDIA = new Set(['text', 'image', 'audio', 'video']);
 
-/** Grants as written and as listed: the same publishers and apps, in any order (API-004 I-11). */
+/** Grants as written and as listed: the same publishers and apps, in any order (API-MATERIALS I-11). */
 function sameGrants(a: unknown, b: { publishers: '*' | string[]; apps?: string[]; grounding?: boolean }): boolean {
   if (typeof a !== 'object' || a === null) return false;
   const g = a as { publishers?: unknown; apps?: unknown; grounding?: unknown };
@@ -64,7 +64,7 @@ function sameGrants(a: unknown, b: { publishers: '*' | string[]; apps?: string[]
     ? g.publishers === b.publishers
     : Array.isArray(g.publishers) && sameList(g.publishers as string[], b.publishers);
   const appsMatch = g.apps === undefined || b.apps === undefined ? g.apps === b.apps : Array.isArray(g.apps) && sameList(g.apps as string[], b.apps);
-  // Absent is false on both sides (API-004 I-13).
+  // Absent is false on both sides (API-MATERIALS I-13).
   const groundingMatch = (g.grounding === true) === (b.grounding === true);
   return publishersMatch && appsMatch && groundingMatch;
 }
@@ -85,7 +85,7 @@ export const title = (id: CheckId) => TITLES[id];
 
 class TooLarge extends Error {}
 
-/** Fetches at most [limit] bytes; a larger response is cut off, as the app does (API-002 `too_large`). */
+/** Fetches at most [limit] bytes; a larger response is cut off, as the app does (API-CHANNEL-LIST `too_large`). */
 async function fetchLimited(fetchImpl: typeof fetch, url: string, limit: number): Promise<Uint8Array> {
   const res = await fetchImpl(url, { redirect: 'error' });
   if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
@@ -209,7 +209,7 @@ export async function checkProvider(baseUrl: string, options: CheckOptions = {})
     if (list.channels.length === 0) set('V-07', 'skip', 'no channels');
     set('V-08', 'pass', 'list ≤ 1MB, packages ≤ 2MB, icons ≤ 100KB');
 
-    // API-002 (V-19, V-20, V-21, V-25): collections. A list without collections has none.
+    // API-CHANNEL-LIST (V-19, V-20, V-21, V-25): collections. A list without collections has none.
     const collections: CollectionEntry[] = list.collections ?? [];
     const colIds = collections.map((c) => c.id);
     const badCol = colIds.find((id) => !CHANNEL_ID.test(id));
@@ -266,7 +266,7 @@ export async function checkProvider(baseUrl: string, options: CheckOptions = {})
     }
     set('V-25', 'pass', `${collectionPackages.size} collections`);
 
-    // V-27 (API-002 P-19): what the list copies for the apps to choose by is what the package says.
+    // V-27 (API-CHANNEL-LIST P-19): what the list copies for the apps to choose by is what the package says.
     for (const [id, bytes] of channelPackages) {
       const entry = list.channels.find((c) => c.id === id)!;
       // A package that isn't the one listed is V-07's to report.

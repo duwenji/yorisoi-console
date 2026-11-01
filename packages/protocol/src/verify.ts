@@ -3,7 +3,7 @@ import { verifyEd25519 } from './ed25519.js';
 import { LIMITS } from './limits.js';
 import type { ChannelList, ChannelListDigest, Discovery, Keyset, SignedDocument, SigningKeyEntry } from './types.js';
 
-/** The reasons of API-002's error table, plus `bad_document` for a malformed document. */
+/** The reasons of API-CHANNEL-LIST's error table, plus `bad_document` for a malformed document. */
 export type ErrorCode =
   | 'provider_mismatch'
   | 'unsupported_version'

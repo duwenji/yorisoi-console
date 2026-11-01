@@ -4,7 +4,7 @@ import { b64url, localSigner, providerId, rawPublicKey, signChannelList, signDoc
 import { sampleChannel } from '@yorisoi-console/protocol/testing';
 
 /**
- * Test vectors for the app's own checks of API-002 (yorisoi-platform core-format): a discovery
+ * Test vectors for the app's own checks of API-CHANNEL-LIST (yorisoi-platform core-format): a discovery
  * document, a channel list and a test ticket, signed by this repository's code with fixed keys.
  * Ed25519 is deterministic, so the output never changes unless the format does.
  *
@@ -41,7 +41,7 @@ const list = await signChannelList(
       sampleChannel({ id: 'tokyo-nature', version: 1, publisher, name: '東京の自然', summary: '公園と水辺', minAppVersions: { sanpoguide: 99 } }),
     ],
     revoked: [{ id: 'old-channel', versions: [1, 2], reason: '審査基準に反する内容が見つかったため', revokedAt: '2026-10-01T00:00:00.000Z' }],
-    // API-002 (DES-009 M-11): a collection, and one taken off the list.
+    // API-CHANNEL-LIST (DES-009 M-11): a collection, and one taken off the list.
     collections: [
       {
         id: 'kamakura-audio-guide', version: 2, producer: 'sg1' + 'c'.repeat(32), producerName: '鎌倉市観光協会',

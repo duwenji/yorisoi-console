@@ -51,7 +51,7 @@ async function invoke(sub: string, groups: string, method: string, path: string,
   return body;
 }
 
-/** A collection package signed as a producer signs it (API-004 `collection-package`). */
+/** A collection package signed as a producer signs it (API-MATERIALS `collection-package`). */
 async function signCollection(files: Record<string, Uint8Array>, key: PublisherKey, id: string, version: number): Promise<Uint8Array> {
   const hashes: Record<string, string> = {};
   for (const name of Object.keys(files).sort()) hashes[name] = hex(await sha256(files[name]!));

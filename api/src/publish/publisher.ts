@@ -24,7 +24,7 @@ export interface ProviderConfig {
   reviewPolicyUrl?: string;
   termsUrl?: string;
   contact?: string;
-  /** How long a list stays valid; at most 14 days (API-002). */
+  /** How long a list stays valid; at most 14 days (API-CHANNEL-LIST). */
   listLifetimeDays?: number;
   /** How long a revocation stays in `revoked` (DM-001 M-9). */
   revokedDays?: number;

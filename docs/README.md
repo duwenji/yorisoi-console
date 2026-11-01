@@ -56,4 +56,4 @@
 | スタジオの決まり | [一言の利用規約](https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/notes-terms.md)・[スタジオの決まり](https://github.com/duwenji/yorisoi-platform/blob/main/docs/policies/studio-rules.md) |
 | SanpoGuide の使い方と運用 | [SanpoGuide 手引き](https://github.com/duwenji/yorisoi-platform/blob/main/docs/apps/sanpoguide/manual/README.md) |
 
-文書 ID はリポジトリごとに管理します。たとえば `console ADR-001` と `platform ADR-CHANNELS` は別の文書です。platform 文書の旧番号は、リンク表示に履歴情報として併記する場合がありますが、共有契約を指すときは canonical ID を使います。
+文書 ID はリポジトリごとに管理します。たとえば `console ADR-001` と `platform ADR-CHANNELS` は別の文書です。platform の文書は canonical ID で指します。

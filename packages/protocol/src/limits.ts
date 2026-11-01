@@ -1,4 +1,4 @@
-/** Limits of API-002 (and the KMS limit behind P-8). */
+/** Limits of API-CHANNEL-LIST (and the KMS limit behind P-8). */
 export const LIMITS = {
   listBytes: 1024 * 1024,
   packageBytes: 2 * 1024 * 1024,

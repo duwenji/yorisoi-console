@@ -138,7 +138,7 @@ class MaterialsReviewTest {
         val other = Grants(setOf("sg1" + "z".repeat(32)))
         val grantZip = collectionZip(collectionJson(grants = JSONArray().put("sg1" + "z".repeat(32))))
         assertEquals(listOf("not_granted"), failed(MachineReview.review(upload, play, png(), catalog(grants = other, zip = grantZip))).findings.map { it.code })
-        // Granted to the publisher's id before a key transfer: still usable (API-004 W-13).
+        // Granted to the publisher's id before a key transfer: still usable (API-MATERIALS W-13).
         val former = "sg1" + "y".repeat(32)
         val toFormer = collectionZip(collectionJson(grants = JSONArray().put(former)))
         val moved = MachineReview.review(upload.copy(formerAccountIds = setOf(former)), play, png(), catalog(Grants(setOf(former)), toFormer))

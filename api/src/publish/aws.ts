@@ -63,7 +63,7 @@ interface RevocationItem {
   revokedAt: string;
 }
 
-/** Shown once the listed version is by the new account, for the time `until` gives (API-002 P-9・P-13, V-16). */
+/** Shown once the listed version is by the new account, for the time `until` gives (API-CHANNEL-LIST P-9・P-13, V-16). */
 function shownChange(c: { from: string; at: string; reason: string; until?: string } | undefined, listedBy: string, now: Date) {
   return c?.until && Date.parse(c.until) > now.getTime() && c.from !== listedBy ? { from: c.from, at: c.at, reason: c.reason } : undefined;
 }

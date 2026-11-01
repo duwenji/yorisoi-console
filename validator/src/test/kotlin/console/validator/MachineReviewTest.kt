@@ -133,7 +133,7 @@ class MachineReviewTest {
     }
 
     @Test
-    fun `values outside the ecosystem's lists are turned away (API-003 V-24)`() {
+    fun `values outside the ecosystem's lists are turned away (API-CHANNEL-PACKAGE V-24)`() {
         assertEquals(listOf("bad_value"), codes(MachineReview.review(upload, pkg(forActivities("drive")), png())))
         assertEquals(listOf("bad_manifest"), codes(MachineReview.review(upload, pkg(manifest().apply { remove("activities") }), png())))
         assertEquals(listOf("unsupported_format"), codes(MachineReview.review(upload, pkg(manifest().put("format", 2)), png())))

@@ -148,7 +148,7 @@ export interface SignedPackage {
   files: string[];
 }
 
-/** What a `signature.json` signs: a channel (API-003 F-6) or a collection (API-004). */
+/** What a `signature.json` signs: a channel (API-CHANNEL-PACKAGE F-6) or a collection (API-MATERIALS). */
 interface PackageKind {
   manifest: 'channel.json' | 'collection.json';
   type: 'channel-package' | 'collection-package';
@@ -198,7 +198,7 @@ async function signAs(kind: PackageKind, zip: Uint8Array, key: PublisherKey, id:
   return { zip: zipSync({ ...files, 'signature.json': signature }, { level: 6 }), version: manifest.version as number, files: Object.keys(hashes) };
 }
 
-/** A channel package (API-003 F-6). */
+/** A channel package (API-CHANNEL-PACKAGE F-6). */
 export async function signPackage(zip: Uint8Array, key: PublisherKey, expect: { channel: string }): Promise<SignedPackage> {
   const signed = await signAs(
     { manifest: 'channel.json', type: 'channel-package', subjectKey: 'channel', ownerKey: 'publisher', what: 'チャンネル' },
@@ -207,7 +207,7 @@ export async function signPackage(zip: Uint8Array, key: PublisherKey, expect: { 
   return { ...signed, channel: expect.channel };
 }
 
-/** A collection package (API-004, DES-010 N-3): the same, as its producer. */
+/** A collection package (API-MATERIALS, DES-010 N-3): the same, as its producer. */
 export async function signCollectionPackage(zip: Uint8Array, key: PublisherKey, expect: { collection: string }): Promise<{ zip: Uint8Array; version: number; files: string[] }> {
   return signAs(
     { manifest: 'collection.json', type: 'collection-package', subjectKey: 'collection', ownerKey: 'producer', what: '素材集' },

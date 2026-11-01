@@ -10,12 +10,12 @@ export interface ListContent {
   expiresAt: Date;
   channels: ChannelEntry[];
   revoked: RevokedEntry[];
-  /** API-002: written on every list, empty or not. */
+  /** API-CHANNEL-LIST: written on every list, empty or not. */
   collections?: CollectionEntry[];
   revokedCollections?: RevokedEntry[];
 }
 
-/** Builds the channel list and signs its digest (API-002 P-8). */
+/** Builds the channel list and signs its digest (API-CHANNEL-LIST P-8). */
 export async function signChannelList(content: ListContent, signer: Signer): Promise<{
   document: ChannelListDocument;
   body: ChannelList;

@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 
-/** base64url without padding (API-002 「共通の決まり」). */
+/** base64url without padding (API-CHANNEL-LIST 「共通の決まり」). */
 export const b64url = {
   encode: (bytes: Uint8Array): string => Buffer.from(bytes).toString('base64url'),
   /** Rejects anything that isn't strict base64url, rather than decoding it loosely. */
@@ -48,10 +48,10 @@ function fingerprintId(prefix: string, publicKey: Uint8Array): string {
   return prefix + base32(sha256(publicKey)).slice(0, 32);
 }
 
-/** Provider id from the root public key (API-002 P-2). */
+/** Provider id from the root public key (API-CHANNEL-LIST P-2). */
 export const providerId = (rootPublicKey: Uint8Array): string => fingerprintId('sc1', rootPublicKey);
 
-/** Publisher account id from the publisher's public key (API-001, API-003 F-6). */
+/** Publisher account id from the publisher's public key (API-001, API-CHANNEL-PACKAGE F-6). */
 export const accountId = (publicKey: Uint8Array): string => fingerprintId('sg1', publicKey);
 
 export const PROVIDER_ID = /^sc1[a-z2-7]{32}$/;
