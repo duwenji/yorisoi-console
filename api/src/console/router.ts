@@ -6,6 +6,8 @@ import * as op from './operator.js';
 import * as pub from './publisher.js';
 import * as review from './review.js';
 import * as studio from './studio.js';
+import * as local from './local-ops.js';
+import * as notes from './notes-ops.js';
 import * as ops from './studio-ops.js';
 import type { Request as Req } from './http.js';
 import * as transfer from './transfer.js';
@@ -114,14 +116,16 @@ const ROUTES: [string, string, Handler][] = [
   ['POST', '/api/admin/studio/studios/{studioId}/{decision}', studioDecision],
   // The studio after things are up (DES-013 K-17, K-18).
   ['GET', '/api/studio/studios/{studioId}/stats', ops.studioStats],
-  ['GET', '/api/admin/studio/reported-studios', ops.listReportedStudios],
-  ['GET', '/api/admin/studio/reported-notes', ops.listReportedNotes],
-  ['POST', '/api/admin/studio/notes/{noteId}/{decision}', ops.decideReportedNote],
-  ['GET', '/api/admin/studio/bans', ops.listBans],
-  ['DELETE', '/api/admin/studio/bans/{noteId}', ops.liftBan],
-  ['GET', '/api/admin/studio/areas', ops.listAreas],
-  ['POST', '/api/admin/studio/areas', ops.closeArea],
-  ['DELETE', '/api/admin/studio/areas/{cell}', ops.openArea],
+  ['GET', '/api/admin/studio/reported', ops.listReportedStudios],
+  // The notes (DES-013 K-17): reported ones and the devices banned from putting them.
+  ['GET', '/api/admin/notes/reported', notes.listReportedNotes],
+  ['POST', '/api/admin/notes/{noteId}/{decision}', notes.decideReportedNote],
+  ['GET', '/api/admin/notes/bans', notes.listBans],
+  ['DELETE', '/api/admin/notes/bans/{noteId}', notes.liftBan],
+  // Closed areas, for studios and notes alike (REQ-STUDIO・REQ-NOTES F-15).
+  ['GET', '/api/admin/local/areas', local.listAreas],
+  ['POST', '/api/admin/local/areas', local.closeArea],
+  ['DELETE', '/api/admin/local/areas/{cell}', local.openArea],
 ];
 
 const PARAM: Record<string, RegExp> = {

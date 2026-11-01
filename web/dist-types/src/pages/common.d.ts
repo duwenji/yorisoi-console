@@ -26,3 +26,4 @@ export declare function ReasonForm({ label, submit, danger, children, }: {
     danger?: boolean;
     children?: ReactNode;
 }): import("react").JSX.Element;
+export declare const reasons: (list: string[]) => string;

@@ -1202,7 +1202,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/admin/studio/reported-studios": {
+    "/api/admin/studio/reported": {
         parameters: {
             query?: never;
             header?: never;
@@ -1219,7 +1219,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/admin/studio/reported-notes": {
+    "/api/admin/notes/reported": {
         parameters: {
             query?: never;
             header?: never;
@@ -1236,7 +1236,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/admin/studio/notes/{noteId}/{decision}": {
+    "/api/admin/notes/{noteId}/{decision}": {
         parameters: {
             query?: never;
             header?: never;
@@ -1257,7 +1257,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/admin/studio/bans": {
+    "/api/admin/notes/bans": {
         parameters: {
             query?: never;
             header?: never;
@@ -1274,7 +1274,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/admin/studio/bans/{noteId}": {
+    "/api/admin/notes/bans/{noteId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -1293,7 +1293,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/admin/studio/areas": {
+    "/api/admin/local/areas": {
         parameters: {
             query?: never;
             header?: never;
@@ -1311,7 +1311,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/admin/studio/areas/{cell}": {
+    "/api/admin/local/areas/{cell}": {
         parameters: {
             query?: never;
             header?: never;
