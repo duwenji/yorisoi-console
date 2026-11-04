@@ -41,6 +41,7 @@ function Editor({ kind }: { kind: Kind }) {
       : (await api.GET('/api/collections/{collectionId}', { params: { path: { collectionId: id } } })).data),
     [api, kind, id],
   );
+  const reloadTarget = target.reload;
   const me = useLoad(async () => (await api.GET('/api/publisher')).data, [api]);
   const accountId = me.data?.activeAccountId ?? undefined;
   const latest = target.data?.latestApproved?.version;
@@ -69,9 +70,9 @@ function Editor({ kind }: { kind: Kind }) {
   // While the machine review runs, read the summary again until it is done (R-18).
   useEffect(() => {
     if (summary?.check?.state !== 'running') return;
-    const timer = setTimeout(() => target.reload(), CHECK_POLL_MS);
+    const timer = setTimeout(reloadTarget, CHECK_POLL_MS);
     return () => clearTimeout(timer);
-  }, [summary, target]);
+  }, [summary, reloadTarget]);
 
   // Leaving with unsaved changes asks first.
   useEffect(() => {
