@@ -12,6 +12,14 @@
     "./testing": {
       "types": "./src/testing.ts",
       "default": "./src/testing.ts"
+    },
+    "./vocabulary": {
+      "types": "./src/vocabulary.ts",
+      "default": "./src/vocabulary.ts"
+    },
+    "./ecosystem": {
+      "types": "./src/ecosystem.ts",
+      "default": "./src/ecosystem.ts"
     }
   }
 }

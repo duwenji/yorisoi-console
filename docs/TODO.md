@@ -14,7 +14,11 @@
 
 ## チャンネルと素材集を画面で作る
 
-[DES-014](design/DES-014-package-editor.md)（承認済み）。API-001・DM-001 には反映済み。残りは下書きの API・下書きの機械審査（validator）・配備・画面・利用ガイド。
+[DES-014](design/DES-014-package-editor.md)。下書きの API・下書きの機械審査・画面・利用ガイドは実装済み。
+
+- [ ] 開発用に配備する（`DraftReview` の Lambda、受付用・公開用のバケットの CORS、CSP）
+- [ ] ブラウザで通しで確かめる（空から作る → 保存 → 機械審査 → 申請、過去の申請から始める、手元の ZIP から始める、素材集の題材を地図で選ぶ）
+- [ ] CloudFront を通して、下書きの保存の `If-None-Match`・`If-Match` と ZIP の本文がそのまま届くか確かめる
 
 ## 確かめること
 

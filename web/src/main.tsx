@@ -17,6 +17,7 @@ import { OperatorStudio, ProviderStudio } from './pages/studio';
 import { OperatorNotes } from './pages/notes';
 import { OperatorAreas } from './pages/areas';
 import { PublisherChannel, PublisherChannels } from './pages/publisher/channels';
+import { ChannelEditor, CollectionEditor } from './pages/publisher/editor';
 import { PublisherCollection, PublisherCollections } from './pages/publisher/collections';
 import { PublisherHome } from './pages/publisher/home';
 import { PublisherKeys } from './pages/publisher/keys';
@@ -129,8 +130,10 @@ function Shell({ session }: { session: Session }) {
             <Route path="/" element={<PublisherHome />} />
             <Route path="/channels" element={<PublisherChannels />} />
             <Route path="/channels/:channelId" element={<PublisherChannel />} />
+            <Route path="/channels/:channelId/edit" element={<ChannelEditor />} />
             <Route path="/collections" element={<PublisherCollections />} />
             <Route path="/collections/:collectionId" element={<PublisherCollection />} />
+            <Route path="/collections/:collectionId/edit" element={<CollectionEditor />} />
             <Route path="/studio" element={<ProviderStudio />} />
             <Route path="/keys" element={<PublisherKeys />} />
             <Route path="/settings" element={<PublisherSettings />} />

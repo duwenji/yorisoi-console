@@ -9,7 +9,7 @@ import { Empty, Status, Time, useLoad } from '../common';
 import { PreReview, reviewFiles } from '../pre-review';
 import { EcosystemNote, StageNote, ValidationView } from '../validation';
 
-const STATE: Record<string, string> = {
+export const STATE: Record<string, string> = {
   uploading: 'アップロード待ち', validating: '機械の確認中', validation_failed: '機械の確認で不合格', awaiting_review: '審査待ち',
   in_review: '審査中', approved: '承認', returned: '差し戻し', rejected: '却下', withdrawn: '取り消し', expired: '期限切れ',
   superseded: '置き換え済み', revoked: '取り下げ',
@@ -75,7 +75,7 @@ function TicketQr({ ticket }: { ticket: Schemas['TestTicket'] }) {
   );
 }
 
-async function upload(target: { url: string; fields: Record<string, string> }, file: Blob) {
+export async function upload(target: { url: string; fields: Record<string, string> }, file: Blob) {
   const form = new FormData();
   for (const [k, v] of Object.entries(target.fields)) form.append(k, v);
   form.append('file', file);
@@ -170,6 +170,14 @@ export function PublisherChannel() {
         </dl>
       )}
 
+      <div className="action">
+        <h3>画面で作る</h3>
+        <p className="muted">
+          <code>channel.json</code>・プロンプト・素材・きっかけを画面のフォームで作り、下書きとして保存できます。下書きのまま機械審査にかけ、そのまま署名して申請できます。
+        </p>
+        <Link to={`/channels/${channelId}/edit`}>{c?.draft ? `下書きを編集する（${new Date(c.draft.updatedAt).toLocaleString('ja-JP')} に保存）` : '下書きを作る'}</Link>
+      </div>
+
       <h2>申請</h2>
       <Status error={subs.error} loading={subs.loading} />
       {subs.data?.items.length === 0 && <Empty>まだ申請していません。</Empty>}
@@ -229,9 +237,9 @@ export function PublisherChannel() {
       {ticket && <TicketQr ticket={ticket} />}
 
       <form className="action" onSubmit={(e) => void submit(e)}>
-        <h3>新しい版を申請する</h3>
+        <h3>ZIP から申請する</h3>
         <p className="muted">
-          署名する前の ZIP（<code>channel.json</code> と <code>prompts/</code>）を選びます。この画面があなたの鍵で署名し、<code>signature.json</code> を足して送ります。形式はチャンネル提供者ガイドを見てください。
+          手元で作った署名する前の ZIP（<code>channel.json</code> と <code>prompts/</code>）を選びます。この画面があなたの鍵で署名し、<code>signature.json</code> を足して送ります。形式はチャンネル提供者ガイドを見てください。
         </p>
         <label>
           パッケージ（ZIP）
