@@ -14,7 +14,7 @@
 
 ## チャンネルと素材集を画面で作る
 
-[DES-014](design/DES-014-package-editor.md)（レビュー中）。承認されたら、API-001・DM-001 に足し、下書きの API・画面・利用ガイドを作る。
+[DES-014](design/DES-014-package-editor.md)（承認済み）。API-001・DM-001 には反映済み。残りは下書きの API・下書きの機械審査（validator）・配備・画面・利用ガイド。
 
 ## 確かめること
 

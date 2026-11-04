@@ -265,6 +265,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/channels/{channelId}/draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                channelId: components["parameters"]["ChannelId"];
+            };
+            cookie?: never;
+        };
+        /** チャンネルの下書き（持ち主だけ。DES-014 R-3・R-6） */
+        get: operations["getChannelDraft"];
+        /** 下書きを保存する（3MB まで。初めては If-None-Match、次からは If-Match。DES-014 R-4） */
+        put: operations["putChannelDraft"];
+        post?: never;
+        /** 下書きを消す */
+        delete: operations["deleteChannelDraft"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/channels/{channelId}/draft/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                channelId: components["parameters"]["ChannelId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 保存した下書きを機械審査にかける（非同期。1 日 50 回。DES-014 R-16〜R-20） */
+        post: operations["checkChannelDraft"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/channels/{channelId}/submissions/{submissionId}/package": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                channelId: components["parameters"]["ChannelId"];
+                submissionId: components["parameters"]["SubmissionId"];
+            };
+            cookie?: never;
+        };
+        /** 自分の申請のパッケージの取得先（署名付き URL、5 分。下書きの始め方。DES-014） */
+        get: operations["getOwnChannelSubmissionPackage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/collections": {
         parameters: {
             query?: never;
@@ -375,6 +435,66 @@ export interface paths {
         put?: never;
         /** 申請を取り消す（awaiting_review・in_review のとき） */
         post: operations["withdrawCollectionSubmission"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/collections/{collectionId}/draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                collectionId: components["parameters"]["CollectionId"];
+            };
+            cookie?: never;
+        };
+        /** 素材集の下書き（持ち主だけ。DES-014 R-3・R-6） */
+        get: operations["getCollectionDraft"];
+        /** 下書きを保存する（3MB まで。初めては If-None-Match、次からは If-Match。DES-014 R-4） */
+        put: operations["putCollectionDraft"];
+        post?: never;
+        /** 下書きを消す */
+        delete: operations["deleteCollectionDraft"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/collections/{collectionId}/draft/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                collectionId: components["parameters"]["CollectionId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 保存した下書きを機械審査にかける（非同期。1 日 50 回。DES-014 R-16〜R-20） */
+        post: operations["checkCollectionDraft"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/collections/{collectionId}/submissions/{submissionId}/package": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                collectionId: components["parameters"]["CollectionId"];
+                submissionId: components["parameters"]["SubmissionId"];
+            };
+            cookie?: never;
+        };
+        /** 自分の申請のパッケージの取得先（署名付き URL、5 分。下書きの始め方。DES-014） */
+        get: operations["getOwnCollectionSubmissionPackage"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1341,6 +1461,32 @@ export interface components {
         AccountId: string;
         Base64Url: string;
         Rev: number;
+        /** @description 下書きの要約（DES-014。持ち主だけに返す） */
+        Draft: {
+            rev: components["schemas"]["Rev"];
+            /** @description 下書きの ZIP のバイト数 */
+            size: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            /**
+             * Format: date-time
+             * @description 最後の保存から 180 日（R-8）
+             */
+            expiresAt: string;
+            /** @description 下書きの機械審査（R-18） */
+            check?: {
+                /** @enum {string} */
+                state: "running" | "done";
+                rev: components["schemas"]["Rev"];
+                /** Format: date-time */
+                startedAt: string;
+                /** Format: date-time */
+                checkedAt?: string;
+                validation?: components["schemas"]["Validation"];
+            } | null;
+        };
         Problem: {
             /** @default about:blank */
             type: string;
@@ -1751,6 +1897,8 @@ export interface components {
                 /** Format: date-time */
                 revokedAt: string;
             }[];
+            /** @description 下書きの要約（持ち主だけ。ないときは null。DES-014） */
+            draft?: components["schemas"]["Draft"] | null;
             rev: components["schemas"]["Rev"];
             /** Format: date-time */
             createdAt: string;
@@ -1797,7 +1945,7 @@ export interface components {
                 resourceId: string;
                 detail: string;
             }[];
-            /** @description 拒まないが知らせること（例 grants_narrowed） */
+            /** @description 拒まないが知らせること（例 grants_narrowed。下書きの機械審査でアイコンがないときの icon_missing） */
             warnings?: {
                 code: string;
                 detail: string;
@@ -1907,6 +2055,8 @@ export interface components {
                 /** Format: date-time */
                 revokedAt: string;
             }[];
+            /** @description 下書きの要約（持ち主だけ。ないときは null。DES-014） */
+            draft?: components["schemas"]["Draft"] | null;
             rev: components["schemas"]["Rev"];
             /** Format: date-time */
             createdAt: string;
@@ -2743,6 +2893,148 @@ export interface operations {
             default: components["responses"]["Error"];
         };
     };
+    getChannelDraft: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                channelId: components["parameters"]["ChannelId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 下書きの ZIP（`package/`・`draft.json`・`icon.png`） */
+            200: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/zip": string;
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    putChannelDraft: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description 前に受け取った `ETag`。2 回目からの保存で必須 */
+                "If-Match"?: string;
+                /** @description 初めての保存は `*` */
+                "If-None-Match"?: "*";
+            };
+            path: {
+                channelId: components["parameters"]["ChannelId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/zip": string;
+            };
+        };
+        responses: {
+            /** @description 保存した下書きの要約 */
+            200: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Draft"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    deleteChannelDraft: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description 取得したときの `ETag`。ないと 428、違うと 412 */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                channelId: components["parameters"]["ChannelId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 消した */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    checkChannelDraft: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description 取得したときの `ETag`。ないと 428、違うと 412 */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                channelId: components["parameters"]["ChannelId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 始めた。結果は下書きの要約の `check` */
+            202: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Draft"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    getOwnChannelSubmissionPackage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                channelId: components["parameters"]["ChannelId"];
+                submissionId: components["parameters"]["SubmissionId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 取得先 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: uri */
+                        packageUrl: string;
+                        /**
+                         * Format: uri
+                         * @description アイコン（素材集にはない）
+                         */
+                        iconUrl: string | null;
+                        /** Format: date-time */
+                        expiresAt: string;
+                    };
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
     listMyCollections: {
         parameters: {
             query?: never;
@@ -2907,6 +3199,143 @@ export interface operations {
         requestBody?: never;
         responses: {
             200: components["responses"]["CollectionSubmission"];
+            default: components["responses"]["Error"];
+        };
+    };
+    getCollectionDraft: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                collectionId: components["parameters"]["CollectionId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 下書きの ZIP（`package/`・`draft.json`・`icon.png`） */
+            200: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/zip": string;
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    putCollectionDraft: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description 前に受け取った `ETag`。2 回目からの保存で必須 */
+                "If-Match"?: string;
+                /** @description 初めての保存は `*` */
+                "If-None-Match"?: "*";
+            };
+            path: {
+                collectionId: components["parameters"]["CollectionId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/zip": string;
+            };
+        };
+        responses: {
+            /** @description 保存した下書きの要約 */
+            200: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Draft"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    deleteCollectionDraft: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description 取得したときの `ETag`。ないと 428、違うと 412 */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                collectionId: components["parameters"]["CollectionId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 消した */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    checkCollectionDraft: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description 取得したときの `ETag`。ないと 428、違うと 412 */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                collectionId: components["parameters"]["CollectionId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 始めた。結果は下書きの要約の `check` */
+            202: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Draft"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    getOwnCollectionSubmissionPackage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                collectionId: components["parameters"]["CollectionId"];
+                submissionId: components["parameters"]["SubmissionId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 取得先 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: uri */
+                        packageUrl: string;
+                        /** Format: date-time */
+                        expiresAt: string;
+                    };
+                };
+            };
             default: components["responses"]["Error"];
         };
     };
