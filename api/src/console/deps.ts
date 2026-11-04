@@ -46,6 +46,21 @@ export interface Deps {
   apps: Record<string, AppEntry>;
   /** The studio's table, intake and check (DES-013 K-2); absent where the studio isn't deployed. */
   local?: LocalDeps;
+  /** Drafts and the files to start one from (DES-014). */
+  drafts: DraftDeps;
+}
+
+/** What the drafts use (DES-014 R-4・R-12・R-18): the intake bucket's `drafts/`, and the machine review. */
+export interface DraftDeps {
+  put: (key: string, bytes: Uint8Array) => Promise<void>;
+  get: (key: string) => Promise<Uint8Array>;
+  remove: (key: string) => Promise<void>;
+  /** Whether an uploaded file is still in the intake bucket (settled ones go after 90 days, DM-001 M-4). */
+  uploadExists: (key: string) => Promise<boolean>;
+  /** A short-lived URL to download an approved file from the public bucket (5 minutes). */
+  presignPublic: (key: string) => Promise<string>;
+  /** Starts the machine review of a saved draft without waiting (R-18). */
+  invokeCheck: (event: { kind: 'channel' | 'collection'; id: string }) => Promise<void>;
 }
 
 /** What the console uses of the studio stack (DES-013 K-2, K-16). */

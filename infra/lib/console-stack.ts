@@ -77,6 +77,8 @@ export class ConsoleStack extends Stack {
     const publicBucket = new s3.Bucket(this, 'PublicBucket', {
       ...bucketDefaults,
       lifecycleRules: [{ prefix: 'trial/', expiration: Duration.days(7) }],
+      // The console hands an owner presigned URLs to their approved files, read from the browser (DES-014).
+      cors: [{ allowedMethods: [s3.HttpMethods.GET], allowedOrigins: ['*'], allowedHeaders: ['*'], maxAge: 3600 }],
     });
     // M-13: every published list, keyset and review sample, kept for good.
     const recordsBucket = new s3.Bucket(this, 'RecordsBucket', { ...bucketDefaults, versioned: true });

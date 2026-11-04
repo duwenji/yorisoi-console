@@ -14,6 +14,7 @@ import io.github.duwenji.yorisoi.sanpoguide.prompt.ReviewSamples as WalkSamples
 import io.github.duwenji.yorisoi.core.format.ChannelList
 import io.github.duwenji.yorisoi.core.format.CollectionReferences
 import io.github.duwenji.yorisoi.core.format.CollectionStatus
+import io.github.duwenji.yorisoi.core.format.Ed25519Verifier
 import io.github.duwenji.yorisoi.core.format.FileRef
 import io.github.duwenji.yorisoi.core.format.JcaEd25519
 import io.github.duwenji.yorisoi.core.format.ListedChannel
@@ -163,7 +164,8 @@ object MachineReview {
     /** DES-007 J-5: all of a collection's outside resources are read within this. */
     const val EXTERNAL_BUDGET_MS = 10 * 60 * 1000L
 
-    fun review(upload: Upload, zip: ByteArray, icon: ByteArray, catalog: Catalog = Catalog.NONE): Outcome {
+    /** [verifier] reads the publisher's signature: a draft's review takes any (DES-014 R-17); the collections it uses are always verified. */
+    fun review(upload: Upload, zip: ByteArray, icon: ByteArray, catalog: Catalog = Catalog.NONE, verifier: Ed25519Verifier = JcaEd25519): Outcome {
         val findings = mutableListOf<Finding>()
         var version: Int? = null
         var passed: Outcome.Passed? = null
@@ -173,7 +175,7 @@ object MachineReview {
             findings += Finding("bad_archive", "${zip.size} bytes (max $MAX_PACKAGE)")
         } else {
             // Every stage: the console checks it all, and the app version a channel needs is minAppVersions' job (J-1).
-            when (val result = StationValidator.checkArchive(zip, listedAs = null, verifier = JcaEd25519, mediaStage = StationValidator.ALL_STAGES)) {
+            when (val result = StationValidator.checkArchive(zip, listedAs = null, verifier = verifier, mediaStage = StationValidator.ALL_STAGES)) {
                 is StationCheck.Rejected -> findings += Finding(result.code.json, result.detail)
                 is StationCheck.Ok -> {
                     val manifest = result.station.manifest
@@ -264,10 +266,11 @@ object MachineReview {
         upload: CollectionUpload,
         zip: ByteArray,
         fetcher: ExternalFetcher,
+        verifier: Ed25519Verifier = JcaEd25519,
         clockMs: () -> Long = System::currentTimeMillis,
     ): CollectionOutcome {
         if (zip.size > MAX_PACKAGE) return CollectionOutcome.Failed(listOf(Finding("bad_archive", "${zip.size} bytes (max $MAX_PACKAGE)")), null)
-        val pkg = when (val result = CollectionValidator.checkArchive(zip, listedAs = null, verifier = JcaEd25519)) {
+        val pkg = when (val result = CollectionValidator.checkArchive(zip, listedAs = null, verifier = verifier)) {
             is CollectionCheck.Rejected -> return CollectionOutcome.Failed(listOf(Finding(result.code.json, result.detail)), null)
             is CollectionCheck.Ok -> result.collection
         }

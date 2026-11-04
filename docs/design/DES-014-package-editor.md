@@ -81,7 +81,7 @@
 | 基本 | 名前・要約・言語・版（最後に承認した版 + 1 を出す）・過ごし方・ジャンル・必要な機能・あいさつ | 名前・要約・言語・版・利用許諾（チャンネル提供者 `*` か一覧、アプリ、AI の根拠） |
 | 話し方 | 話す頻度・6 つの出来事・スポットの好み（優先・話題にしない）・解説の長さ・雰囲気・背景音 | — |
 | プロンプト | スロットごとの文章の欄（文字数と合計を出す。空なら標準の文章を使うと添える） | — |
-| 素材 | テキスト（本文の欄）・画像（ファイルを選ぶ。`alt`・`credit`）・外部の素材（URL・`mime`・`size`・`sha256`・`durationSec`・書き起こし・`credit`）。外部の素材は、ブラウザから取れれば `size`・`sha256` を計算して入れ、取れなければ手で入れる | 同じに加えて、題材（スポットの OSM の ID と名前、地点。位置は地図で選ぶ）・タグ |
+| 素材 | テキスト（本文の欄）・画像（ファイルを選ぶ。`alt`・`credit`）・外部の素材（URL・`mime`・`size`・`sha256`・`durationSec`・書き起こし・`credit`）。外部の素材は、置き場所に上げる前の手元のファイルを選べば、`size`・`sha256`（音声・映像は `durationSec` も）をブラウザの中で計算して入れる（ファイルは送らない）。手で入れることもできる | 同じに加えて、題材（スポットの OSM の ID と名前、地点。位置は地図で選ぶ）・タグ |
 | きっかけ | 一覧と編集。題材（スポット・題材を問わないスポット・地点・出来事）、語り（`replace`・`add`）、繰り返し、見せ方と素材（同梱の素材を選ぶか、素材提供者への参照の候補を 1〜3 個並べる）。地点は地図で選ぶ | — |
 | 素材集 | 使う素材集の宣言（別名・ID・最低の版） | — |
 | そのほか | そのほかの項目（JSON）（R-11） | 同じ |
@@ -99,7 +99,7 @@
 | R-12 | 保存は、受付用の S3 の新しいキー（`drafts/ch/{channelId}/{draftId}.zip`、`drafts/col/{collectionId}/{draftId}.zip`。`draftId` は ULID）に書いてから、下書きの項目を `rev` を条件に書き換え、前のキーを消す。条件で落ちたら、書いた新しいキーを消して 412 `precondition_failed` | S3 と DynamoDB を 1 つのトランザクションにできないので、項目が指すキーが必ず中身のある 1 つになるようにする |
 | R-13 | サーバーが確かめるのは、大きさ（3MB）と ZIP であること（先頭のバイト）だけ。中身は開かない | 中身の判定は申請の機械審査に任せる（R-1） |
 | R-14 | 下書きの保存・削除は、操作の記録（ARCH-001 A-16）に残さない。下書きから作った申請は、今と同じく申請として残る | 申請する前の作業で、審査と公開に関わらない。保存のたびに記録が増えるのを避ける |
-| R-15 | 受付用の S3 の CORS に `GET` を足す（過去の申請の署名付き URL を画面が読むため） | 今は署名付き POST だけを許している。`GET` も署名付き URL がなければ読めない |
+| R-15 | 受付用の S3 と公開用のバケットの CORS に `GET` を足し、画面の CSP の接続先・画像に公開用のバケットを足す（過去の申請の署名付き URL を画面が読むため）。地図のタイル（地理院）は画像に常に許す | 今は署名付き POST だけを許している。`GET` も署名付き URL がなければ読めない。公開用のバケットのものはもともと CloudFront で公開している |
 
 ### 下書きの機械審査
 
@@ -119,10 +119,10 @@
 | PUT | `/api/channels/{channelId}/draft` | P（持ち主だけ） | 下書きを保存する。本文は ZIP。初めての保存は `If-None-Match: *`、2 回目からは `If-Match`。応答は下書きの要約（`rev`・`updatedAt`・`size`・`expiresAt`） |
 | DELETE | `/api/channels/{channelId}/draft` | P（持ち主だけ） | 下書きを消す（`If-Match`） |
 | POST | `/api/channels/{channelId}/draft/check` | P（持ち主だけ） | 保存した下書きを機械審査にかける（`If-Match` に確かめる下書きの `rev`）。202 と下書きの要約（R-18）。上限は 429 `quota_exceeded` |
-| GET | `/api/channels/{channelId}/submissions/{submissionId}/package` | P（自分のもの）・O | 申請のパッケージとアイコンの署名付き URL（5 分）。運営の `GET /api/admin/…/package` と同じ形。受付用の S3 から消えていれば、承認された版は公開用のバケットのもの（`pkg/`・`icons/`・`col/`）を返し、そうでなければ 404 `not_found`（`detail` に消えたこと） |
+| GET | `/api/channels/{channelId}/submissions/{submissionId}/package` | P（自分のもの） | 申請のパッケージとアイコンの署名付き URL（5 分）。運営の `GET /api/admin/…/package` と同じ形。受付用の S3 から消えていれば、承認された版は公開用のバケットのもの（`pkg/`・`icons/`・`col/`）を返し、そうでなければ 404 `not_found`（`detail` に消えたこと） |
 | GET・PUT・DELETE | `/api/collections/{collectionId}/draft` | 素材提供者（持ち主だけ） | 素材集の下書き（チャンネルと同じ） |
 | POST | `/api/collections/{collectionId}/draft/check` | 素材提供者（持ち主だけ） | 素材集の下書きを機械審査にかける（チャンネルと同じ） |
-| GET | `/api/collections/{collectionId}/submissions/{submissionId}/package` | 素材提供者（自分のもの）・O | 素材集の申請のパッケージの署名付き URL |
+| GET | `/api/collections/{collectionId}/submissions/{submissionId}/package` | 素材提供者（自分のもの） | 素材集の申請のパッケージの署名付き URL |
 
 - チャンネル・素材集の応答（`GET /api/channels/{channelId}` など）に、下書きの要約 `draft`（`rev`・`updatedAt`・`expiresAt`・`check`）を足す（持ち主だけに返す）。`check` は `state`（`running`・`done`）・`rev`（確かめた下書きの版）・`startedAt`・`checkedAt`・`validation`
 - エラーは API-001 のエラー表のもの: 3MB を超える（413 `payload_too_large`）、ZIP でない（400 `invalid_request`）、`rev` が違う（412 `precondition_failed`）、`If-Match` も `If-None-Match` もない（428 `precondition_required`）、停止中（403 `publisher_not_active`）、取り下げのあと（409 `invalid_state`）。新しいコードは足さない
@@ -162,7 +162,7 @@
 
 | No. | 内容 | 対応 |
 |---|---|---|
-| 2 | 外部の素材の `size`・`sha256` は、置き場所が CORS を許していないとブラウザで計算できない | 手で入れる欄を残し、計算の仕方（`sha256sum` など）を利用ガイドに書く |
+| 2 | 画面は CSP で接続先を限っているので（ARCH-001 A-14）、外部の素材を置き場所から取って `size`・`sha256` を確かめられない | 手元のファイルから計算する欄と手で入れる欄を置き、計算の仕方（`sha256sum` など）を利用ガイドに書く。置き場所の中身と合うかは、素材集では下書きの機械審査（R-16）で確かめる。チャンネルの外部の素材は、申請の機械審査でも読みに行かない（今と同じ） |
 | 3 | きっかけを 500 個まで作れるが、画面で 1 つずつ作るのは手間がかかる | 一覧の絞り込みと複製を付ける。それでも足りなければ、表（CSV）からの取り込みを考える |
 
 ## 関連ドキュメント・参照リンク

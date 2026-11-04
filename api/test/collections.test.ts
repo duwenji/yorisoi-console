@@ -12,6 +12,7 @@ import { DynamoStore } from '../src/publish/aws.js';
 import { DISCOVERY_PATH, LIST_PATH, MemoryStorage, noCdn, publish } from '../src/publish/index.js';
 import type { Trigger } from '../src/publish/ports.js';
 import { freshTable, startDynamoLocal } from './dynamo-local.js';
+import { memoryDrafts } from './drafts-fake.js';
 
 // DES-008: the producer role, collections, their submissions and their review (API-001).
 
@@ -80,6 +81,7 @@ beforeEach(async () => {
       await duringCopy();
       return `https://provider.example/col/${sha}.zip`;
     },
+    drafts: memoryDrafts(),
     apps: { sanpoguide: { ...DEFAULT_APPS.sanpoguide!, stageVersions: { 0: 1, 1: 9999, 2: 9999, 3: 9999 } } },
   };
 });

@@ -9,6 +9,7 @@ import { route } from '../src/console/router.js';
 import { CursorCodec } from '../src/console/util.js';
 import type { Trigger } from '../src/publish/ports.js';
 import { freshTable, startDynamoLocal } from './dynamo-local.js';
+import { memoryDrafts } from './drafts-fake.js';
 
 const start = new Date('2026-10-04T03:00:00.000Z');
 const alice: Caller = { sub: 'sub-alice', roles: ['publisher'] };
@@ -67,6 +68,7 @@ beforeEach(async () => {
     writeRecord: async () => {},
     notify: async (n) => void notices.push(n),
     publishCollection: async (_key: string, sha: string) => `https://provider.example/col/${sha}.zip`,
+    drafts: memoryDrafts(),
     apps: { sanpoguide: { ...DEFAULT_APPS.sanpoguide!, stageVersions: { 0: 1, 1: 9999, 2: 9999, 3: 9999 } } },
     publishApproved: async ({ packageSha256, iconSha256 }) => ({ packageUrl: `https://provider.example/pkg/${packageSha256}.zip`, iconUrl: `https://provider.example/icons/${iconSha256}.png` }),
   };

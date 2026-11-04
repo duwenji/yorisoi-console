@@ -143,11 +143,13 @@ describe('ConsoleStack', () => {
 
   it('takes uploads straight to a private intake bucket that forgets settled packages after 90 days', () => {
     prod.hasResourceProperties('AWS::S3::Bucket', {
-      CorsConfiguration: { CorsRules: [Match.objectLike({ AllowedMethods: ['POST'] })] },
+      CorsConfiguration: { CorsRules: [Match.objectLike({ AllowedMethods: ['POST', 'GET'] })] },
       LifecycleConfiguration: {
         Rules: Match.arrayWith([
           Match.objectLike({ Prefix: 'archive/', ExpirationInDays: 90 }),
           Match.objectLike({ Prefix: 'archive-col/', ExpirationInDays: 90 }),
+          // Drafts, 180 days from the last save (DES-014 R-8).
+          Match.objectLike({ Prefix: 'drafts/', ExpirationInDays: 180 }),
         ]),
       },
     });
@@ -182,6 +184,10 @@ describe('ConsoleStack', () => {
       Timeout: 900,
       Environment: { Variables: Match.objectLike({ PUBLIC_BUCKET: Match.anyValue() }) },
     });
+    // A draft's machine review: the same code, invoked by the console API (DES-014 R-18).
+    prod.hasResourceProperties('AWS::Lambda::Function', { Handler: 'console.validator.DraftHandler::handleRequest', Timeout: 900 });
+    prod.hasResourceProperties('AWS::Lambda::EventInvokeConfig', { MaximumRetryAttempts: 0 });
+    prod.hasResourceProperties('AWS::Lambda::Function', { Environment: { Variables: Match.objectLike({ DRAFT_CHECK_FUNCTION: Match.anyValue() }) } });
     const keyPolicy = JSON.stringify(prod.findResources('AWS::KMS::Key'));
     expect(keyPolicy.match(/ED25519_SHA_512/g)?.length).toBe(2);
     expect(JSON.stringify(prod.findResources('AWS::IAM::Policy'))).not.toContain('kms:Sign');

@@ -2,6 +2,7 @@ import { GetCommand } from '@aws-sdk/lib-dynamodb';
 import type { Deps } from './deps.js';
 import { ApiError, fail, json, problem, type Caller, type Request, type Response } from './http.js';
 import * as col from './collections.js';
+import * as drafts from './drafts.js';
 import * as op from './operator.js';
 import * as pub from './publisher.js';
 import * as review from './review.js';
@@ -55,6 +56,12 @@ const ROUTES: [string, string, Handler][] = [
   ['GET', '/api/collections/{collectionId}/submissions', col.listCollectionSubmissions],
   ['GET', '/api/collections/{collectionId}/submissions/{submissionId}', col.getCollectionSubmission],
   ['POST', '/api/collections/{collectionId}/submissions/{submissionId}/withdraw', col.withdrawCollectionSubmission],
+  // Drafts (DES-014).
+  ['GET', '/api/collections/{collectionId}/draft', drafts.getCollectionDraft],
+  ['PUT', '/api/collections/{collectionId}/draft', drafts.putCollectionDraft],
+  ['DELETE', '/api/collections/{collectionId}/draft', drafts.deleteCollectionDraft],
+  ['POST', '/api/collections/{collectionId}/draft/check', drafts.checkCollectionDraft],
+  ['GET', '/api/collections/{collectionId}/submissions/{submissionId}/package', drafts.getOwnCollectionSubmissionPackage],
   ['POST', '/api/channels', pub.registerChannel],
   ['GET', '/api/channels', pub.listMyChannels],
   ['GET', '/api/channels/{channelId}', pub.getChannel],
@@ -64,6 +71,11 @@ const ROUTES: [string, string, Handler][] = [
   ['POST', '/api/channels/{channelId}/submissions/{submissionId}/withdraw', pub.withdrawSubmission],
   ['POST', '/api/channels/{channelId}/submissions/{submissionId}/test-tickets', pub.issueTestTicket],
   ['GET', '/api/channels/{channelId}/submissions/{submissionId}/test-tickets', pub.listTestTickets],
+  ['GET', '/api/channels/{channelId}/draft', drafts.getChannelDraft],
+  ['PUT', '/api/channels/{channelId}/draft', drafts.putChannelDraft],
+  ['DELETE', '/api/channels/{channelId}/draft', drafts.deleteChannelDraft],
+  ['POST', '/api/channels/{channelId}/draft/check', drafts.checkChannelDraft],
+  ['GET', '/api/channels/{channelId}/submissions/{submissionId}/package', drafts.getOwnSubmissionPackage],
   // The operator.
   ['POST', '/api/admin/channels/{channelId}/revoke', op.revokeChannel],
   // Review (implementation stage 3c).

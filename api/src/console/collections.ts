@@ -2,6 +2,7 @@ import { QueryCommand, type TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
 import { CHANNEL_ID } from '@yorisoi-console/protocol';
 import { auditItem, type Deps } from './deps.js';
 import { fail, ifMatch, json, object, requireOperator, requiredText, text, withEtag, type Request, type Response } from './http.js';
+import { draftSummary } from './drafts.js';
 import { myPublisher, transact } from './publisher.js';
 import {
   DEFAULT_LIMITS, collectionSubmissionView, collectionView, get, loadCollection, loadCollectionSubmission, loadPublisher, page, publisherView, rolesOf, type Item,
@@ -117,8 +118,10 @@ export async function listPublisherCollections(deps: Deps, req: Request): Promis
 }
 
 export async function getCollection(deps: Deps, req: Request): Promise<Response> {
-  const { collection } = await visibleCollection(deps, req, req.params.collectionId!);
-  return withEtag(200, await collectionView(deps, collection));
+  const { collection, account } = await visibleCollection(deps, req, req.params.collectionId!);
+  // The draft is the owner's alone (DES-014 R-6).
+  const draft = account ? { draft: await draftSummary(deps, `COL#${String(collection.collectionId)}`) } : {};
+  return withEtag(200, { ...(await collectionView(deps, collection)), ...draft });
 }
 
 /**

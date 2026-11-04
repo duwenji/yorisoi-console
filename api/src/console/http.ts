@@ -13,6 +13,8 @@ export interface Request {
   query: Record<string, string | undefined>;
   headers: Record<string, string | undefined>;
   body: unknown;
+  /** The body as bytes when it is a ZIP (a draft, API-001 C-28); `body` is then undefined. */
+  rawBody?: Uint8Array;
   caller: Caller;
   requestId: string;
 }
@@ -21,6 +23,8 @@ export interface Response {
   statusCode: number;
   headers: Record<string, string>;
   body: string;
+  /** The body is bytes in base64 (a draft's ZIP). */
+  isBase64Encoded?: boolean;
 }
 
 const STATUS: Record<ProblemCode, number> = {
@@ -86,6 +90,11 @@ export function json(statusCode: number, body: unknown, extra: Record<string, st
 /** A resource with its `rev` as ETag (API-001 C-8). */
 export function withEtag(statusCode: number, body: { rev: number }): Response {
   return json(statusCode, body, { etag: `"${body.rev}"` });
+}
+
+/** Bytes, such as a draft's ZIP (API-001 C-28). */
+export function binary(statusCode: number, bytes: Uint8Array, contentType: string, extra: Record<string, string> = {}): Response {
+  return { statusCode, headers: { 'content-type': contentType, ...SECURITY_HEADERS, ...extra }, body: Buffer.from(bytes).toString('base64'), isBase64Encoded: true };
 }
 
 export const noContent = (): Response => ({ statusCode: 204, headers: SECURITY_HEADERS, body: '' });

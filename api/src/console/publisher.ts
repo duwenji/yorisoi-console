@@ -5,6 +5,7 @@ import { CHANNEL_ID, accountId, b64url, providerId, utf8, verifyEd25519 } from '
 import { auditItem, type Deps } from './deps.js';
 import { fail, ifMatch, json, noContent, object, requiredText, text, withEtag, type Request, type Response } from './http.js';
 import { DEFAULT_LIMITS, channelView, get, loadChannel, loadPublisher, offeredIn, page, publisherView, type Item } from './shared.js';
+import { draftSummary } from './drafts.js';
 import { deleteUses, notifyUsers, usesOfChannel, usesOfCollection } from './uses.js';
 import { jstDate, ulid } from './util.js';
 
@@ -292,6 +293,14 @@ export async function deleteMyPublisher(deps: Deps, req: Request): Promise<Respo
       });
     }
   }
+  // Drafts go with the account (DES-014 R-7); their files after the transaction.
+  const draftKeys: string[] = [];
+  for (const pk of [...channels.map((c) => `CH#${String(c.channelId)}`), ...collections.map((c) => `COL#${String(c.collectionId)}`)]) {
+    const draft = await get(deps, pk, 'DRAFT');
+    if (!draft) continue;
+    draftKeys.push(String(draft.key));
+    items.push({ Delete: { TableName: deps.table, Key: { PK: pk, SK: 'DRAFT' } } });
+  }
   if (pub.pendingTransferId) {
     const transfer = await get(deps, `PUB#${publisherId}`, `TRANSFER#${String(pub.pendingTransferId)}`);
     if (transfer) {
@@ -329,6 +338,7 @@ export async function deleteMyPublisher(deps: Deps, req: Request): Promise<Respo
   if (items.length > 100) fail('invalid_state', 'too much to remove at once; ask an operator to revoke some channels or collections first');
   await transact(deps, items, {});
   for (const key of archives) await deps.archiveUpload(key).catch(() => undefined);
+  for (const key of draftKeys) await deps.drafts.remove(key).catch(() => undefined);
   await deps.deleteUser(req.caller.sub);
   if (revoked) await deps.requestPublish('revoke');
   // The channels that used its collections hear they are gone (D-18).
@@ -462,8 +472,10 @@ export async function listMyChannels(deps: Deps, req: Request): Promise<Response
 }
 
 export async function getChannel(deps: Deps, req: Request): Promise<Response> {
-  const { channel } = await visibleChannel(deps, req, req.params.channelId!);
-  return withEtag(200, await channelView(deps, channel));
+  const { channel, publisher } = await visibleChannel(deps, req, req.params.channelId!);
+  // The draft is the owner's alone (DES-014 R-6).
+  const draft = publisher ? { draft: await draftSummary(deps, `CH#${String(channel.channelId)}`) } : {};
+  return withEtag(200, { ...(await channelView(deps, channel)), ...draft });
 }
 
 // ---- submissions ----

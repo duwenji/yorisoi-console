@@ -4,7 +4,7 @@ import { GetPublicKeyCommand, KMSClient } from '@aws-sdk/client-kms';
 import { InvokeCommand, LambdaClient } from '@aws-sdk/client-lambda';
 import { GetSecretValueCommand, SecretsManagerClient } from '@aws-sdk/client-secrets-manager';
 import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs';
-import { CopyObjectCommand, DeleteObjectCommand, GetObjectCommand, NoSuchKey, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { CopyObjectCommand, DeleteObjectCommand, GetObjectCommand, HeadObjectCommand, NoSuchKey, NotFound, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { createPresignedPost } from '@aws-sdk/s3-presigned-post';
 import { DynamoDBDocumentClient, GetCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
@@ -144,6 +144,31 @@ async function load(): Promise<Deps> {
       return `${env('PROVIDER_URL')}/${key}`;
     },
     apps: apps(),
+    drafts: {
+      put: async (key, bytes) => {
+        await s3.send(new PutObjectCommand({ Bucket: env('INTAKE_BUCKET'), Key: key, Body: bytes, ContentType: 'application/zip' }));
+      },
+      get: async (key) => {
+        const out = await s3.send(new GetObjectCommand({ Bucket: env('INTAKE_BUCKET'), Key: key }));
+        return new Uint8Array(await out.Body!.transformToByteArray());
+      },
+      remove: async (key) => {
+        await s3.send(new DeleteObjectCommand({ Bucket: env('INTAKE_BUCKET'), Key: key }));
+      },
+      uploadExists: async (key) => {
+        try {
+          await s3.send(new HeadObjectCommand({ Bucket: env('INTAKE_BUCKET'), Key: key }));
+          return true;
+        } catch (e) {
+          if (e instanceof NotFound || e instanceof NoSuchKey) return false;
+          throw e;
+        }
+      },
+      presignPublic: (key) => getSignedUrl(s3, new GetObjectCommand({ Bucket: env('PUBLIC_BUCKET'), Key: key }), { expiresIn: 300 }),
+      invokeCheck: async (event) => {
+        await lambda.send(new InvokeCommand({ FunctionName: env('DRAFT_CHECK_FUNCTION'), InvocationType: 'Event', Payload: JSON.stringify(event) }));
+      },
+    },
     ...(process.env.LOCAL_TABLE ? { local: local() } : {}),
     deleteUser: async (sub) => {
       // Sign-in is by email, so the user name is the sub.
@@ -186,27 +211,37 @@ function apps(): Record<string, AppEntry> {
 }
 
 const MAX_BODY = 1024 * 1024;
+/** A draft's ZIP (API-001 C-28). */
+const MAX_ZIP_BODY = 3 * 1024 * 1024;
 
 /** The console API behind API Gateway's JWT authorizer (ARCH-001 A-3, API-001). */
 export async function handler(event: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyResultV2> {
   const requestId = event.requestContext.requestId;
   try {
     deps ??= await load();
-    const raw = event.body ? (event.isBase64Encoded ? Buffer.from(event.body, 'base64').toString('utf8') : event.body) : undefined;
-    if (raw && raw.length > MAX_BODY) return problem(new ApiError('payload_too_large', 'the body is over 1MB'), requestId);
-    let body: unknown;
-    try {
-      body = raw ? JSON.parse(raw) : undefined;
-    } catch {
-      return problem(new ApiError('invalid_request', 'the body is not JSON'), requestId);
-    }
     const headers = Object.fromEntries(Object.entries(event.headers ?? {}).map(([k, v]) => [k.toLowerCase(), v]));
+    let body: unknown;
+    let rawBody: Uint8Array | undefined;
+    if (headers['content-type']?.split(';')[0]?.trim() === 'application/zip') {
+      // API Gateway passes bytes in base64.
+      rawBody = event.body ? Buffer.from(event.body, event.isBase64Encoded ? 'base64' : 'latin1') : new Uint8Array();
+      if (rawBody.length > MAX_ZIP_BODY) return problem(new ApiError('payload_too_large', 'the draft is over 3MB'), requestId);
+    } else {
+      const raw = event.body ? (event.isBase64Encoded ? Buffer.from(event.body, 'base64').toString('utf8') : event.body) : undefined;
+      if (raw && raw.length > MAX_BODY) return problem(new ApiError('payload_too_large', 'the body is over 1MB'), requestId);
+      try {
+        body = raw ? JSON.parse(raw) : undefined;
+      } catch {
+        return problem(new ApiError('invalid_request', 'the body is not JSON'), requestId);
+      }
+    }
     return await route(deps, {
       method: event.requestContext.http.method,
       path: event.rawPath,
       query: event.queryStringParameters ?? {},
       headers,
       body,
+      ...(rawBody ? { rawBody } : {}),
       caller: callerFrom(event.requestContext.authorizer.jwt.claims as Record<string, unknown>),
       requestId,
     });

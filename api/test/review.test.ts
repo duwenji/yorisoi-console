@@ -13,6 +13,7 @@ import { DynamoStore } from '../src/publish/aws.js';
 import { DISCOVERY_PATH, LIST_PATH, MemoryStorage, noCdn, publish } from '../src/publish/index.js';
 import type { Trigger } from '../src/publish/ports.js';
 import { freshTable, startDynamoLocal } from './dynamo-local.js';
+import { memoryDrafts } from './drafts-fake.js';
 
 const alice: Caller = { sub: 'sub-alice', roles: ['publisher'] };
 const operator: Caller = { sub: 'op-1', roles: ['operator'] };
@@ -64,6 +65,7 @@ beforeEach(async () => {
     writeRecord: async (key, body) => void records.set(key, body),
     notify: async (n) => void notices.push(n),
     publishCollection: async (_key: string, sha: string) => `https://provider.example/col/${sha}.zip`,
+    drafts: memoryDrafts(),
     apps: { sanpoguide: { ...DEFAULT_APPS.sanpoguide!, stageVersions: { 0: 1, 1: 9999, 2: 9999, 3: 9999 } } },
     publishApproved: async ({ packageSha256, iconSha256 }) => ({
       packageUrl: `https://provider.example/pkg/${packageSha256}.zip`,
