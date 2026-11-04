@@ -80,7 +80,8 @@ ol.steps li { margin: 4px 0; }
 .tag.rejected, .tag.removed, .tag.declined { background: #fbe1df; color: var(--danger); }
 form.action.wide { max-width: 760px; }
 
-/* Making a channel or a collection on the screen (DES-014). */
+/* Making a channel or a collection on the screen (DES-014). The save bar sticks, so the page itself scrolls. */
+section.editor { overflow: visible; }
 .editor .form-grid { display: grid; gap: 10px; max-width: 760px; }
 .editor .form-grid label { display: grid; gap: 2px; font-size: 0.9rem; }
 .editor .form-grid label.check, .choices label.check { display: inline-flex; gap: 6px; align-items: center; margin-right: 12px; }

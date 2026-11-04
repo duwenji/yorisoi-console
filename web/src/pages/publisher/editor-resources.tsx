@@ -147,10 +147,12 @@ function ResourceCard({ d, r, items, inCollection, onChange, onRemove, onError }
     if (f.type && (RESOURCE_MIME[r.type] ?? []).includes(f.type)) next.mime = f.type;
     onChange(next as Resource);
   };
+  // Open while new; then the user opens and closes it (typing the first character mustn't close it).
+  const [startOpen] = useState(() => !r.id || (r.type === 'text' && !fileText(d, String(r.file))) || (r.type === 'image' && !d.files[String(r.file)]));
   const texts = items.filter((x) => x.type === 'text').map((x) => x.id);
   const images = items.filter((x) => x.type === 'image').map((x) => x.id);
   return (
-    <details className="card" open={!r.id || (r.type === 'text' && !fileText(d, String(r.file)))}>
+    <details className="card" open={startOpen}>
       <summary>
         <code>{r.id}</code> {TYPE_LABEL[r.type] ?? r.type}{inPackage ? '' : '（外部）'}{' '}
         <span className="muted small">{r.type === 'text' && inPackage ? fileText(d, String(r.file)).slice(0, 40) : str(r.alt) || str(r.url)}</span>
