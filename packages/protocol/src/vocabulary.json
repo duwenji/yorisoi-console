@@ -1,0 +1,40 @@
+{
+  "$comment": "The values of a package and a collection the console's screens offer (DES-014 R-10), as core-format has them. validator/src/test/.../VocabularyTest.kt checks them against core-format.",
+  "activities": ["walk", "cycle"],
+  "genres": ["general", "history", "nature", "food", "shopping"],
+  "features": [
+    "slot:guide", "slot:companion", "trigger:spot", "trigger:point", "trigger:event",
+    "present:speak", "present:card", "present:notify", "present:sheet", "present:play", "present:ambient", "present:fullscreen"
+  ],
+  "spotKinds": {
+    "shrine": "神社", "temple": "寺院", "church": "教会", "worship": "礼拝所", "historic": "史跡", "museum": "博物館", "gallery": "ギャラリー",
+    "viewpoint": "展望スポット", "artwork": "アート", "attraction": "名所", "park": "公園", "garden": "庭園", "beach": "海辺", "water": "水辺",
+    "nature": "自然", "restaurant": "飲食店", "cafe": "カフェ", "sweets": "菓子・パン", "food_shop": "食品店", "market": "市場", "crafts": "工芸・土産",
+    "shop": "専門店"
+  },
+  "talkLevels": ["quiet", "normal", "chatty"],
+  "talkEvents": ["spot", "revisit", "milestone", "rest", "start", "finish"],
+  "guideLengths": ["short", "normal", "long"],
+  "sounds": ["auto", "rain", "waves", "wind", "birds", "insects", "temple"],
+  "slots": {
+    "prompts/guide/persona.md": 600,
+    "prompts/guide/focus.md": 1000,
+    "prompts/companion/persona.md": 600,
+    "prompts/companion/topics.md": 1000,
+    "prompts/companion/events/start.md": 300,
+    "prompts/companion/events/revisit.md": 300,
+    "prompts/companion/events/milestone.md": 300,
+    "prompts/companion/events/rest.md": 300,
+    "prompts/companion/events/finish.md": 300
+  },
+  "slotsTotal": 4000,
+  "cueEvents": ["select", "start", "finish", "idle"],
+  "narration": ["replace", "add"],
+  "repeat": ["oncePerWalk", "oncePerDay", "once"],
+  "presentAs": {
+    "speak": ["text"], "card": ["text", "image"], "notify": ["text", "image"], "sheet": ["text", "image", "audio", "video"],
+    "play": ["audio"], "ambient": ["audio"], "fullscreen": ["image", "video"]
+  },
+  "materialTypes": ["text", "image", "audio", "video"],
+  "textChars": 2000
+}

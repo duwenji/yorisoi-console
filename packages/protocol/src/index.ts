@@ -7,3 +7,4 @@ export * from './list.js';
 export * from './signed.js';
 export * from './types.js';
 export * from './verify.js';
+export * from './vocabulary.js';
