@@ -12,6 +12,10 @@
 4. スポットのタイル（ARCH-001 A-22）: 本番の配信を作る時期を決めてから配備する（platform API-SPOT-TILES 未決事項 No.2、[スポットのタイルの手順](operations/spot-tiles.md)「配備」）
 5. スタジオ（ARCH-001 A-23）: 本番の中継のあとに配備し、`config.ts` の本番の `studio` を `true` にする（[スタジオの手順](operations/studio.md)「配備」）
 
+## チャンネルと素材集を画面で作る
+
+[DES-014](design/DES-014-package-editor.md)（レビュー中）。承認されたら、API-001・DM-001 に足し、下書きの API・画面・利用ガイドを作る。
+
 ## 確かめること
 
 - [ ] 試用チケットで、素材集・基準を使うチャンネルをアプリで通しで確かめる（SanpoGuide 側。チャンネル提供者の鍵ファイルが届いてから）
