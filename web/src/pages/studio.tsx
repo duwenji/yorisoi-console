@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
 import type { Schemas } from '@yorisoi-console/api-types';
-import { STUDIO_CATEGORIES, type StudioCategory } from '@yorisoi-console/protocol';
+import { STUDIO_CATEGORIES, type StudioCategory } from '@yorisoi-console/protocol/ecosystem';
 import { describe, ifMatch } from '../api';
 import { useSession } from '../main';
 import { CellMap } from './cell-map';
