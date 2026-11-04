@@ -79,3 +79,22 @@ ol.steps li { margin: 4px 0; }
 .tag.returned, .tag.appealed, .tag.checking, .tag.uploading, .tag.requested { background: #fff4d6; color: var(--warn); }
 .tag.rejected, .tag.removed, .tag.declined { background: #fbe1df; color: var(--danger); }
 form.action.wide { max-width: 760px; }
+
+/* Making a channel or a collection on the screen (DES-014). */
+.editor .form-grid { display: grid; gap: 10px; max-width: 760px; }
+.editor .form-grid label { display: grid; gap: 2px; font-size: 0.9rem; }
+.editor .form-grid label.check, .choices label.check { display: inline-flex; gap: 6px; align-items: center; margin-right: 12px; }
+.editor fieldset { border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px; background: var(--panel); }
+.editor legend { font-size: 0.9rem; color: var(--muted); }
+.editor textarea { width: 100%; }
+.editor .card { background: var(--panel); }
+.editor .card summary { cursor: pointer; }
+.editor .card .form-grid { margin-top: 8px; }
+.editor .inline { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.editor table.compact td, .editor table.compact th { padding: 2px 6px; }
+.editor .present-row { display: grid; gap: 6px; padding: 8px; margin: 6px 0; border-left: 3px solid var(--line); }
+.editor .thumb { max-width: 240px; max-height: 160px; border: 1px solid var(--line); margin-top: 4px; }
+.save-bar { position: sticky; top: 0; z-index: 2; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding: 8px 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
+.editor-nav { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0; }
+.point-marker { fill: #b3261e; stroke: #fff; stroke-width: 2; }
+.point-radius { fill: rgba(179, 38, 30, 0.15); stroke: #b3261e; stroke-width: 1; }

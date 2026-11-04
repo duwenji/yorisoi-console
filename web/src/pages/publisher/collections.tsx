@@ -191,6 +191,14 @@ export function PublisherCollection() {
       </ul>
       <p className="muted small">ここにある素材を消したり種類を変えたりした版は、機械の確認で不合格になります（公開中のチャンネルが壊れないように）。</p>
 
+      <div className="action">
+        <h3>画面で作る</h3>
+        <p className="muted">
+          <code>collection.json</code> と素材（題材・タグを含む）を画面のフォームで作り、下書きとして保存できます。下書きのまま機械審査にかけ、そのまま署名して申請できます。
+        </p>
+        <Link to={`/collections/${collectionId}/edit`}>{c?.draft ? `下書きを編集する（${new Date(c.draft.updatedAt).toLocaleString('ja-JP')} に保存）` : '下書きを作る'}</Link>
+      </div>
+
       <h2>申請</h2>
       <Status error={subs.error} loading={subs.loading} />
       {subs.data?.items.length === 0 && <Empty>まだ申請していません。</Empty>}
@@ -236,9 +244,9 @@ export function PublisherCollection() {
       <button onClick={() => subs.reload()}>申請の状態を読み込み直す</button>
 
       <form className="action" onSubmit={(e) => void submit(e)}>
-        <h3>新しい版を申請する</h3>
+        <h3>ZIP から申請する</h3>
         <p className="muted">
-          署名する前の ZIP（<code>collection.json</code> と <code>resources/</code>）を選びます。この画面があなたの鍵で署名し、<code>signature.json</code> を足して送ります。
+          手元で作った署名する前の ZIP（<code>collection.json</code> と <code>resources/</code>）を選びます。この画面があなたの鍵で署名し、<code>signature.json</code> を足して送ります。
           大きな画像・音声・映像は外部の URL（HTTPS）に置き、<code>collection.json</code> に SHA-256 と大きさを書きます。形式は利用ガイドの「素材提供者」を見てください。
         </p>
         <label>

@@ -11,6 +11,8 @@ import software.amazon.awssdk.core.sync.RequestBody
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
+import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException
+import software.amazon.awssdk.services.dynamodb.model.UpdateItemRequest
 import software.amazon.awssdk.services.dynamodb.model.GetItemRequest
 import software.amazon.awssdk.services.dynamodb.model.Put
 import software.amazon.awssdk.services.dynamodb.model.QueryRequest
@@ -64,6 +66,69 @@ class Handler(
         }
         return results.joinToString("; ")
     }
+
+    /**
+     * The machine review of a saved draft (DES-014 R-16〜R-20), which the console API starts with
+     * `{ kind, id }`: the same checks as a submission's but the signature, with the account's key
+     * now. Nothing moves on: only the draft's `check` is written, and only by the run that was started.
+     */
+    fun processDraft(kind: String, id: String): String {
+        val channel = kind == "channel"
+        val pk = if (channel) "CH#$id" else "COL#$id"
+        val draft = getItem(pk, "DRAFT") ?: return "no draft for $pk"
+        val check = draft["check"]?.m() ?: return "no check for $pk"
+        if (check.str("state") != "running") return "not running: $pk"
+        val startedAt = check.str("startedAt").orEmpty()
+        val owner = getItem(pk, if (channel) "CH" else "COL") ?: return "no $pk"
+        val publisherId = owner.str("publisherId").orEmpty()
+        val key = query("PUB#$publisherId", "KEY#").firstOrNull { it.str("status") == "active" }
+        val now = iso(clock())
+        val contents = Draft.unpack(read(draft.str("key").orEmpty()) ?: ByteArray(0))
+        val latest = owner["latestApproved"]?.m()?.get("version")?.n()?.toInt()
+
+        val result: AttributeValue = if (key == null) {
+            validation(false, listOf(Finding("publisher_mismatch", "the account has no key now")), now, null, emptyMap())
+        } else {
+            val accountId = key.str("accountId").orEmpty()
+            val publicKey = java.util.Base64.getUrlDecoder().decode(key.str("publicKey").orEmpty())
+            if (channel) {
+                val zip = Draft.forReview(contents.files, Draft.Kind.CHANNEL, accountId, publicKey)
+                val upload = Upload(id, "draft", accountId, latest, accountIdsOf(publisherId) - accountId)
+                val warnings = if (contents.icon == null) listOf(Finding("icon_missing", "the draft has no icon; it was not checked")) else emptyList()
+                when (val outcome = MachineReview.review(upload, zip, contents.icon ?: Draft.PLACEHOLDER_ICON, DynamoCatalog(), Draft.ACCEPT_ANY)) {
+                    is Outcome.Passed -> validation(true, emptyList(), now, outcome.listing.appStage, mapOf("collections" to collectionResults(outcome.collections), "warnings" to findings(warnings)))
+                    is Outcome.Failed -> validation(false, outcome.findings, now, null, mapOf("collections" to collectionResults(outcome.collections), "warnings" to findings(warnings)))
+                }
+            } else {
+                val zip = Draft.forReview(contents.files, Draft.Kind.COLLECTION, accountId, publicKey)
+                val usedBy = query(pk, "USEDBY#").map { item ->
+                    UsedBy(item.str("channelId").orEmpty(), item.str("publisherId")?.let(::accountIdsOf).orEmpty(), item["resources"]?.m().orEmpty().mapValues { it.value.s().orEmpty() })
+                }
+                when (val outcome = MachineReview.reviewCollection(CollectionUpload(id, "draft", accountId, latest, usedBy), zip, fetcher, verifier = Draft.ACCEPT_ANY)) {
+                    is CollectionOutcome.Passed -> validation(true, emptyList(), now, outcome.listing.appStage, collectionExtra(outcome.external, emptyList(), outcome.warnings))
+                    is CollectionOutcome.Failed -> validation(false, outcome.findings, now, null, collectionExtra(outcome.external, outcome.inUse, outcome.warnings))
+                }
+            }
+        }
+        val done = AttributeValue.fromM(
+            mapOf("state" to s("done"), "rev" to n(draft.num("rev").toInt()), "startedAt" to s(startedAt), "checkedAt" to s(now), "validation" to result),
+        )
+        return try {
+            db.updateItem(
+                UpdateItemRequest.builder().tableName(table).key(mapOf("PK" to s(pk), "SK" to s("DRAFT")))
+                    .updateExpression("SET #c = :done")
+                    .conditionExpression("#c.#s = :running AND #c.startedAt = :started")
+                    .expressionAttributeNames(mapOf("#c" to "check", "#s" to "state"))
+                    .expressionAttributeValues(mapOf(":done" to done, ":running" to s("running"), ":started" to s(startedAt)))
+                    .build(),
+            )
+            "checked draft $pk"
+        } catch (e: ConditionalCheckFailedException) {
+            "another check of $pk took over"
+        }
+    }
+
+    private fun findings(list: List<Finding>): AttributeValue = av(list.map { mapOf("code" to it.code, "detail" to it.detail.take(500)) })
 
     fun process(key: String): String {
         KEY.matchEntire(key)?.let { val (channelId, submissionId) = it.destructured; return processChannel(channelId, submissionId) }
@@ -448,5 +513,21 @@ internal object StoredGrants {
         }
         val apps = m["apps"]?.l()?.mapNotNull { it.s() }?.toSet()
         return Grants(publishers, apps, grounding = m["grounding"]?.bool() == true)
+    }
+}
+
+/**
+ * The Lambda for a draft's machine review (DES-014 R-18): the console API invokes it without
+ * waiting, with `{ "kind": "channel" | "collection", "id": … }`.
+ */
+class DraftHandler(private val handler: Handler = Handler()) : RequestHandler<Map<String, Any?>, String> {
+    override fun handleRequest(event: Map<String, Any?>, context: Context?): String {
+        val kind = event["kind"] as? String ?: return "no kind"
+        val id = event["id"] as? String ?: return "no id"
+        if (kind != "channel" && kind != "collection" || !Regex("[a-z0-9-]{3,40}").matches(id)) return "bad event"
+        return runCatching { handler.processDraft(kind, id) }.getOrElse { e ->
+            context?.logger?.log("failed on draft $kind/$id: ${e.stackTraceToString()}")
+            throw e
+        }
     }
 }

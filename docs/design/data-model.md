@@ -157,6 +157,8 @@ erDiagram
 | AP-27 | 公開の Lambda | `revokedCollections` に載せる取り下げを集める（7 日以内） | GSI2 `REVOKED`（`kind` で見分ける） |
 | AP-28 | システム・素材提供者 | 素材集を使っているチャンネル（D-8 の確認、D-18 の知らせ） | `COL#{collectionId}` / `USEDBY#` |
 | AP-29 | 運営 | 審査待ちの一覧（チャンネルと素材集を古い順） | GSI2 `QUEUE#REVIEW`（AP-09 と同じ。`kind` で見分ける） |
+| AP-30 | チャンネル提供者・機械審査の Lambda | チャンネルの下書きを読み書きする（DES-014） | `CH#{channelId}` / `DRAFT` |
+| AP-31 | 素材提供者・機械審査の Lambda | 素材集の下書きを読み書きする（DES-014） | `COL#{collectionId}` / `DRAFT` |
 
 ### 状態の移り方
 
@@ -245,6 +247,8 @@ stateDiagram-v2
 | 素材集の申請 | `COL#{collectionId}` | `SUB#{submissionId}` | — | 審査待ちのとき `QUEUE#REVIEW` / `{submittedAt}#col:{collectionId}` |
 | 素材集の審査の記録 | `COL#{collectionId}` | `SUB#{submissionId}#REVIEW#{at}` | — | — |
 | 素材集の取り下げ | `COL#{collectionId}` | `REVOKE#{revokedAt}` | — | 7 日のあいだ `REVOKED` / `{revokedAt}#col:{collectionId}` |
+| チャンネルの下書き | `CH#{channelId}` | `DRAFT` | — | — |
+| 素材集の下書き | `COL#{collectionId}` | `DRAFT` | — | — |
 | 利用の記録 | `COL#{collectionId}` | `USEDBY#{channelId}` | `CH#{channelId}` / `USES#{collectionId}`（チャンネルから引く） | — |
 
 - 送ったメールは、SQS が同じ知らせを 2 度届けても 1 通だけ送るための印。`event`・`messageId` だけを持ち、30 日の TTL で消える（宛先は持たない）
@@ -439,7 +443,19 @@ stateDiagram-v2
 
 ### 1 日の数（QUOTA）
 
-`uploads`・`tickets`（N）。`uploads` はチャンネルと素材集の申請を合わせて数える（M-19）。日本時間の日付ごとの項目。`ADD` と条件（`uploads < :上限`）で増やす。`ttl` は 3 日後。
+`uploads`・`tickets`・`draftChecks`（N）。`uploads` はチャンネルと素材集の申請を合わせて数える（M-19）。`draftChecks` は下書きの機械審査の数（チャンネルと素材集を合わせて 1 日 50 回。DES-014 R-19）。日本時間の日付ごとの項目。`ADD` と条件（`uploads < :上限`）で増やす。`ttl` は 3 日後。
+
+### 下書き（DRAFT）
+
+チャンネル・素材集ごとに 1 つ（DES-014 R-5）。持ち主はチャンネル・素材集の項目の `publisherId` で確かめる。
+
+| 属性 | 型 | 必須 | 内容 |
+|---|---|---|---|
+| `key` | S | ○ | 受付用の S3 のキー（`drafts/ch/{channelId}/{draftId}.zip`・`drafts/col/{collectionId}/{draftId}.zip`） |
+| `size`・`sha256` | N・S | ○ | 下書きの ZIP |
+| `rev` | N | ○ | 保存のたびに 1 増やす（M-11） |
+| `expiresAt`・`ttl` | S・N | ○ | 最後の保存から 180 日（DES-014 R-8） |
+| `check` | M | — | 下書きの機械審査（DES-014 R-18）: `state`（`running`・`done`）、`rev`（確かめた下書きの `rev`）、`startedAt`、`checkedAt`、`validation`（申請の `validation` と同じ形） |
 
 ### 操作の記録（AUDIT）
 
@@ -470,7 +486,7 @@ DynamoDB なので DDL はなく、テーブルとインデックスは CDK（`i
 | 承認 | 申請（`in_review` → `approved`）、前の承認済みの申請（→ `superseded`）、チャンネル（`latestApproved`・`LISTED`、`pendingSubmissionId` を消す、`status` を `active` に）、審査の記録 |
 | 取り下げ | 取り下げ、チャンネル（`revoked`、`LISTED` を外す）、承認済みの申請（→ `revoked`） |
 | 移し替えの承認 | 移し替え（`requested` → `approved`）、チャンネル提供者（`activeAccountId`、`pendingTransferId` を消す）、新しい鍵（→ `active`）、古い鍵（→ `unbound`）、チャンネル提供者のすべてのチャンネル（`publisherChange`、審査待ちの申請を外す）、審査待ちの申請（→ `returned`）。チャンネル 5 つと申請 5 つでも 20 件ほど |
-| 退会 | チャンネル提供者（→ `deleted`、表示名・連絡先を消す）、公開中のチャンネル（→ `revoked`）と取り下げ、承認済みの申請（→ `revoked`）、審査待ちの申請（→ `withdrawn`）、移し替えの申し出（→ `cancelled`）。1.3: 公開中の素材集（→ `revoked`）と取り下げ、その承認済み・審査待ちの申請、チャンネルの利用の記録の削除も同じトランザクションに入れる。チャンネル 5 つ・素材集 5 つで 50 件ほど。Cognito のユーザーの削除はトランザクションの後 |
+| 退会 | 下書きの項目の削除（DES-014 R-7。S3 のキーはトランザクションの後に消す）、チャンネル提供者（→ `deleted`、表示名・連絡先を消す）、公開中のチャンネル（→ `revoked`）と取り下げ、承認済みの申請（→ `revoked`）、審査待ちの申請（→ `withdrawn`）、移し替えの申し出（→ `cancelled`）。1.3: 公開中の素材集（→ `revoked`）と取り下げ、その承認済み・審査待ちの申請、チャンネルの利用の記録の削除も同じトランザクションに入れる。チャンネル 5 つ・素材集 5 つで 50 件ほど。Cognito のユーザーの削除はトランザクションの後 |
 | 素材提供者の役割を有効にする | アカウント（`roles` に `producer` を足す。`status = active`） |
 | 素材集の登録 | 素材集（まだないこと）、アカウント（`collectionCount < 上限`、`producer` の役割、`status = active`） |
 | 素材集の申請の開始 | 1 日の数（`uploads < 上限`。チャンネルと共通）、素材集（`pendingSubmissionId` がないこと）、申請（`uploading`） |
@@ -495,6 +511,7 @@ DynamoDB なので DDL はなく、テーブルとインデックスは CDK（`i
 | 受付用（非公開） | `intake/{channelId}/{submissionId}.png`（アイコン） | パッケージと同じ |
 | 受付用（非公開） | `intake-col/{collectionId}/{submissionId}.zip`、`archive-col/{collectionId}/{submissionId}.zip` | チャンネルと同じ（M-4）。素材集の ID はチャンネルの ID と重なりうるので、接頭辞を分ける |
 | 公開用（CloudFront） | `col/{sha256}.zip` | 消さない（チャンネルのパッケージと同じ） |
+| 受付用（非公開） | `drafts/ch/{channelId}/{draftId}.zip`、`drafts/col/{collectionId}/{draftId}.zip` | 最後の保存から 180 日で消す（ライフサイクル。DES-014 R-8）。保存し直したら前のキーを消す |
 
 ## 移行・互換性メモ
 
@@ -528,6 +545,7 @@ DynamoDB なので DDL はなく、テーブルとインデックスは CDK（`i
 | DV-19 | 退会で公開中の素材集が取り下げられ、`revokedCollections` に 7 日載る（M-25） |
 | DV-20 | チャンネルの新しい版の承認と取り下げで、利用の記録が書き直される・消える |
 | DV-21 | 素材集の新しい版の承認で、使っているチャンネルの `resourcesSize`・`media` が次の公開から変わる（M-24） |
+| DV-22 | 同じ下書きを 2 つのタブで保存すると片方だけが成功し、項目の `key` は中身のある 1 つの S3 のキーを指す（DES-014 R-12） |
 
 ## 制約
 

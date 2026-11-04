@@ -8,6 +8,7 @@ import { route } from '../src/console/router.js';
 import { CursorCodec } from '../src/console/util.js';
 import { goLive, startCheck, type StudioPorts } from '../src/local/studio.js';
 import { freshTable, startDynamoLocal } from './dynamo-local.js';
+import { memoryDrafts } from './drafts-fake.js';
 
 // DES-013 K-14〜K-17: the provider's approval and studios in the console, with the check run in
 // process as the studio stack would.
@@ -72,6 +73,7 @@ beforeEach(async () => {
     publishApproved: async () => ({ packageUrl: '', iconUrl: '' }),
     notify: async (n) => void notices.push(n),
     publishCollection: async () => '',
+    drafts: memoryDrafts(),
     apps: { sanpoguide: { ...DEFAULT_APPS.sanpoguide! } },
     local: {
       table: localTable.table,

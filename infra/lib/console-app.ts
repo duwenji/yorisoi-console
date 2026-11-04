@@ -155,7 +155,8 @@ export class ConsoleApp extends Construct {
       encryption: s3.BucketEncryption.S3_MANAGED,
       removalPolicy: prod ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
       autoDeleteObjects: !prod,
-      cors: [{ allowedMethods: [s3.HttpMethods.POST], allowedOrigins: ['*'], allowedHeaders: ['*'], maxAge: 3600 }],
+      // GET for the presigned URLs to an owner's own submission (DES-014 R-15); it too needs the signature.
+      cors: [{ allowedMethods: [s3.HttpMethods.POST, s3.HttpMethods.GET], allowedOrigins: ['*'], allowedHeaders: ['*'], maxAge: 3600 }],
       lifecycleRules: [
         // Settled submissions are kept 90 days (DM-001 M-4); uploads that never got a result go after 30.
         { prefix: 'archive/', expiration: Duration.days(90) },
@@ -163,6 +164,8 @@ export class ConsoleApp extends Construct {
         // Collections the same way, under their own prefixes (DM-001: their ids may equal a channel's).
         { prefix: 'archive-col/', expiration: Duration.days(90) },
         { prefix: 'intake-col/', expiration: Duration.days(30) },
+        // Drafts: each save is a new object, so this is 180 days from the last save (DES-014 R-8).
+        { prefix: 'drafts/', expiration: Duration.days(180) },
         { abortIncompleteMultipartUploadAfter: Duration.days(1) },
       ],
     });
@@ -216,11 +219,11 @@ export class ConsoleApp extends Construct {
             "default-src 'self'",
             "script-src 'self'",
             "style-src 'self'",
-            // The icon of a submission under review comes from a presigned URL on the intake bucket.
-            // The studio's cell map shows GSI tiles (DES-013 K-16).
-            `img-src 'self' data: https://${intakeBucket.bucketRegionalDomainName}${local ? ' https://cyberjapandata.gsi.go.jp' : ''}`,
+            // The icon of a submission under review comes from a presigned URL on the intake bucket, an approved one's
+            // from the public bucket (DES-014). The maps show GSI tiles (the studio's cells DES-013 K-16, places in a draft).
+            `img-src 'self' data: blob: https://${intakeBucket.bucketRegionalDomainName} https://${props.publicBucket.bucketRegionalDomainName} https://cyberjapandata.gsi.go.jp`,
             // The review samples call the AI from the browser with the operator's key (ARCH-001 D-4, DES-005).
-            `connect-src 'self' https://${authDomain} https://cognito-idp.${stack.region}.${stack.urlSuffix} https://${intakeBucket.bucketRegionalDomainName}${localIntake} https://api.openai.com https://api.deepseek.com`,
+            `connect-src 'self' https://${authDomain} https://cognito-idp.${stack.region}.${stack.urlSuffix} https://${intakeBucket.bucketRegionalDomainName} https://${props.publicBucket.bucketRegionalDomainName}${localIntake} https://api.openai.com https://api.deepseek.com`,
             `form-action 'self' https://${authDomain}`,
             "frame-ancestors 'none'",
             "base-uri 'none'",
@@ -336,6 +339,12 @@ export class ConsoleApp extends Construct {
     intakeBucket.grantPut(consoleFn, 'archive-col/*');
     intakeBucket.grantRead(consoleFn, 'archive-col/*');
     props.publicBucket.grantPut(consoleFn, 'col/*');
+    // Drafts (DES-014): kept under drafts/; an owner's own submissions are read from intake, or from the public bucket once approved.
+    intakeBucket.grantReadWrite(consoleFn, 'drafts/*');
+    intakeBucket.grantDelete(consoleFn, 'drafts/*');
+    // Without ListBucket, S3 answers a missing key's HEAD with 403 rather than 404.
+    consoleFn.addToRolePolicy(new iam.PolicyStatement({ actions: ['s3:ListBucket'], resources: [intakeBucket.bucketArn] }));
+    for (const prefix of ['pkg/*', 'icons/*', 'col/*']) props.publicBucket.grantRead(consoleFn, prefix);
     // Leaving deletes the user (API-001 C-4).
     consoleFn.addToRolePolicy(new iam.PolicyStatement({ actions: ['cognito-idp:AdminDeleteUser'], resources: [userPool.userPoolArn] }));
     props.table.grantReadWriteData(consoleFn);
@@ -412,6 +421,31 @@ export class ConsoleApp extends Construct {
     intakeBucket.grantPut(validator, 'archive-col/*');
     props.publicBucket.grantRead(validator, 'col/*');
     intakeBucket.addEventNotification(s3.EventType.OBJECT_CREATED, new s3n.LambdaDestination(validator), { prefix: 'intake-col/' });
+
+    // A saved draft's machine review (DES-014 R-16〜R-20): the same code, started by the console API without waiting.
+    const draftCheck = new lambda.Function(this, 'DraftReview', {
+      runtime: lambda.Runtime.JAVA_21,
+      architecture: lambda.Architecture.ARM_64,
+      handler: 'console.validator.DraftHandler::handleRequest',
+      code: lambda.Code.fromAsset(props.validatorZip),
+      memorySize: 1536,
+      timeout: Duration.minutes(15),
+      // A failed run is not retried: the draft's check is freed after 15 minutes (R-19).
+      retryAttempts: 0,
+      ...logGroupFor(this, 'DraftReviewLogs', config),
+      environment: {
+        TABLE_NAME: props.table.tableName,
+        INTAKE_BUCKET: intakeBucket.bucketName,
+        RECORDS_BUCKET: props.recordsBucket.bucketName,
+        PUBLIC_BUCKET: props.publicBucket.bucketName,
+        JAVA_TOOL_OPTIONS: '-XX:+TieredCompilation -XX:TieredStopAtLevel=1',
+      },
+    });
+    props.table.grantReadWriteData(draftCheck);
+    intakeBucket.grantRead(draftCheck, 'drafts/*');
+    props.publicBucket.grantRead(draftCheck, 'col/*');
+    consoleFn.addEnvironment('DRAFT_CHECK_FUNCTION', draftCheck.functionName);
+    draftCheck.grantInvoke(consoleFn);
 
     // ---- the publishers' emails (ARCH-001 A-19, API-001 C-14) ----
     const deadNotices = new sqs.Queue(this, 'NotifyDeadLetters', { retentionPeriod: Duration.days(14), enforceSSL: true });

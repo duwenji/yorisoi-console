@@ -350,6 +350,96 @@ paths:
         '200': { $ref: '#/components/responses/Publisher' }
         default: { $ref: '#/components/responses/Error' }
 
+  /api/channels/{channelId}/draft:
+    parameters: [{ $ref: '#/components/parameters/ChannelId' }]
+    get:
+      tags: [channels]
+      operationId: getChannelDraft
+      summary: チャンネルの下書き（持ち主だけ。DES-014 R-3・R-6）
+      responses:
+        '200':
+          description: 下書きの ZIP（`package/`・`draft.json`・`icon.png`）
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/zip:
+              schema: { type: string, format: binary }
+        default: { $ref: '#/components/responses/Error' }
+    put:
+      tags: [channels]
+      operationId: putChannelDraft
+      summary: 下書きを保存する（3MB まで。初めては If-None-Match、次からは If-Match。DES-014 R-4）
+      parameters:
+        - name: If-Match
+          in: header
+          description: 前に受け取った `ETag`。2 回目からの保存で必須
+          schema: { type: string }
+        - name: If-None-Match
+          in: header
+          description: 初めての保存は `*`
+          schema: { type: string, enum: ['*'] }
+      requestBody:
+        required: true
+        content:
+          application/zip:
+            schema: { type: string, format: binary, maxLength: 3145728 }
+      responses:
+        '200':
+          description: 保存した下書きの要約
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Draft' }
+        default: { $ref: '#/components/responses/Error' }
+    delete:
+      tags: [channels]
+      operationId: deleteChannelDraft
+      summary: 下書きを消す
+      parameters: [{ $ref: '#/components/parameters/IfMatch' }]
+      responses:
+        '204': { description: 消した }
+        default: { $ref: '#/components/responses/Error' }
+
+  /api/channels/{channelId}/draft/check:
+    parameters: [{ $ref: '#/components/parameters/ChannelId' }]
+    post:
+      tags: [channels]
+      operationId: checkChannelDraft
+      summary: 保存した下書きを機械審査にかける（非同期。1 日 50 回。DES-014 R-16〜R-20）
+      parameters: [{ $ref: '#/components/parameters/IfMatch' }]
+      responses:
+        '202':
+          description: 始めた。結果は下書きの要約の `check`
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Draft' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /api/channels/{channelId}/submissions/{submissionId}/package:
+    parameters:
+      - { $ref: '#/components/parameters/ChannelId' }
+      - { $ref: '#/components/parameters/SubmissionId' }
+    get:
+      tags: [channels]
+      operationId: getOwnChannelSubmissionPackage
+      summary: 自分の申請のパッケージの取得先（署名付き URL、5 分。下書きの始め方。DES-014）
+      responses:
+        '200':
+          description: 取得先
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [packageUrl, iconUrl, expiresAt]
+                properties:
+                  packageUrl: { type: string, format: uri }
+                  iconUrl: { type: [string, 'null'], format: uri, description: アイコン（素材集にはない） }
+                  expiresAt: { type: string, format: date-time }
+        default: { $ref: '#/components/responses/Error' }
+
   /api/collections:
     get:
       tags: [collections]
@@ -469,6 +559,95 @@ paths:
       parameters: [{ $ref: '#/components/parameters/IfMatch' }]
       responses:
         '200': { $ref: '#/components/responses/CollectionSubmission' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /api/collections/{collectionId}/draft:
+    parameters: [{ $ref: '#/components/parameters/CollectionId' }]
+    get:
+      tags: [collections]
+      operationId: getCollectionDraft
+      summary: 素材集の下書き（持ち主だけ。DES-014 R-3・R-6）
+      responses:
+        '200':
+          description: 下書きの ZIP（`package/`・`draft.json`・`icon.png`）
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/zip:
+              schema: { type: string, format: binary }
+        default: { $ref: '#/components/responses/Error' }
+    put:
+      tags: [collections]
+      operationId: putCollectionDraft
+      summary: 下書きを保存する（3MB まで。初めては If-None-Match、次からは If-Match。DES-014 R-4）
+      parameters:
+        - name: If-Match
+          in: header
+          description: 前に受け取った `ETag`。2 回目からの保存で必須
+          schema: { type: string }
+        - name: If-None-Match
+          in: header
+          description: 初めての保存は `*`
+          schema: { type: string, enum: ['*'] }
+      requestBody:
+        required: true
+        content:
+          application/zip:
+            schema: { type: string, format: binary, maxLength: 3145728 }
+      responses:
+        '200':
+          description: 保存した下書きの要約
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Draft' }
+        default: { $ref: '#/components/responses/Error' }
+    delete:
+      tags: [collections]
+      operationId: deleteCollectionDraft
+      summary: 下書きを消す
+      parameters: [{ $ref: '#/components/parameters/IfMatch' }]
+      responses:
+        '204': { description: 消した }
+        default: { $ref: '#/components/responses/Error' }
+
+  /api/collections/{collectionId}/draft/check:
+    parameters: [{ $ref: '#/components/parameters/CollectionId' }]
+    post:
+      tags: [collections]
+      operationId: checkCollectionDraft
+      summary: 保存した下書きを機械審査にかける（非同期。1 日 50 回。DES-014 R-16〜R-20）
+      parameters: [{ $ref: '#/components/parameters/IfMatch' }]
+      responses:
+        '202':
+          description: 始めた。結果は下書きの要約の `check`
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Draft' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /api/collections/{collectionId}/submissions/{submissionId}/package:
+    parameters:
+      - { $ref: '#/components/parameters/CollectionId' }
+      - { $ref: '#/components/parameters/SubmissionId' }
+    get:
+      tags: [collections]
+      operationId: getOwnCollectionSubmissionPackage
+      summary: 自分の申請のパッケージの取得先（署名付き URL、5 分。下書きの始め方。DES-014）
+      responses:
+        '200':
+          description: 取得先
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [packageUrl, expiresAt]
+                properties:
+                  packageUrl: { type: string, format: uri }
+                  expiresAt: { type: string, format: date-time }
         default: { $ref: '#/components/responses/Error' }
 
   /api/admin/review-queue:
@@ -1554,6 +1733,27 @@ components:
       type: integer
       minimum: 1
 
+    Draft:
+      type: object
+      description: 下書きの要約（DES-014。持ち主だけに返す）
+      required: [rev, size, createdAt, updatedAt, expiresAt]
+      properties:
+        rev: { $ref: '#/components/schemas/Rev' }
+        size: { type: integer, description: 下書きの ZIP のバイト数 }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        expiresAt: { type: string, format: date-time, description: 最後の保存から 180 日（R-8） }
+        check:
+          type: [object, 'null']
+          description: 下書きの機械審査（R-18）
+          required: [state, rev, startedAt]
+          properties:
+            state: { type: string, enum: [running, done] }
+            rev: { $ref: '#/components/schemas/Rev' }
+            startedAt: { type: string, format: date-time }
+            checkedAt: { type: string, format: date-time }
+            validation: { $ref: '#/components/schemas/Validation' }
+
     Problem:
       type: object
       required: [type, title, status, code]
@@ -2009,6 +2209,11 @@ components:
               reason: { type: string }
               severity: { type: string, enum: [high, low] }
               revokedAt: { type: string, format: date-time }
+        draft:
+          description: 下書きの要約（持ち主だけ。ないときは null。DES-014）
+          oneOf:
+            - { $ref: '#/components/schemas/Draft' }
+            - { type: 'null' }
         rev: { $ref: '#/components/schemas/Rev' }
         createdAt: { type: string, format: date-time }
         updatedAt: { type: string, format: date-time }
@@ -2078,7 +2283,7 @@ components:
               detail: { type: string }
         warnings:
           type: array
-          description: 拒まないが知らせること（例 grants_narrowed）
+          description: 拒まないが知らせること（例 grants_narrowed。下書きの機械審査でアイコンがないときの icon_missing）
           items:
             type: object
             required: [code, detail]
@@ -2202,6 +2407,11 @@ components:
               reason: { type: string }
               severity: { type: string, enum: [high, low] }
               revokedAt: { type: string, format: date-time }
+        draft:
+          description: 下書きの要約（持ち主だけ。ないときは null。DES-014）
+          oneOf:
+            - { $ref: '#/components/schemas/Draft' }
+            - { type: 'null' }
         rev: { $ref: '#/components/schemas/Rev' }
         createdAt: { type: string, format: date-time }
         updatedAt: { type: string, format: date-time }

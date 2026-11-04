@@ -92,6 +92,16 @@ DES-011 による。
 | C-25 | 機械審査（DES-011 N-8） | 見本は `activities` の代表のアプリのプロンプト・パックで作る（`walk` は SanpoGuide、`cycle` は CycleGuide、両方なら両方）。代表のアプリがない過ごし方だけのチャンネルは、`sample-prompts` の応答の `scenarios` が空で `noRepresentativeApp`（チャンネルの `activities`）が付く |
 | C-27 | 設定（C-21 の改訂。DM-001 M-27） | CDK の環境ごとの設定に、アプリの ID ごとの `appStageVersions` を置く。変えるときは PR を通して配備する。運営の画面からは変えない |
 
+### 下書きの決定
+
+[DES-014](../design/DES-014-package-editor.md) による。
+
+| No. | 論点 | 決定 |
+|---|---|---|
+| C-28 | 下書き（DES-014 R-3〜R-8） | チャンネル・素材集ごとに 1 つ。本文は ZIP（`application/zip`、3MB まで）のまま送り、受け取る。サーバーは中身を開かない。初めての保存は `If-None-Match: *`、次からは `If-Match`。持ち主だけが読み書きでき、運営も見ない（C-12 の例外）。停止中は保存できず（`publisher_not_active`）、取り下げのあとも保存できない（`invalid_state`）。読み込みと削除はできる |
+| C-29 | 下書きの機械審査（DES-014 R-16〜R-20） | `POST …/draft/check` は 202 で返し、結果は下書きの要約の `check` に入る。申請と同じ判定で、署名だけは確かめない。申請の 1 日の数を使わず、1 アカウント 1 日 50 回（`quota_exceeded`）。`running` の間の 2 つ目は `invalid_state`（15 分を過ぎれば始め直せる） |
+| C-30 | 自分の申請のパッケージ（DES-014） | `GET /api/channels/{channelId}/submissions/{submissionId}/package`（素材集も同じ形）で、持ち主に署名付き URL（5 分）を返す。受付用の S3 から消えた申請は、承認された版なら公開用のバケットのもの、そうでなければ `not_found` |
+
 ### 全体の流れ
 
 ```mermaid
@@ -153,6 +163,9 @@ sequenceDiagram
 | POST | `/api/channels/{channelId}/submissions/{submissionId}/withdraw` | P | 申請を取り消す（If-Match） | — |
 | POST | `/api/channels/{channelId}/submissions/{submissionId}/test-tickets` | P | 試用チケットを発行 | AP-16・17 |
 | GET | `/api/channels/{channelId}/submissions/{submissionId}/test-tickets` | P | 試用チケットの一覧 | AP-16 |
+| GET | `/api/channels/{channelId}/submissions/{submissionId}/package` | P | 自分の申請のパッケージ・アイコンの取得先（署名付き URL、5 分）。C-30 | AP-07 |
+| GET・PUT・DELETE | `/api/channels/{channelId}/draft` | P（持ち主だけ） | 下書きの読み込み・保存・削除。C-28 | AP-30 |
+| POST | `/api/channels/{channelId}/draft/check` | P（持ち主だけ） | 下書きの機械審査（If-Match）。C-29 | AP-30・17 |
 
 ### 素材提供者
 
@@ -169,6 +182,9 @@ sequenceDiagram
 | GET | `/api/collections/{collectionId}/submissions` | R・O | 申請の一覧（新しい順） | AP-25 |
 | GET | `/api/collections/{collectionId}/submissions/{submissionId}` | R・O | 申請（機械審査の結果、判定と理由） | AP-25 |
 | POST | `/api/collections/{collectionId}/submissions/{submissionId}/withdraw` | R | 申請を取り消す（If-Match） | — |
+| GET | `/api/collections/{collectionId}/submissions/{submissionId}/package` | R | 自分の申請のパッケージの取得先。C-30 | AP-25 |
+| GET・PUT・DELETE | `/api/collections/{collectionId}/draft` | R（持ち主だけ） | 素材集の下書き。C-28 | AP-31 |
+| POST | `/api/collections/{collectionId}/draft/check` | R（持ち主だけ） | 素材集の下書きの機械審査。C-29 | AP-31・17 |
 
 ### 運営
 
@@ -409,6 +425,7 @@ AI の出力だけを保存する（C-13）。応答の `samplesId` を判定の
 | 他のチャンネル提供者のもの | 見えない（`404`。存在を明かさない） | 見える |
 | 身元の確認の記録の中身 | 見えない（「確認済みか」だけ） | 見える |
 | 素材集を使っているチャンネル | 自分の素材集のぶん（リストに載っている内容だけ） | すべて |
+| 下書き（C-28） | 自分のものだけ | 見えない |
 
 ## 確認観点
 
@@ -433,6 +450,8 @@ AI の出力だけを保存する（C-13）。応答の `samplesId` を判定の
 | CV-18 | チャンネルの機械審査: 宣言した素材集が載っていない・利用許諾がない・素材がないとき、`collections` に理由が出て不合格になる |
 | CV-19 | 素材集の承認・取り下げで、使っているチャンネル提供者にメールが 1 通ずつ届き、素材提供者にも判定が届く |
 | CV-20 | 退会で、公開中の素材集も取り下げられ、素材集 ID が再利用できない |
+| CV-21 | 下書き: 持ち主だけが読み書きでき、運営と他のアカウントには 404。古い `If-Match` は 412、3MB を超えると 413。停止中・取り下げのあとは保存できない |
+| CV-22 | 下書きの機械審査: 申請の 1 日の数を使わず 1 日 50 回で止まり、同じ中身の申請と同じ結果（署名を除く）になる |
 | CV-13 | 承認・差し戻し・却下・取り下げ・移し替えの承認・認めないのそれぞれで、チャンネル提供者の確認済みのメールアドレスに 1 通だけ届く。SES が失敗しても操作は成功し、再送のあと失敗が操作の記録に残る。本文に見本・運営の `sub`・トークンが含まれない |
 
 ## 互換性方針・移行メモ
@@ -442,7 +461,7 @@ AI の出力だけを保存する（C-13）。応答の `samplesId` を判定の
 
 ## 制約
 
-- API Gateway の HTTP API の本文は 10MB まで、Lambda の応答は 6MB まで。パッケージは本文で送らず S3 に直接上げる
+- API Gateway の HTTP API の本文は 10MB まで、Lambda の応答は 6MB まで。パッケージは本文で送らず S3 に直接上げる。下書き（3MB まで）だけは本文で送り、受け取る（C-28）
 - HTTP API には AWS WAF を直接付けられない。流量の制限は API Gateway のルートごとの制限と、Cognito に付けた WAF（ARCH-001 A-18）で行う
 
 ## 未決事項・リスク
