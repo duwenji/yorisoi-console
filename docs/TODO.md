@@ -16,9 +16,8 @@
 
 [DES-014](design/DES-014-package-editor.md)。下書きの API・下書きの機械審査・画面・利用ガイドは実装済み。
 
-- [ ] 開発用に配備する（`DraftReview` の Lambda、受付用・公開用のバケットの CORS、CSP）
 - [ ] ブラウザで通しで確かめる（空から作る → 保存 → 機械審査 → 申請、過去の申請から始める、手元の ZIP から始める、素材集の題材を地図で選ぶ）
-- [ ] CloudFront を通して、下書きの保存の `If-None-Match`・`If-Match` と ZIP の本文がそのまま届くか確かめる
+- [ ] CloudFront を通して、下書きの保存の `If-None-Match`・`If-Match` と ZIP の本文がそのまま届くか確かめる（Lambda を直接呼ぶ確認は `tools/e2e/drafts.ts` で済み）
 
 ## 確かめること
 
