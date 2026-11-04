@@ -10,7 +10,7 @@
 |---|---|
 | AWS 構成とコンポーネントの関係、構成の決まり | [構成図と決まり（ARCH-001）](design/architecture.md) |
 | CDK にある AWS 資源とつながり（生成した図） | [AWS 資源の図](design/aws-diagrams.md) |
-| 機能ごとの設計 | [console DES-001〜DES-011・DES-013](design/) |
+| 機能ごとの設計 | [console DES-001〜DES-011・DES-013・DES-014](design/) |
 | 管理画面が使う API | [console API-001](contracts/console-api.md) と [OpenAPI 定義](contracts/api/console.openapi.yaml) |
 | DynamoDB の項目・キー・状態 | [console DM-001](design/data-model.md) |
 | 残作業と確認事項 | [console TODO](TODO.md) |
