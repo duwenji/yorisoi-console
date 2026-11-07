@@ -10,7 +10,7 @@ const TILE = 256;
 const TILES = 'https://cyberjapandata.gsi.go.jp/xyz/std';
 /** Tokyo Station, until a point is chosen. */
 const START = { lat: 35.6812, lng: 139.7671 };
-/** Close enough to see a 20m radius, for typed coordinates. */
+/** Close enough to see a 20m radius, when the map opens on a chosen point. */
 const POINT_ZOOM = 17;
 
 /** Metres per pixel at [lat] and [zoom] (Web Mercator). */
@@ -30,12 +30,9 @@ export function PointMap({ lat, lon, radiusM, onChange }: { lat?: number | undef
     if (Number.isFinite(lat) && Number.isFinite(lon)) setPlace(`${String(lat)}, ${String(lon)}`);
   }, [lat, lon]);
 
-  /** Puts the point at [p]. Typed coordinates also bring the map there, close enough to see the radius; a click leaves the map as it is. */
+  /** Puts the point at [p]. Typed coordinates also bring the map there; the zoom stays as it is. */
   const choose = (p: { lat: number; lng: number }, typed: boolean) => {
-    if (typed) {
-      setCenter(p);
-      setZoom((z) => Math.max(z, POINT_ZOOM));
-    }
+    if (typed) setCenter(p);
     onChange(round6(p.lat), round6(p.lng));
   };
 
