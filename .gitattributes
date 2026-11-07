@@ -1,5 +1,6 @@
 # Keep LF everywhere: signed documents and test fixtures are compared byte for byte.
 * text=auto eol=lf
 *.png binary
+*.jpg binary
 *.zip binary
 *.bat text eol=crlf

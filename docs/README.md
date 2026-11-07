@@ -24,6 +24,7 @@
 | 運営 | [運営ガイド](manual/operator.md) |
 | チャンネル提供者 | [チャンネル提供者ガイド](manual/publisher.md) |
 | 素材提供者 | [素材提供者ガイド](manual/producer.md) |
+| 画面でチャンネル・素材集を作る（画像つき） | [画面でチャンネルを作る](manual/editor-guide.md) |
 | 素材提供者（スタジオ） | [スタジオのガイド](manual/studio.md) |
 | 開発・保守 | [開発・保守ガイド](manual/maintainer.md) |
 
