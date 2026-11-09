@@ -18,8 +18,8 @@ songs:
       lyricist: { name: 高野辰之, died: 1947 }
       composer: { name: 岡野貞一, died: 1941 }
       score: 尋常小学唱歌 第三学年用（1912）
-      checkedAt: null
-      checkedBy: null
+      checkedAt: "2026-11-10"
+      checkedBy: duwenji
 
   - id: haru-no-ogawa
     title: 春の小川
@@ -31,8 +31,8 @@ songs:
       lyricist: { name: 高野辰之, died: 1947 }
       composer: { name: 岡野貞一, died: 1941 }
       score: 尋常小学唱歌 第四学年用（1912）
-      checkedAt: null
-      checkedBy: null
+      checkedAt: "2026-11-10"
+      checkedBy: duwenji
 
   - id: hana
     title: 花
@@ -44,8 +44,8 @@ songs:
       lyricist: { name: 武島羽衣, died: 1967 }
       composer: { name: 滝廉太郎, died: 1903 }
       score: 組歌「四季」（1900）
-      checkedAt: null
-      checkedBy: null
+      checkedAt: "2026-11-10"
+      checkedBy: duwenji
 
   - id: natsu-wa-kinu
     title: 夏は来ぬ
@@ -57,8 +57,8 @@ songs:
       lyricist: { name: 佐佐木信綱, died: 1963 }
       composer: { name: 小山作之助, died: 1927 }
       score: 新編教育唱歌集 第五集（1896）
-      checkedAt: null
-      checkedBy: null
+      checkedAt: "2026-11-10"
+      checkedBy: duwenji
 
   - id: chatsumi
     title: 茶摘
@@ -69,8 +69,8 @@ songs:
       lyricist: { name: 不詳（文部省唱歌）, died: null }
       composer: { name: 不詳（文部省唱歌）, died: null }
       score: 尋常小学唱歌 第三学年用（1912）
-      checkedAt: null
-      checkedBy: null
+      checkedAt: "2026-11-10"
+      checkedBy: duwenji
 
   - id: ware-wa-umi-no-ko
     title: 我は海の子
@@ -82,8 +82,8 @@ songs:
       composer: { name: 不詳（文部省唱歌）, died: null }
       score: 尋常小学読本唱歌（1910）
       notesFrom: { title: 新訂尋常小学唱歌 第六学年用（1932）p.22, url: "https://doi.org/10.15027/da4099", license: Public Domain }
-      checkedAt: null
-      checkedBy: null
+      checkedAt: "2026-11-10"
+      checkedBy: duwenji
 
   - id: momiji
     title: 紅葉
@@ -95,8 +95,8 @@ songs:
       lyricist: { name: 高野辰之, died: 1947 }
       composer: { name: 岡野貞一, died: 1941 }
       score: 尋常小学唱歌 第二学年用（1911）
-      checkedAt: null
-      checkedBy: null
+      checkedAt: "2026-11-10"
+      checkedBy: duwenji
 
   - id: akatombo
     title: 赤とんぼ
@@ -107,8 +107,8 @@ songs:
       lyricist: { name: 三木露風, died: 1964 }
       composer: { name: 山田耕筰, died: 1965 }
       score: 山田耕筰童謡百曲集（1927）
-      checkedAt: null
-      checkedBy: null
+      checkedAt: "2026-11-10"
+      checkedBy: duwenji
 
   - id: mushi-no-koe
     title: 虫のこえ
@@ -119,8 +119,8 @@ songs:
       lyricist: { name: 不詳（文部省唱歌）, died: null }
       composer: { name: 不詳（文部省唱歌）, died: null }
       score: 尋常小学読本唱歌（1910）
-      checkedAt: null
-      checkedBy: null
+      checkedAt: "2026-11-10"
+      checkedBy: duwenji
 
   - id: usagi
     title: うさぎ
@@ -131,8 +131,8 @@ songs:
       lyricist: { name: 不詳（わらべうた）, died: null }
       composer: { name: 不詳（わらべうた）, died: null }
       score: 小学唱歌 二（1892）
-      checkedAt: null
-      checkedBy: null
+      checkedAt: "2026-11-10"
+      checkedBy: duwenji
 
   - id: yuki
     title: 雪
@@ -143,8 +143,8 @@ songs:
       lyricist: { name: 不詳（文部省唱歌）, died: null }
       composer: { name: 不詳（文部省唱歌）, died: null }
       score: 尋常小学唱歌 第二学年用（1911）
-      checkedAt: null
-      checkedBy: null
+      checkedAt: "2026-11-10"
+      checkedBy: duwenji
 
   - id: fuyugeshiki
     title: 冬景色
@@ -156,8 +156,8 @@ songs:
       composer: { name: 不詳（文部省唱歌）, died: null }
       score: 尋常小学唱歌 第五学年用（1913）
       notesFrom: { title: 尋常小学唱歌 第五学年用（1913）p.39, url: "https://doi.org/10.15027/da4100", license: Public Domain }
-      checkedAt: null
-      checkedBy: null
+      checkedAt: "2026-11-10"
+      checkedBy: duwenji
 
   - id: fuyu-no-yoru
     title: 冬の夜
@@ -169,8 +169,8 @@ songs:
       composer: { name: 不詳（文部省唱歌）, died: null }
       score: 尋常小学唱歌 第三学年用（1912）
       notesFrom: { title: 新訂尋常小学唱歌 第三学年用（1932）p.50, url: "https://doi.org/10.15027/da4075", license: Public Domain }
-      checkedAt: null
-      checkedBy: null
+      checkedAt: "2026-11-10"
+      checkedBy: duwenji
 
   - id: furusato
     title: 故郷
@@ -181,8 +181,8 @@ songs:
       lyricist: { name: 高野辰之, died: 1947 }
       composer: { name: 岡野貞一, died: 1941 }
       score: 尋常小学唱歌 第六学年用（1914）
-      checkedAt: null
-      checkedBy: null
+      checkedAt: "2026-11-10"
+      checkedBy: duwenji
 
   - id: nanatsu-no-ko
     title: 七つの子
@@ -194,5 +194,5 @@ songs:
       lyricist: { name: 野口雨情, died: 1945 }
       composer: { name: 本居長世, died: 1945 }
       score: 「金の船」1921年7月号
-      checkedAt: null
-      checkedBy: null
+      checkedAt: "2026-11-10"
+      checkedBy: duwenji
