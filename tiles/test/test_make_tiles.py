@@ -111,3 +111,21 @@ def test_tiles_match_the_schema(made):
     for f in (site / "v1").rglob("*.json"):
         errors = [e.message for e in validator.iter_errors(json.loads(f.read_text(encoding="utf-8")))]
         assert errors == [], f
+
+
+def test_stations_bridges_slopes_libraries_and_theatres_are_spots():
+    spot = ("spot", None)
+    assert make_tiles.classify({"name": "鎌倉", "railway": "station"}) == spot
+    assert make_tiles.classify({"name": "日本橋", "man_made": "bridge"}) == spot
+    assert make_tiles.classify({"name": "日本橋", "highway": "primary", "bridge": "yes"}, "way") == spot
+    assert make_tiles.classify({"name": "九段坂", "highway": "secondary"}, "way") == spot
+    assert make_tiles.classify({"name": "中央図書館", "amenity": "library"}) == spot
+    assert make_tiles.classify({"name": "歌舞伎座", "amenity": "theatre"}) == spot
+    # Only road ways whose names end so; not a building, a bus stop or a street named after one.
+    assert make_tiles.classify({"name": "坂本ビル", "building": "yes"}, "way") is None
+    assert make_tiles.classify({"name": "九段坂", "highway": "bus_stop"}) is None
+    assert make_tiles.classify({"name": "板橋通り", "highway": "primary", "bridge": "yes"}, "way") is None
+    assert make_tiles.classify({"name": "日本橋", "highway": "primary"}, "way") is None
+    assert make_tiles.classify({"name": "日本橋", "highway": "primary", "bridge": "no"}, "way") is None
+    # Markets stay a shop kind.
+    assert make_tiles.classify({"name": "朝市", "amenity": "marketplace"}) == ("shop", "market")

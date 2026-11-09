@@ -78,7 +78,12 @@ FACILITIES: list[tuple[str, object, object]] = [
 ]
 
 
-def classify(t: dict) -> tuple[str, str | None] | None:
+def _road_named(t: dict, osm_type: str, ending: str) -> bool:
+    """A road way whose name ends so: a slope or a bridge (kit-geo searches `way` only, by `name`)."""
+    return osm_type == "way" and "highway" in t and t.get("name", "").endswith(ending)
+
+
+def classify(t: dict, osm_type: str = "node") -> tuple[str, str | None] | None:
     """('facility', kind), ('spot', None) or ('shop', kind); None when the element goes in no tile."""
     for kind, matches, searched in FACILITIES:
         if matches(t):
@@ -92,6 +97,12 @@ def classify(t: dict) -> tuple[str, str | None] | None:
         or t.get("amenity") == "place_of_worship"
         or t.get("leisure") in SPOT_LEISURE
         or t.get("natural") in SPOT_NATURAL
+        # REQ-NEARBY-TALK F-4: stations, bridges, slopes, libraries and theatres.
+        or t.get("railway") == "station"
+        or t.get("man_made") == "bridge"
+        or (_road_named(t, osm_type, "橋") and t.get("bridge", "no") != "no")
+        or _road_named(t, osm_type, "坂")
+        or t.get("amenity") in ("library", "theatre")
     ):
         return ("spot", None)
     if "brand" in t or "brand:wikidata" in t:
@@ -220,7 +231,7 @@ def read(pbf: Path) -> tuple[list[Wanted], list[tuple[float, float]]]:
     member_nodes: dict[int, tuple[float, float]] = {}
     for r in osmium.FileProcessor(str(pbf), osmium.osm.RELATION):
         t = tags_of(r)
-        what = classify(t)
+        what = classify(t, "relation")
         if what is None:
             continue
         w = Wanted("relation", r.id, t, what)
@@ -260,7 +271,7 @@ def read(pbf: Path) -> tuple[list[Wanted], list[tuple[float, float]]]:
             if o.id in member_ways:
                 member_ways[o.id] = coords
             t = tags_of(o)
-            what = classify(t)
+            what = classify(t, "way")
             if what is not None:
                 w = Wanted("way", o.id, t, what, *center(coords))
                 w.lines = [coords]

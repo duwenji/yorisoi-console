@@ -14,14 +14,20 @@ curl -fsSL --retry 3 -A "$ua" -o japan.poly https://download.geofabrik.de/asia/j
 timestamp=$(osmium fileinfo -g header.option.osmosis_replication_timestamp japan.osm.pbf)
 
 # What the apps search (API-SPOT-TILES「抜き出しの条件」); make_tiles.py applies the rest (names,
-# access, chains). The members of relations are kept for their outlines.
+# access, chains). The members of relations are kept for their outlines. osmium can't match a
+# name's ending, so the ways whose names have 坂 or 橋 in them are kept, and make_tiles.py keeps
+# the roads whose names end so.
 echo '{"event":"filter"}'
 osmium tags-filter japan.osm.pbf \
   nwr/historic \
   nwr/tourism=attraction,museum,viewpoint,artwork,gallery \
   nwr/leisure=park,garden \
   nwr/natural=tree,peak,spring,water,beach \
-  nwr/amenity=place_of_worship,toilets,drinking_water,vending_machine,shelter,bench,bicycle_parking,bicycle_repair_station,compressed_air,restaurant,cafe,ice_cream,marketplace \
+  nwr/railway=station \
+  nwr/man_made=bridge \
+  w/name=*坂 \
+  w/name=*橋 \
+  nwr/amenity=place_of_worship,library,theatre,toilets,drinking_water,vending_machine,shelter,bench,bicycle_parking,bicycle_repair_station,compressed_air,restaurant,cafe,ice_cream,marketplace \
   nwr/shop=convenience,bicycle,confectionery,pastry,bakery,chocolate,deli,tea,coffee,alcohol,wine,seafood,butcher,greengrocer,cheese,spices,tofu,rice,craft,gift,antiques,art,books,second_hand,stationery,fabric,clothes,shoes,bag,jewelry,leather,musical_instrument,music,toys,florist,kitchen,interior_decoration \
   n/highway=traffic_signals \
   --overwrite -o filtered.osm.pbf

@@ -93,7 +93,7 @@ export function blankChannel(id: string, publisher: string, version: number): Dr
     kind: 'channel',
     manifest: {
       format: 1, id, version, publisher, name: '', summary: '', lang: 'ja', activities: ['walk'], genres: [], greeting: '',
-      talk: { level: 'normal', events: { spot: true, revisit: true, milestone: true, rest: true, start: true, finish: true } },
+      talk: { level: 'normal', events: { spot: true, revisit: true, milestone: true, rest: true, start: true, finish: true, preview: true, chat: true, song: true } },
       spots: { prefer: [], skip: [] }, guide: { length: 'normal' }, mood: { tone: true, sound: 'auto' },
     },
     files: {},

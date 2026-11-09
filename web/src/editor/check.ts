@@ -292,7 +292,10 @@ function channel(out: Problem[], d: Draft) {
   textLength(out, '基本: あいさつ', m.greeting, 1, 60);
   oneOf(out, '話し方: 話す頻度', getIn(m, ['talk', 'level']), V.talkLevels);
   for (const e of V.talkEvents) {
-    if (typeof getIn(m, ['talk', 'events', e]) !== 'boolean') out.push({ where: `話し方: 出来事 ${e}`, message: '話すかどうかを選んでください' });
+    const on = getIn(m, ['talk', 'events', e]);
+    // preview・chat・song may be left out: they are on then (platform REQ-NEARBY-TALK F-29).
+    if (on === undefined && V.talkEventsOptional.includes(e)) continue;
+    if (typeof on !== 'boolean') out.push({ where: `話し方: 出来事 ${e}`, message: '話すかどうかを選んでください' });
   }
   const kinds = Object.keys(V.spotKinds);
   list(out, '話し方: 優先するスポット', getIn(m, ['spots', 'prefer']), kinds, 0, 8);

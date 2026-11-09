@@ -36,6 +36,7 @@ class VocabularyTest {
         assertEquals(Feature.entries.map { it.json }, list("features"))
         assertEquals(TalkLevel.entries.map { it.json }, list("talkLevels"))
         assertEquals(TalkEventKind.entries.map { it.json }, list("talkEvents"))
+        assertEquals(TalkEventKind.entries.filter { !it.required }.map { it.json }, list("talkEventsOptional"))
         assertEquals(GuideLength.entries.map { it.json }, list("guideLengths"))
         assertEquals(SoundChoice.entries.map { it.json }, list("sounds"))
         assertEquals(CueEvent.entries.map { it.json }, list("cueEvents"))
