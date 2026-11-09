@@ -18,7 +18,7 @@ kotlin {
 
 dependencies {
     implementation("io.github.duwenji.yorisoi:core-format:2.30.1")
-    implementation("io.github.duwenji.yorisoi.sanpoguide:prompts:4.6.0")
+    implementation("io.github.duwenji.yorisoi.sanpoguide:prompts:4.6.1")
     implementation("io.github.duwenji.yorisoi.cycleguide:prompts:0.4.0")
     // core-format leaves org.json to its users (Android ships one).
     implementation("org.json:json:20240303")
