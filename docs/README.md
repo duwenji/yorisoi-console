@@ -43,6 +43,7 @@
 | ルート鍵・署名鍵の管理 | [鍵の手順書](operations/keys.md) |
 | 運営の AI（中継）の配備・上限・予算 | [運営の AI の手順](operations/ai-relay.md) |
 | スポットのタイルの配備・作り直し | [スポットのタイルの手順](operations/spot-tiles.md) |
+| 季節の歌を作る・確かめる・上げる | [季節の歌の手順](operations/songs.md) |
 | スタジオの配備・利用規約の版・止め方 | [スタジオの手順](operations/studio.md) |
 
 ## エコシステム共通の正本
