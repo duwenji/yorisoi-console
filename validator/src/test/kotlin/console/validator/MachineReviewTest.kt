@@ -80,7 +80,7 @@ class MachineReviewTest {
         assertEquals(MachineReview.VALIDATOR, samples.getString("generatedBy"))
         // The review policy's scenes (2.7), as the app would render them; this channel doesn't talk on rest.
         val ids = (0 until samples.getJSONArray("scenarios").length()).map { samples.getJSONArray("scenarios").getJSONObject(it).getString("id") }
-        assertEquals(9, ids.size)
+        assertEquals(10, ids.size)
         assertTrue("rest" !in ids)
         assertTrue(samples.getJSONArray("scenarios").getJSONObject(0).getString("system").contains("守ること"))
     }
