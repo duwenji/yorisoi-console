@@ -1,0 +1,198 @@
+# The season's songs (platform API-SONGS). make_songs.py reads this with songs/scores/{id}.ly.
+#
+# rights: the lyricist and the composer with the year each died (null when not known: a 文部省唱歌),
+# the first songbook, where the notes were taken from, and who checked it all and when (D-14).
+# tempo (quarter notes a minute), when given, replaces the score's own: some have none.
+# A song is made only when checkedAt and checkedBy are filled in: fill them in after listening to it
+# against the first songbook and confirming the people and the years.
+
+credit: "演奏: yorisoi 運営（CC BY-SA 4.0）。楽譜: Wikipedia 日本語版（CC BY-SA 4.0）・広島大学図書館（パブリックドメイン）。曲はパブリックドメインです。"
+
+songs:
+  - id: haru-ga-kita
+    title: 春が来た
+    seasons: [spring]
+    timesOfDay: [morning, day]
+    weather: [clear]
+    rights:
+      lyricist: { name: 高野辰之, died: 1947 }
+      composer: { name: 岡野貞一, died: 1941 }
+      score: 尋常小学唱歌 第三学年用（1912）
+      checkedAt: null
+      checkedBy: null
+
+  - id: haru-no-ogawa
+    title: 春の小川
+    seasons: [spring]
+    timesOfDay: [morning, day]
+    weather: []
+    tempo: 104
+    rights:
+      lyricist: { name: 高野辰之, died: 1947 }
+      composer: { name: 岡野貞一, died: 1941 }
+      score: 尋常小学唱歌 第四学年用（1912）
+      checkedAt: null
+      checkedBy: null
+
+  - id: hana
+    title: 花
+    seasons: [spring]
+    timesOfDay: [day]
+    weather: [clear]
+    tempo: 100
+    rights:
+      lyricist: { name: 武島羽衣, died: 1967 }
+      composer: { name: 滝廉太郎, died: 1903 }
+      score: 組歌「四季」（1900）
+      checkedAt: null
+      checkedBy: null
+
+  - id: natsu-wa-kinu
+    title: 夏は来ぬ
+    seasons: [summer]
+    timesOfDay: [morning, day]
+    weather: []
+    tempo: 96
+    rights:
+      lyricist: { name: 佐佐木信綱, died: 1963 }
+      composer: { name: 小山作之助, died: 1927 }
+      score: 新編教育唱歌集 第五集（1896）
+      checkedAt: null
+      checkedBy: null
+
+  - id: chatsumi
+    title: 茶摘
+    seasons: [summer]
+    timesOfDay: [day]
+    weather: [clear]
+    rights:
+      lyricist: { name: 不詳（文部省唱歌）, died: null }
+      composer: { name: 不詳（文部省唱歌）, died: null }
+      score: 尋常小学唱歌 第三学年用（1912）
+      checkedAt: null
+      checkedBy: null
+
+  - id: ware-wa-umi-no-ko
+    title: 我は海の子
+    seasons: [summer]
+    timesOfDay: [day]
+    weather: [clear]
+    rights:
+      lyricist: { name: 宮原晃一郎, died: 1945 }
+      composer: { name: 不詳（文部省唱歌）, died: null }
+      score: 尋常小学読本唱歌（1910）
+      notesFrom: { title: 新訂尋常小学唱歌 第六学年用（1932）p.22, url: "https://doi.org/10.15027/da4099", license: Public Domain }
+      checkedAt: null
+      checkedBy: null
+
+  - id: momiji
+    title: 紅葉
+    seasons: [autumn]
+    timesOfDay: [day, evening]
+    weather: []
+    tempo: 104
+    rights:
+      lyricist: { name: 高野辰之, died: 1947 }
+      composer: { name: 岡野貞一, died: 1941 }
+      score: 尋常小学唱歌 第二学年用（1911）
+      checkedAt: null
+      checkedBy: null
+
+  - id: akatombo
+    title: 赤とんぼ
+    seasons: [autumn]
+    timesOfDay: [evening]
+    weather: [clear]
+    rights:
+      lyricist: { name: 三木露風, died: 1964 }
+      composer: { name: 山田耕筰, died: 1965 }
+      score: 山田耕筰童謡百曲集（1927）
+      checkedAt: null
+      checkedBy: null
+
+  - id: mushi-no-koe
+    title: 虫のこえ
+    seasons: [autumn]
+    timesOfDay: [evening, night]
+    weather: []
+    rights:
+      lyricist: { name: 不詳（文部省唱歌）, died: null }
+      composer: { name: 不詳（文部省唱歌）, died: null }
+      score: 尋常小学読本唱歌（1910）
+      checkedAt: null
+      checkedBy: null
+
+  - id: usagi
+    title: うさぎ
+    seasons: [autumn]
+    timesOfDay: [evening, night]
+    weather: [clear]
+    rights:
+      lyricist: { name: 不詳（わらべうた）, died: null }
+      composer: { name: 不詳（わらべうた）, died: null }
+      score: 小学唱歌 二（1892）
+      checkedAt: null
+      checkedBy: null
+
+  - id: yuki
+    title: 雪
+    seasons: [winter]
+    timesOfDay: []
+    weather: [snow, cloudy]
+    rights:
+      lyricist: { name: 不詳（文部省唱歌）, died: null }
+      composer: { name: 不詳（文部省唱歌）, died: null }
+      score: 尋常小学唱歌 第二学年用（1911）
+      checkedAt: null
+      checkedBy: null
+
+  - id: fuyugeshiki
+    title: 冬景色
+    seasons: [winter]
+    timesOfDay: [morning, day]
+    weather: []
+    rights:
+      lyricist: { name: 不詳（文部省唱歌）, died: null }
+      composer: { name: 不詳（文部省唱歌）, died: null }
+      score: 尋常小学唱歌 第五学年用（1913）
+      notesFrom: { title: 尋常小学唱歌 第五学年用（1913）p.39, url: "https://doi.org/10.15027/da4100", license: Public Domain }
+      checkedAt: null
+      checkedBy: null
+
+  - id: fuyu-no-yoru
+    title: 冬の夜
+    seasons: [winter]
+    timesOfDay: [evening, night]
+    weather: []
+    rights:
+      lyricist: { name: 不詳（文部省唱歌）, died: null }
+      composer: { name: 不詳（文部省唱歌）, died: null }
+      score: 尋常小学唱歌 第三学年用（1912）
+      notesFrom: { title: 新訂尋常小学唱歌 第三学年用（1932）p.50, url: "https://doi.org/10.15027/da4075", license: Public Domain }
+      checkedAt: null
+      checkedBy: null
+
+  - id: furusato
+    title: 故郷
+    seasons: [all]
+    timesOfDay: [evening]
+    weather: []
+    rights:
+      lyricist: { name: 高野辰之, died: 1947 }
+      composer: { name: 岡野貞一, died: 1941 }
+      score: 尋常小学唱歌 第六学年用（1914）
+      checkedAt: null
+      checkedBy: null
+
+  - id: nanatsu-no-ko
+    title: 七つの子
+    seasons: [all]
+    timesOfDay: [evening]
+    weather: []
+    tempo: 76
+    rights:
+      lyricist: { name: 野口雨情, died: 1945 }
+      composer: { name: 本居長世, died: 1945 }
+      score: 「金の船」1921年7月号
+      checkedAt: null
+      checkedBy: null
