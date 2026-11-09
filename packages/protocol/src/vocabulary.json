@@ -9,11 +9,12 @@
   "spotKinds": {
     "shrine": "神社", "temple": "寺院", "church": "教会", "worship": "礼拝所", "historic": "史跡", "museum": "博物館", "gallery": "ギャラリー",
     "viewpoint": "展望スポット", "artwork": "アート", "attraction": "名所", "park": "公園", "garden": "庭園", "beach": "海辺", "water": "水辺",
-    "nature": "自然", "restaurant": "飲食店", "cafe": "カフェ", "sweets": "菓子・パン", "food_shop": "食品店", "market": "市場", "crafts": "工芸・土産",
+    "nature": "自然", "station": "駅", "bridge": "橋", "slope": "坂", "library": "図書館", "theatre": "劇場", "restaurant": "飲食店", "cafe": "カフェ", "sweets": "菓子・パン", "food_shop": "食品店", "market": "市場", "crafts": "工芸・土産",
     "shop": "専門店"
   },
   "talkLevels": ["quiet", "normal", "chatty"],
-  "talkEvents": ["spot", "revisit", "milestone", "rest", "start", "finish"],
+  "talkEvents": ["spot", "revisit", "milestone", "rest", "start", "finish", "preview", "chat", "song"],
+  "talkEventsOptional": ["preview", "chat", "song"],
   "guideLengths": ["short", "normal", "long"],
   "sounds": ["auto", "rain", "waves", "wind", "birds", "insects", "temple"],
   "slots": {

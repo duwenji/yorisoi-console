@@ -20,6 +20,11 @@ export declare const VOCABULARY: {
         beach: string;
         water: string;
         nature: string;
+        station: string;
+        bridge: string;
+        slope: string;
+        library: string;
+        theatre: string;
         restaurant: string;
         cafe: string;
         sweets: string;
@@ -30,6 +35,7 @@ export declare const VOCABULARY: {
     };
     talkLevels: string[];
     talkEvents: string[];
+    talkEventsOptional: string[];
     guideLengths: string[];
     sounds: string[];
     slots: {

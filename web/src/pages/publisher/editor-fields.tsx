@@ -77,7 +77,16 @@ const FEATURE: Record<string, string> = {
   'present:play': '録音の再生', 'present:ambient': '背景音として流す', 'present:fullscreen': '全画面',
 };
 const TALK_LEVEL: Record<string, string> = { quiet: '控えめ', normal: 'ふつう', chatty: 'おしゃべり' };
-const TALK_EVENT: Record<string, string> = { spot: '初めてのスポットの解説', revisit: '再訪の一言', milestone: '距離・時間の区切り', rest: '休憩', start: '開始のあいさつ', finish: '終了の振り返り' };
+const TALK_EVENT: Record<string, string> = {
+  spot: '初めてのスポットの解説', revisit: '再訪の一言', milestone: '距離・時間の区切り', rest: '休憩', start: '開始のあいさつ', finish: '終了の振り返り',
+  preview: '少し先の見どころの予告', chat: '話すことがないときの雑談', song: '季節の歌（雑談の話題の 1 つ）',
+};
+
+/** An event left out of `talk.events` is on when it may be left out (preview・chat・song). */
+const talksOn = (m: Json, e: string) => {
+  const on = getIn(m, ['talk', 'events', e]);
+  return on === true || (on === undefined && V.talkEventsOptional.includes(e));
+};
 const LENGTH: Record<string, string> = { short: '短い（100〜150 字）', normal: 'ふつう（200〜300 字）', long: '長い（300〜450 字）' };
 const SOUND: Record<string, string> = { auto: '雰囲気から選ぶ', rain: '雨', waves: '波', wind: '風', birds: '鳥', insects: '虫', temple: '寺' };
 export const SLOT_LABEL: Record<string, string> = {
@@ -149,7 +158,7 @@ export function ChannelTalk({ d, edit }: { d: Draft; edit: Edit }) {
         <legend>話す出来事（天気の急変・日の入り・施設の案内は、どのチャンネルでも話します）</legend>
         {V.talkEvents.map((e) => (
           <label key={e} className="check">
-            <input type="checkbox" checked={getIn(m, ['talk', 'events', e]) === true} onChange={(x) => edit(withManifest(d, ['talk', 'events', e], x.target.checked))} />
+            <input type="checkbox" checked={talksOn(m, e)} disabled={e === 'song' && !talksOn(m, 'chat')} onChange={(x) => edit(withManifest(d, ['talk', 'events', e], x.target.checked))} />
             {TALK_EVENT[e]}
           </label>
         ))}

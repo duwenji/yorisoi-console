@@ -102,8 +102,8 @@ prompts/
 | `publisher` | 紐づけたアカウントID |
 | `name`・`summary`・`greeting` | 1〜20 字・1〜60 字・1〜60 字（`greeting` は切り替えたときにそのまま読み上げる） |
 | `talk.level` | `quiet`・`normal`・`chatty` |
-| `talk.events` | 6 つの出来事（スポットの解説、再訪、区切り、休憩、開始、終了）で話すか。6 つとも必須 |
-| `spots.prefer`・`skip` | 優先する・話題にしないスポットの種類（`shrine`、`temple`、`historic`、`museum`、`park`、`garden`、`viewpoint` など 15 種）。重ねられない |
+| `talk.events` | 出来事ごとに話すか。6 つ（スポットの解説、再訪、区切り、休憩、開始、終了）は必須。`preview`（少し先の見どころの予告）・`chat`（話すことがないときの雑談）・`song`（季節の歌）は書かなければ話す。`chat` を切ると歌も流れない |
+| `spots.prefer`・`skip` | 優先する・話題にしないスポットの種類（`shrine`、`temple`、`historic`、`museum`、`park`、`garden`、`viewpoint`、`station`、`bridge`、`slope`、`library`、`theatre` など。店の種類を含めて 27 種）。重ねられない |
 | `guide.length` | `short`（100〜150 字）・`normal`（200〜300 字）・`long`（300〜450 字） |
 | `mood` | `tone`（雰囲気に合わせるか）と `sound`（背景音: `auto`・`rain`・`waves`・`wind`・`birds`・`insects`・`temple`） |
 
